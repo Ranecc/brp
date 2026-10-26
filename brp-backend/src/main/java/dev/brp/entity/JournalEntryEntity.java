@@ -47,6 +47,7 @@ public class JournalEntryEntity {
     }
 
     public Long getId() { return id; }
+    public Long getAccountId() { return accountId; }
     public String getJournalId() { return journalId; }
     public String getIdemKey() { return idemKey; }
     public long getAmountCents() { return amountCents; }

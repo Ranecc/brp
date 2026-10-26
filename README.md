@@ -72,7 +72,7 @@ mvn -pl brp-backend -am test    # 14/14 green: ledger idempotency, saga, teams �
 | Phase | Scope | Status |
 |---|---|---|
 | P0 | repo + contracts + ledger core (idempotent, double-entry) + agent skeleton | ✅ this repo |
-| P1 | teams, player sync, saga engine, approval labyrinth + TPS reports done; portal, agent upload pipeline pending | 🚧 |
+| P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V) done; portal, agent upload pipeline pending | 🚧 |
 | P2 | WMS adapters (vanilla → AE2 → Create) + dashboards + alerts | ⬜ |
 | P3 | MRP (BOM explosion + work orders) | ⬜ |
 | P4 | APS + machine monitoring + signal hub | ⬜ |

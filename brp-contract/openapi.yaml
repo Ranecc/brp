@@ -132,6 +132,24 @@ paths:
         "200": {description: "synergy metrics, flair count, Monday detection"}
         "400": {description: "TPS reports now require a cover sheet. Didn't you get the memo?"}
 
+  /api/v1/economy/daily:
+    get:
+      summary: Today's money printer status (M / net emission / traded volume / velocity V)
+      description: Materialized from the ledger only — if it didn't journal, it didn't happen.
+      parameters:
+        - {name: currency, in: query, schema: {type: string, default: BRC}}
+      responses:
+        "200":
+          description: "the observable economy; velocity is Fisher's paranoia channel"
+
+  /api/v1/economy/history:
+    get:
+      summary: Daily economy history for a currency
+      parameters:
+        - {name: currency, in: query, schema: {type: string, default: BRC}}
+      responses:
+        "200": {description: previous printer statuses, faithfully archived}
+
   /api/v1/players/batch:
     post:
       summary: Bulk upsert player identity (agent-pulled uuid/name, rename history kept)
