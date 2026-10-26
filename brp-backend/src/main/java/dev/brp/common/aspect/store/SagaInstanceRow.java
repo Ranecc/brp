@@ -21,6 +21,7 @@ public class SagaInstanceRow {
     private String step;
     private String correlation;
     private String compensation;
+    private String payload;
     private String state = "RUNNING";
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
@@ -34,11 +35,15 @@ public class SagaInstanceRow {
         this.compensation = compensation;
     }
 
+    public Long getId() { return id; }
     public String getSaga() { return saga; }
     public String getStep() { return step; }
     public String getCorrelation() { return correlation; }
     public String getCompensation() { return compensation; }
+    public String getPayload() { return payload; }
     public String getState() { return state; }
+
+    public void setPayload(String payload) { this.payload = payload; }
 
     public void done() {
         this.state = "DONE";
@@ -47,6 +52,11 @@ public class SagaInstanceRow {
 
     public void failed() {
         this.state = "FAILED";
+        this.updatedAt = Instant.now();
+    }
+
+    public void compensated() {
+        this.state = "COMPENSATED";
         this.updatedAt = Instant.now();
     }
 }

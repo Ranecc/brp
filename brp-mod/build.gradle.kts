@@ -50,9 +50,18 @@ neoForge {
     }
 }
 
+// Single-file distribution: the release pipeline drops the Maven-built fat
+// jar at src/main/resources/backend/brp-backend.jar (git-ignored) before
+// `gradle build`; BackendSupervisor extracts it at first run (sha256-checked,
+// auto-upgraded when the embedded copy changes). 100+ MB mod jars are a
+// time-honored tradition; we uphold it.
+//
+// tasks.register("embedBackend", Copy::class) {
+//     from(rootProject.projectDir.resolve("brp-backend/target/brp-backend-0.1.0-SNAPSHOT.jar"))
+//     into(layout.projectDirectory.dir("src/main/resources/backend"))
+//     rename { "brp-backend.jar" }
+// }
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
-
-// Single universal jar: no side classifiers, adapters are soft deps guarded
-// at runtime — one artifact installs on both client and dedicated server.

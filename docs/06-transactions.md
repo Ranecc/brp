@@ -83,7 +83,7 @@ second, any failure lands safely.
 | `@Idempotent(key, ttl)` | SpEL key; `idem_store` row stores the response; replays return it; races resolved by PK | WAL dedup by eventId / key before enqueue |
 | `@Cached(key, ttl, maxSize)` | Caffeine, TTL from write, nulls not cached | CacheFront (Caffeine wrapper, relocation-safe) |
 | `@Atomic(timeoutMs)` | one DB transaction, all-or-nothing | one SQLite transaction via LocalStore |
-| `@Compensable(saga, step, compensation)` | durable RUNNING→DONE/FAILED audit row; engine dispatch lands P1 | recorded into the local log, uploaded with telemetry |
+| `@Compensable(saga, step, compensation)` | durable RUNNING→DONE/FAILED rows; SagaEngine dispatches reverse-order compensations + crash recovery | recorded into the local log, uploaded with telemetry |
 
 Aspect order (outer→inner): `@Cached` → `@Idempotent` → `@Atomic` → `@Compensable`
 — cache hits short-circuit everything, replays skip transactions, saga steps

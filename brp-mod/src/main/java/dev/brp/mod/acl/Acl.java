@@ -52,4 +52,22 @@ public final class Acl {
         double mspt();       // mean ms per tick, for the TPS-commodity metrics
         double tps();
     }
+
+    /**
+     * Team/guild source port (docs/07-tenants.md). Exactly ONE provider is
+     * active; selection: native (BRP authority, backend-managed) or compat
+     * (game-side authority e.g. FTB Teams — native management disabled).
+     */
+    public interface TeamProvider {
+        String id();                                    // "native" | "ftbteams" | ...
+        boolean gameSideAuthority();                    // ftbteams=true, native=false
+
+        record TeamSnapshot(String id, String name, String tag,
+                            List<MemberSnapshot> members) {}
+
+        record MemberSnapshot(String uuid, String role) {}   // OWNER|OFFICER|MEMBER
+
+        /** Full roster snapshot for POST /api/v1/teams/sync (compat mode). */
+        List<TeamSnapshot> snapshot();
+    }
 }

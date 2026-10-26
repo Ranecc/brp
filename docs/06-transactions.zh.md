@@ -72,7 +72,7 @@ Backend 宕机时文件无限增长？→ 磁盘水位保护：超阈值丢最�
 | `@Idempotent(key, ttl)` | SpEL 键；`idem_store` 存响应；重放返回首响应；并发由 PK 裁决 | 入队前按 eventId/键做 WAL 去重 |
 | `@Cached(key, ttl, maxSize)` | Caffeine，写入起算 TTL，null 不缓存 | CacheFront（Caffeine 包装，可整体重定位） |
 | `@Atomic(timeoutMs)` | 一个数据库事务，全有或全无 | LocalStore 的一个 SQLite 事务 |
-| `@Compensable(saga, step, compensation)` | 持久化 RUNNING→DONE/FAILED 审计行；补偿派发引擎 P1 落地 | 记入本地日志，随遥测上传 |
+| `@Compensable(saga, step, compensation)` | 持久化 RUNNING→DONE/FAILED 行；SagaEngine 自动反向补偿 + 崩溃恢复 | 记入本地日志，随遥测上传 |
 
 切面顺序（外→内）：`@Cached` → `@Idempotent` → `@Atomic` → `@Compensable`
 ——缓存命中短路一切，重放跳过事务，saga 步骤保持原子。

@@ -39,7 +39,8 @@ import java.util.function.Consumer;
 public final class BackendSupervisor {
 
     public record Config(
-            Path backendJar,            // e.g. <server>/brp/brp-backend.jar
+            Path backendJar,            // extraction target: <server>/brp/brp-backend.jar
+            String embeddedResource,    // null = sibling file mode; else resource path in the mod jar
             String javaExecutable,      // defaults to current JVM's java
             int port,
             String xmx,                 // e.g. "1G"
@@ -48,8 +49,12 @@ public final class BackendSupervisor {
             Consumer<String> log) {
 
         public static Config defaults(Path serverDir) {
+            // Single-file distribution: the mod jar embeds the backend fat jar
+            // at resources/backend/brp-backend.jar (see build.gradle.kts); the
+            // supervisor extracts it on first run / version change (sha256).
             return new Config(
                     serverDir.resolve("brp").resolve("brp-backend.jar"),
+                    "/backend/brp-backend.jar",
                     ProcessHandle.current().info().command().orElse("java"),
                     8080, "1G", List.of(), 5, line -> {});
         }
@@ -77,14 +82,66 @@ public final class BackendSupervisor {
         if (running.get()) {
             return;
         }
+        if (cfg.embeddedResource() != null) {
+            extractEmbedded(cfg.embeddedResource(), cfg.backendJar());
+        }
         if (!Files.isRegularFile(cfg.backendJar())) {
             throw new IOException("backend jar not found: " + cfg.backendJar()
-                    + " (drop brp-backend.jar there or set brp.agent.supervisor.jar)");
+                    + " (single-file build embeds it; else drop brp-backend.jar there)");
         }
         spawn();
         watchdog.scheduleWithFixedDelay(this::watch, 5, 5, TimeUnit.SECONDS);
         if (!awaitHealthy(Duration.ofSeconds(90))) {
             throw new IllegalStateException("backend did not become healthy within 90s");
+        }
+    }
+
+    /**
+     * Single-file distribution step: extract the embedded backend jar unless
+     * the on-disk copy already matches (sha256). Still a CHILD PROCESS after
+     * extraction — the "single file" is the distribution artifact, not the
+     * runtime topology (docs/01 section 2.5).
+     */
+    static void extractEmbedded(String resource, Path target) throws IOException {
+        byte[] bytes;
+        try (var in = BackendSupervisor.class.getResourceAsStream(resource)) {
+            if (in == null) {
+                throw new IOException("embedded backend not found in mod jar: " + resource);
+            }
+            bytes = in.readAllBytes();
+        }
+        String want = sha256(bytes);
+        if (Files.isRegularFile(target)) {
+            try {
+                if (sha256(Files.readAllBytes(target)).equals(want)) {
+                    return; // same version already extracted
+                }
+            } catch (IOException e) {
+                cfgLog("re-extracting (unreadable target): " + e.getMessage());
+            }
+        }
+        Files.createDirectories(target.getParent());
+        Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
+        Files.write(tmp, bytes);
+        Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        cfgLog("extracted embedded backend to " + target + " (" + bytes.length / 1024 / 1024 + " MB)");
+    }
+
+    private static String sha256(byte[] data) throws java.security.NoSuchAlgorithmException {
+        byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(data);
+        StringBuilder sb = new StringBuilder(d.length * 2);
+        for (byte b : d) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    private void cfgLog(String msg) {
+        try {
+            cfg.log().accept("[BRP] " + msg);
+        } catch (RuntimeException ignored) {
+            // logging consumer is optional plumbing, never fatal
         }
     }
 
