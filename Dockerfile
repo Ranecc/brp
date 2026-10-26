@@ -1,5 +1,5 @@
 # Root build: aggregator resolves brp-common -> brp-backend (multi-module).
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /src
 COPY pom.xml .
 COPY brp-common/pom.xml brp-common/
