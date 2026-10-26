@@ -1,0 +1,39 @@
+# BRP local stack: PostgreSQL + Redis + backend.
+# The Minecraft server with the brp-mod jar joins over the host network.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: brp
+      POSTGRES_USER: brp
+      POSTGRES_PASSWORD: brp
+    ports:
+      - "5432:5432"
+    volumes:
+      - brp-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./brp-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BRP_DB_URL: jdbc:postgresql://postgres:5432/brp
+      BRP_DB_USER: brp
+      BRP_DB_PASS: brp
+      BRP_PORT: "8080"
+    ports:
+      - "8080:8080"
+
+volumes:
+  brp-pg:

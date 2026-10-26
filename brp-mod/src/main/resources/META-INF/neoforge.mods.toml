@@ -1,0 +1,50 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"        # NeoForge for 1.21.1: FML javafml 4.x — verify on first build
+license = "MIT"
+
+[[mods]]
+modId = "brp"
+version = "0.1.0-SNAPSHOT"
+displayName = "BRP — Better Resource Plan"
+description = '''
+Enterprise-grade (in the fun way) resource planning for Minecraft servers:
+ledger, WMS/MRP, machine telemetry and signal control. Pairs with the
+standalone BRP Spring Boot backend.
+'''
+authors = ["BRP Team"]
+
+[[dependencies.brp]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.brp]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+# Soft integrations — optional on BOTH sides, guarded by runtime ModList checks.
+[[dependencies.brp]]
+modId = "ae2"
+type = "optional"
+versionRange = "[19.0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.brp]]
+modId = "create"
+type = "optional"
+versionRange = "[6.0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.brp]]
+modId = "cc-tweaked"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"

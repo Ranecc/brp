@@ -1,0 +1,22 @@
+# build outputs
+target/
+build/
+out/
+*.class
+
+# ide
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# gradle
+.gradle/
+gradle-app.setting
+
+# runtime / local
+*.log
+.env
+docker-data/
