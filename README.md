@@ -78,7 +78,7 @@ Deliberately inconsistent, give you a real ENTERPRISE experience:
 | `brp-mod` | MIT | players and pack authors deserve zero friction |
 | `brp-common` | MIT | shared by both sides — keeps the mod jar clean |
 | `brp-backend` | Apache-2.0 | the *enterprise* ritual: explicit patent grant, NOTICE file, the full ritual |
-| `brp-contract` | Apache-2.0 | the single source of truth gets a legal department |
+| `brp-contract` | Apache-2.0 | Please find the Legal Department's stamp |
 
 The backend never ships inside the game JVM, so the two regimes never mix.
 None of this touches the Mojang EULA — these licenses cover *our* code only;
