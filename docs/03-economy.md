@@ -105,3 +105,45 @@ exchange/futures (performance-art ceiling; options stay sealed forever, thanks).
   the compute quota is the economy lever that caps mass production. Overruns
   and high-cost chunks (`chunk.performance` telemetry over threshold) NOTIFY
   admins via the outbox; enforcement stays a human choice by design.
+
+## 9. P3 anti-monopoly: progressive levies, quota caps, and the Emerald-TPS bimetallic standard
+
+Detection -> diagnosis -> prescription. The Gini monitor (section 2) above
+0.8 activates the "anti-monopoly regime"; everything below arms only then.
+
+**Progressive compute levy (the anti-monopoly main battery).** Overage
+billing scales with the tenant's SHARE OF FLEET mspt, not flat amounts:
+share <= 20%: 1.0x | <= 35%: 1.2x | <= 50%: 1.6x | > 50%: 2.5x, multiplied by
+a wealth-Gini surcharge (up to 1.5x in full regime). Small guilds never feel
+it; a farm cartel at half the server's tick budget pays 2.5x+ per overage
+minute. Hard quota ceilings remain per-tier (squad/guild/alliance), and
+sustained ceiling breaches walk the existing admin-alert ladder.
+
+**Progressive wealth levy (the monetary auxiliary).** Brackets on balances:
+<= 1M: 0% | <= 10M: 0.5%/week | > 10M: 1.5%/week, plus a hoarding surcharge
+when velocity V < 0.5. Only charges while the regime is active — the levy is
+a diagnosed medicine, not a permanent tax. All takings route to SYSTEM_SINK
+and appear in net emission as negative (burned, not spent).
+
+**The Emerald-TPS bimetallic standard.** A single anchor is fragile: emerald
+farms inflate with villager hall engineering; compute gets cheaper with
+hardware. So BRC is pegged against BOTH:
+
+- **Emerald leg** — the MC-native commodity anchor. Central-bank vault
+  (a physically guarded storage region) holds emerald reserves; a mint
+  window redeems 1 emerald stack <=> X BRC.
+- **TPS leg** — the hard physical anchor (section 6): quota-minutes are the
+  commodity, Y BRC <=> Z quota-minutes.
+
+The peg band absorbs +/-5% of anchor drift, then re-pegs by policy vote.
+The engineered teaching moment: **Gresham's law events** — when one leg
+turns cheap (say an emerald-printing farm), redemptions flood that leg while
+the "good money" leg is hoarded. The Gresham detector (redemption flow
+asymmetry > 95% on one leg over 7 days) is a first-class crisis signal in
+section 5's table, with two prescriptions: re-peg, or float the weak leg
+temporarily. Bimetallism collapsed in real history for exactly this reason;
+ours collapses on schedule, with dashboards, and that is the product.
+
+P3 deliverables: regime activation wired to Gini, levy brackets as policy
+table rows, mint window + vault accounting (escrow-backed, append-only),
+Gresham flow detector, re-peg playbooks.

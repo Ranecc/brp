@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 概览')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('overview')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('概览 Overview')}"></header>
+<main class="content">
+  <section class="cards">
+    <div class="card"><div class="card-label">货币总量 M / Money mass</div>
+      <div class="card-value pixel" th:text="${daily.moneyMassCents}">0</div><div class="unit">cents · BRC</div></div>
+    <div class="card"><div class="card-label">净投放 / Net emission</div>
+      <div class="card-value pixel" th:text="${daily.netEmissionCents}">0</div><div class="unit">today</div></div>
+    <div class="card"><div class="card-label">流通速度 V / Velocity</div>
+      <div class="card-value pixel" th:text="${daily.velocity}">0.0</div><div class="unit">Fisher's MV=PQ</div></div>
+    <div class="card accent"><div class="card-label">舰队 MSPT</div>
+      <div class="card-value pixel" th:text="${mspt}">0.0</div><div class="unit">physics, not synergy</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>TPS 周报 / Weekly TPS report <span class="tag">cover sheet: attached ✓</span></h2>
+    <ul class="tps-lines">
+      <li th:each="line : ${tps.lines}" th:text="${line}">—</li>
+    </ul>
+    <p class="meta">synergy score: <span class="pixel" th:text="${tps.synergyScore}">42</span> ·
+      pieces of flair: <span class="pixel" th:text="${tps.piecesOfFlair}">15</span> ·
+      Monday detected: <span th:text="${tps.caseOfTheMondaysDetected}">?</span></p>
+  </section>
+
+  <section class="panel">
+    <h2>待审批 <span class="badge" th:text="${pendingCount}">0</span></h2>
+    <table class="grid" th:if="${!pending.isEmpty()}">
+      <thead><tr><th>ID</th><th>团队</th><th>申请人</th><th>金额(cents)</th><th>状态</th></tr></thead>
+      <tbody>
+      <tr th:each="r : ${pending}">
+        <td class="pixel" th:text="${r.id}">-</td>
+        <td th:text="${r.teamId}">-</td>
+        <td class="pixel" th:text="${r.requesterUuid}">-</td>
+        <td class="num pixel" th:text="${r.amountCents}">0</td>
+        <td><span class="status" th:text="${r.status}">PENDING</span></td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${pending.isEmpty()}">没有待办审批。请检查日历，这可能是个错误。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

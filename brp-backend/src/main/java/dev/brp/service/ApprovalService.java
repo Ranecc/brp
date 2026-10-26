@@ -22,4 +22,7 @@ public interface ApprovalService {
     NudgeAck perMyLastEmail(String requestId);
 
     List<WithdrawalRequestResponse> inbox(String teamId, String status);
+
+    /** Portal feed: the newest pending paperwork across all teams. */
+    List<WithdrawalRequestResponse> latestPending();
 }

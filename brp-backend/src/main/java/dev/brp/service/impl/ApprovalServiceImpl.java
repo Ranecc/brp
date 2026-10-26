@@ -180,6 +180,11 @@ public class ApprovalServiceImpl implements ApprovalService {
         return mapper.toDtoList(requests.findByTeamIdAndStatusOrderById(teamId, s));
     }
 
+    @Override
+    public List<WithdrawalRequestResponse> latestPending() {
+        return mapper.toDtoList(requests.findTop20ByStatusOrderByIdDesc("PENDING"));
+    }
+
     // --- internals ---
 
     private WithdrawalRequestResponse executeApproved(WithdrawalRequestEntity entity) {

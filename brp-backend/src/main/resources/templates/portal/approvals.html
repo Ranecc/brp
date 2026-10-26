@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 审批中心')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('approvals')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('审批中心 Approvals')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>审批收件箱 / The corporate labyrinth</h2>
+    <table class="grid" th:if="${!pending.isEmpty()}">
+      <thead><tr><th>ID</th><th>团队</th><th>申请人</th><th>金额(cents)</th><th>备注</th><th>状态</th><th>提交时间</th></tr></thead>
+      <tbody>
+      <tr th:each="r : ${pending}">
+        <td class="pixel" th:text="${r.id}">-</td>
+        <td th:text="${r.teamId}">-</td>
+        <td class="pixel" th:text="${r.requesterUuid}">-</td>
+        <td class="num pixel" th:text="${r.amountCents}">0</td>
+        <td th:text="${r.memo}">-</td>
+        <td><span class="status" th:text="${r.status}">PENDING</span></td>
+        <td th:text="${r.createdAt}">-</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${pending.isEmpty()}">没有待办审批。请检查日历，这可能是个错误。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

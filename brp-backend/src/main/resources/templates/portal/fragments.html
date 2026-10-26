@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"/>
+  <title th:text="${title}">BRP</title>
+  <link rel="stylesheet" th:href="@{/portal/portal.css}"/>
+</head>
+<body>
+<!-- the classic left sidebar: menu tree, enterprise patina, creeper accents -->
+<nav th:fragment="sidebar(active)" class="sidebar">
+  <div class="brand">BRP<span class="brand-sub">Better Resource Plan</span></div>
+  <div class="menu">
+    <a href="/portal" th:classappend="${active}=='overview' ? 'active'"><span class="ico">&#9632;</span>概览 / Overview</a>
+    <a href="/portal/approvals" th:classappend="${active}=='approvals' ? 'active'"><span class="ico">&#9998;</span>审批中心 / Approvals</a>
+    <a class="disabled" title="P1+"><span class="ico">&#9879;</span>经济 / Economy</a>
+    <a class="disabled" title="P2+"><span class="ico">&#9881;</span>配额 / Quotas</a>
+    <a class="disabled" title="P2"><span class="ico">&#128736;</span>仓库 / WMS</a>
+  </div>
+  <div class="sidebar-foot">v0 · no auth · internal only</div>
+</nav>
+<header th:fragment="breadcrumb(crumb)" class="topbar">
+  <span class="crumb">BRP 控制台 / <span th:text="${crumb}">page</span></span>
+  <span class="top-right">Quarterly Block Story, on schedule</span>
+</header>
+<footer th:fragment="footer" class="footer">
+  Delivering an unadulterated, E-n-t-e-r-p-r-i-s-e-grade Spring Boot experience in Minecraft ·
+  <span class="pixel">TPS: it's load-bearing</span>
+</footer>
+</body>
+</html>

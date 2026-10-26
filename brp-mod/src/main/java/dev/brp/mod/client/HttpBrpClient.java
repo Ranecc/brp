@@ -65,6 +65,20 @@ public final class HttpBrpClient implements BrpServerApi {
     }
 
     @Override
+    public CompletableFuture<Map<String, Object>> postPlayers(
+            String batchId, List<BrpServerApi.PlayerRef> players) {
+        List<Map<String, String>> body = players.stream()
+                .map(p -> Map.of("uuid", p.uuid(), "name", p.name()))
+                .toList();
+        return send("POST", "/api/v1/players/batch",
+                        Map.of("batchId", batchId, "players", body))
+                .thenApply(b -> {
+                    Type t = new TypeToken<Map<String, Object>>() {}.getType();
+                    return gson.<Map<String, Object>>fromJson(b, t);
+                });
+    }
+
+    @Override
     public CompletableFuture<SignalPoll> pollSignals(String tenantId) {
         return send("GET", "/api/v1/tenants/" + tenantId + "/signals/poll", null)
                 .thenApply(body -> gson.fromJson(body, SignalPoll.class));

@@ -51,6 +51,12 @@ public interface BrpServerApi {
     CompletableFuture<Map<String, Object>> putInventorySnapshots(
             String tenantId, String batchMode, List<Map<String, Object>> lines);
 
+    // --- player identity sync (agent pulls uuid/name from the MC server) ---
+
+    CompletableFuture<Map<String, Object>> postPlayers(String batchId, List<PlayerRef> players);
+
+    record PlayerRef(String uuid, String name) {}
+
     // --- push plane (v0 poll + ack) ---
 
     record SignalCommand(long id, String channel, int level) {}

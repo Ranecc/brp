@@ -1,0 +1,46 @@
+/* BRP console: classic enterprise admin chrome with Minecraft accents.
+   Palette: creeper green #3fb950, dirt #8b6c52, deepslate #2b2d31, paper #f5f4ef. */
+* { box-sizing: border-box; margin: 0; }
+body.portal { font: 14px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f4ef; color: #2b2d31; }
+.pixel, .card-value, td.num { font-family: "Minecraftia", "Courier New", monospace; letter-spacing: .5px; }
+
+.sidebar { position: fixed; inset: 0 auto 0 0; width: 220px; background: #2b2d31; color: #cfcdc4; padding: 18px 0; display: flex; flex-direction: column; }
+.brand { padding: 0 16px 14px; font-size: 20px; font-weight: 700; color: #3fb950; border-bottom: 2px solid #1d1e21; }
+.brand-sub { display: block; font-size: 11px; color: #8f8d84; font-weight: 400; }
+.menu { flex: 1; padding-top: 10px; }
+.menu a { display: block; padding: 10px 16px; color: #cfcdc4; text-decoration: none; border-left: 4px solid transparent; }
+.menu a.active { background: #1d1e21; border-left-color: #3fb950; color: #fff; }
+.menu a.disabled { color: #5d5f63; cursor: not-allowed; }
+.menu .ico { margin-right: 8px; }
+.sidebar-foot { padding: 12px 16px; font-size: 11px; color: #5d5f63; border-top: 2px solid #1d1e21; }
+
+.topbar { margin-left: 220px; background: #fff; border-bottom: 2px solid #d9d6cc; padding: 12px 24px; display: flex; justify-content: space-between; }
+.crumb { color: #8b6c52; }
+.top-right { color: #b3b0a5; font-style: italic; font-size: 12px; }
+
+.content { margin-left: 220px; padding: 24px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card { background: #fff; border: 2px solid #d9d6cc; border-radius: 4px; padding: 16px; box-shadow: 3px 3px 0 #e4e1d6; }
+.card.accent { border-color: #3fb950; box-shadow: 3px 3px 0 #bfe6c6; }
+.card-label { font-size: 12px; color: #8f8d84; }
+.card-value { font-size: 26px; margin: 6px 0 2px; color: #2b2d31; }
+.card.accent .card-value { color: #2e8b43; }
+.unit { font-size: 11px; color: #b3b0a5; }
+
+.panel { background: #fff; border: 2px solid #d9d6cc; border-radius: 4px; padding: 18px; margin-bottom: 24px; }
+.panel h2 { font-size: 15px; margin-bottom: 12px; color: #2b2d31; }
+.tag { font-size: 11px; color: #3fb950; border: 1px solid #3fb950; padding: 1px 8px; border-radius: 2px; margin-left: 8px; }
+.badge { background: #8b6c52; color: #fff; border-radius: 8px; padding: 0 8px; font-size: 12px; }
+.tps-lines { margin: 0 0 8px 20px; color: #4c4e52; }
+.meta { font-size: 12px; color: #8f8d84; }
+
+table.grid { width: 100%; border-collapse: collapse; }
+table.grid th { text-align: left; background: #efece3; border-bottom: 2px solid #d9d6cc; padding: 8px; font-size: 12px; color: #8b6c52; }
+table.grid td { padding: 8px; border-bottom: 1px solid #efece3; }
+table.grid tr:nth-child(even) td { background: #faf9f4; }   /* zebra: grass-block inspired */
+td.num { text-align: right; }
+.status { font-size: 11px; padding: 1px 6px; border: 1px solid #8b6c52; color: #8b6c52; }
+.empty { color: #8f8d84; font-style: italic; }
+
+.footer { margin-left: 220px; padding: 16px 24px; color: #b3b0a5; font-size: 12px; border-top: 2px solid #d9d6cc; }
+.footer .pixel { color: #3fb950; }
