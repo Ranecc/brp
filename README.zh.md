@@ -54,6 +54,8 @@ brp/
 - [04-technical-control](docs/04-technical-control.md) — 生电计量与控制（流量计/信号/配额）
 - [05-anomaly-anticheat](docs/05-anomaly-anticheat.md) — 行为数据驱动的异常检测 / 反作弊
 - [06-transactions](docs/06-transactions.md) — 幂等、Outbox、Saga、账本并发 ⭐
+- [07-tenants](docs/07-tenants.md) — 公会租户模型、native + FTB 兼容
+- [08-bridge-api](docs/08-bridge-api.md) — 第三方桥接模组稳定接口
 
 ## 快速开始（后端）
 

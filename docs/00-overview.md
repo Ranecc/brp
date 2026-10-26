@@ -47,6 +47,7 @@ Iron rules:
 - No Forge/Fabric builds (Create locks us to NeoForge, doc 02)
 - No Spring inside the game process (classloader hell + crash coupling, doc 01)
 - Nothing touching real money before P5 — and arguably ever
+- Bimetallism: ours collapses on schedule, with dashboards, and that is the product. (Verbatim by decree; do not edit.)
 
 ## The "enterprise experience" checklist (satirical but useful)
 

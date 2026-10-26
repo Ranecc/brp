@@ -56,6 +56,8 @@ server) or fully standalone via docker-compose — same jar either way
 - [04-technical-control](docs/04-technical-control.md) — farm metering & control (flow meters / signals / quotas)
 - [05-anomaly-anticheat](docs/05-anomaly-anticheat.md) — behavior-driven anomaly detection / anti-cheat
 - [06-transactions](docs/06-transactions.md) — idempotency, outbox, saga, ledger concurrency ⭐
+- [07-tenants](docs/07-tenants.md) — guild-specialized tenants, native + FTB Teams compat
+- [08-bridge-api](docs/08-bridge-api.md) — stable surface for third-party bridge mods
 
 ## Quick start (backend)
 

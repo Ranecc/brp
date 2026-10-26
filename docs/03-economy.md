@@ -108,42 +108,67 @@ exchange/futures (performance-art ceiling; options stay sealed forever, thanks).
 
 ## 9. P3 anti-monopoly: progressive levies, quota caps, and the Emerald-TPS bimetallic standard
 
-Detection -> diagnosis -> prescription. The Gini monitor (section 2) above
-0.8 activates the "anti-monopoly regime"; everything below arms only then.
+Detection -> diagnosis -> prescription. Everything below arms only when the
+anti-monopoly regime is ACTIVE.
 
-**Progressive compute levy (the anti-monopoly main battery).** Overage
-billing scales with the tenant's SHARE OF FLEET mspt, not flat amounts:
-share <= 20%: 1.0x | <= 35%: 1.2x | <= 50%: 1.6x | > 50%: 2.5x, multiplied by
-a wealth-Gini surcharge (up to 1.5x in full regime). Small guilds never feel
-it; a farm cartel at half the server's tick budget pays 2.5x+ per overage
-minute. Hard quota ceilings remain per-tier (squad/guild/alliance), and
-sustained ceiling breaches walk the existing admin-alert ladder.
+**Regime activation has HYSTERESIS** (half-open breaker heritage): wealth
+Gini > 0.8 activates; Gini < 0.7 deactivates. Between 0.7 and 0.8 the regime
+holds its previous state — Gini oscillating around a single threshold would
+make the tax flap, and players feel flapping as twitching.
 
-**Progressive wealth levy (the monetary auxiliary).** Brackets on balances:
-<= 1M: 0% | <= 10M: 0.5%/week | > 10M: 1.5%/week, plus a hoarding surcharge
-when velocity V < 0.5. Only charges while the regime is active — the levy is
-a diagnosed medicine, not a permanent tax. All takings route to SYSTEM_SINK
-and appear in net emission as negative (burned, not spent).
+**One weekly snapshot feeds every mechanism.** Gini AND velocity V compute
+from the same weekly snapshot job (V = nominal traded volume / mean held
+balance, from TRANSFERRED/CRAFTED telemetry). When two mechanisms share a
+number, they share the calculation — never recompute per-consumer, or the
+books stop agreeing with themselves.
+
+**Progressive compute levy — MARGINAL brackets, two separate tools.**
+The levy is a TAX: priced in EMERALDS, paid into SYSTEM_SINK (real
+liquidity contraction, one ledger event per tenant per minute, idempotency
+key `tax:tenant:minute`; mspt share is metered by the agent's flow-meter
+infrastructure and AGGREGATED per tenant-minute — sample streams never
+touch the ledger). Marginal pricing per segment of fleet-mspt share:
+0-20% @ 1.0x | 20-35% @ 1.2x | 35-50% @ 1.6x | >50% @ 2.5x. No cliff: the
+first emerald over a bracket pays the next bracket's rate, like an income
+tax, so running at 49.9% forever is not a strategy.
+
+The >50% line is NOT a tax rate — it is a RED LINE. Sustained share above
+50% (the operational definition of a farm cartel) escalates through the
+existing admin-alert ladder as `BRP-0950` (with the alert family reserved
+`BRP-09xx`). A tool cannot be both a levy and a death sentence: the tax
+bills emeralds, the redline pages humans. QUOTAS remain the pure quantity
+instrument (hard caps, machine licensing) — money tool and quantity tool
+never twist into each other.
+
+**Progressive wealth levy (monetary auxiliary, regime-gated).** Brackets on
+balances: <= 1M: 0% | <= 10M: 0.5%/week | > 10M: 1.5%/week, plus a hoarding
+surcharge when V < 0.5 (from the shared weekly snapshot). Takings route to
+SYSTEM_SINK and appear in net emission as negative (burned, not spent).
 
 **The Emerald-TPS bimetallic standard.** A single anchor is fragile: emerald
-farms inflate with villager hall engineering; compute gets cheaper with
-hardware. So BRC is pegged against BOTH:
+farms inflate with villager-hall engineering; compute gets cheaper with
+hardware. BRC is pegged against BOTH:
 
-- **Emerald leg** — the MC-native commodity anchor. Central-bank vault
-  (a physically guarded storage region) holds emerald reserves; a mint
-  window redeems 1 emerald stack <=> X BRC.
+- **Emerald leg** — the MC-native commodity anchor. Central-bank vault (a
+  physically guarded storage region) holds emerald reserves; the mint window
+  redeems 1 emerald stack <=> X BRC.
 - **TPS leg** — the hard physical anchor (section 6): quota-minutes are the
   commodity, Y BRC <=> Z quota-minutes.
 
-The peg band absorbs +/-5% of anchor drift, then re-pegs by policy vote.
-The engineered teaching moment: **Gresham's law events** — when one leg
-turns cheap (say an emerald-printing farm), redemptions flood that leg while
-the "good money" leg is hoarded. The Gresham detector (redemption flow
-asymmetry > 95% on one leg over 7 days) is a first-class crisis signal in
-section 5's table, with two prescriptions: re-peg, or float the weak leg
-temporarily. Bimetallism collapsed in real history for exactly this reason;
-ours collapses on schedule, with dashboards, and that is the product.
+The peg band absorbs +/-5% drift; re-pegging beyond the band is a POLICY
+VOTE that rides the EXISTING approval workflow — no third governance
+channel for money matters, RFC P3 grants no exemptions here.
 
-P3 deliverables: regime activation wired to Gini, levy brackets as policy
-table rows, mint window + vault accounting (escrow-backed, append-only),
-Gresham flow detector, re-peg playbooks.
+**Gresham detector.** Legs are defined by PAYMENT RAIL (emerald-priced vs
+quota-priced redemption flows through ESCROW), never by item movement — a
+7-day sliding-window aggregation over escrow flows. Single-leg share > 95%
+is a first-class crisis signal (section 5); prescriptions: re-peg, or float
+the weak leg temporarily.
+
+**Mint ordering (vault cannot drift from ledger).** Every mint is FAUCET
+ledger event FIRST, item dispense SECOND — the @Compensable saga pattern
+exists precisely for "books moved, goods didn't" compensation ordering.
+
+P3 deliverables: hysteresis-wired regime, shared weekly snapshot job,
+marginal levy engine (emerald-denominated, tenant-minute aggregation),
+BRP-09xx alert family, mint window saga, Gresham detector, re-peg playbook.
