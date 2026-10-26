@@ -3,6 +3,7 @@ package dev.brp.service.impl;
 import dev.brp.common.BadRequestException;
 import dev.brp.dto.TpsReportResponse;
 import dev.brp.service.TpsReportService;
+import dev.brp.service.AgentMonitorService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,6 +18,12 @@ import java.util.UUID;
 @Service
 public class TpsReportServiceImpl implements TpsReportService {
 
+    private final AgentMonitorService monitor;
+
+    public TpsReportServiceImpl(AgentMonitorService monitor) {
+        this.monitor = monitor;
+    }
+
     @Override
     public TpsReportResponse fileWeeklyReport(boolean withCoverSheet) {
         if (!withCoverSheet) {
@@ -27,7 +34,7 @@ public class TpsReportServiceImpl implements TpsReportService {
                 "tps-" + UUID.randomUUID().toString().substring(0, 8),
                 "week-of-" + LocalDate.now().with(java.time.DayOfWeek.MONDAY),
                 true,
-                0.0,
+                monitor.averageMspt(),
                 42.0,   // the synergy target; it's always been 42
                 15,     // minimum flair; expression of self encouraged
                 LocalDate.now().getDayOfWeek() == java.time.DayOfWeek.MONDAY,
