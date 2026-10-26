@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: '21', cache: maven }
       - name: The sacred ritual (tests)
         run: mvn -B -pl brp-backend -am test
@@ -18,13 +18,13 @@ jobs:
     needs: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: '21', cache: maven }
       - name: "Install brp-common + build backend jar (embed order: common -> backend -> mod)"
         run: |
           mvn -B -pl brp-common install -DskipTests
           mvn -B -pl brp-backend -am package -DskipTests
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with: { gradle-version: '8.10' }
       - name: Embed backend fat jar for single-file distribution
         run: |
