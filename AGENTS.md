@@ -11,6 +11,9 @@ to read this too, but the meme budget is earmarked.
 - Puns and memes are welcome in docs, comments and commit messages (English
   ones — see red line 8). They are **not** welcome in ledger invariants,
   migrations or security code — those stay aggressively boring.
+- Memes are earned, not scheduled: if the joke is right there, take it; if
+  it isn't, ship it straight. No forced bits, no dead memes. A joke that
+  needs a footnote has already failed its code review.
 - We are already over-engineered *on purpose*. Adding more ceremony is only
   funny if it compiles and the tests stay green. Which brings us to:
 - **The meme boundary**: user-facing copy (messages[_xx].properties, error
@@ -143,6 +146,16 @@ DTOs + Entities + Repositories):
 
 Short, present tense, lightly unhinged, English. Example:
 `ledger: refuse to lose a single emerald (idempotency hardening)`.
+
+## Remotes
+
+- **gogs** (`REDACTED`) — the private home mirror; always push here.
+- **origin** (GitHub, `Ranecc/brp`) — the **server** is private, the code
+  is not. Push freely, no per-push ceremony. Force-push only after a
+  rebase, only with `--force-with-lease`, and only after verifying the
+  old tip's tree matches the local rebased base (`git diff` empty).
+- CI lives on origin. It is the second opinion; the local build is the
+  verdict of record (see brp-mod/README.md, mirror notes).
 
 ## When in doubt
 
