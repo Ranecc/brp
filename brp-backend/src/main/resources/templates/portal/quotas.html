@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 配额')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('quotas')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('配额 Quotas')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>设置配额 / License the machines <span class="tag">0 = unlimited</span></h2>
+    <form class="verdict" th:action="@{/portal/quotas/NEW_TENANT/machine_slot}" method="post"
+          onsubmit="this.action='/portal/quotas/'+this.elements['tenant'].value+'/'+this.elements['resource'].value;return true;">
+      <input name="tenant" placeholder="租户 / team id" required/>
+      <input name="resource" placeholder="资源 (machine_slot...)" value="machine_slot" required/>
+      <input name="limit" type="number" min="0" placeholder="上限" required style="min-width:70px"/>
+      <button type="submit" class="btn approve">保存</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>配额桶 / Quota buckets</h2>
+    <table class="grid" th:if="${!buckets.isEmpty()}">
+      <thead><tr><th>租户</th><th>资源</th><th>上限</th><th>已用</th><th>利用率</th></tr></thead>
+      <tbody>
+      <tr th:each="b : ${buckets}">
+        <td class="pixel" th:text="${b.tenantId}">-</td>
+        <td th:text="${b.resource}">-</td>
+        <td class="num pixel" th:text="${b.limit == 0} ? '∞' : ${b.limit}">0</td>
+        <td class="num pixel" th:text="${b.used}">0</td>
+        <td class="num pixel" th:text="${b.limit > 0} ? ${#numbers.formatDecimal(b.used * 100.0 / b.limit,1,1)} + '%' : '—'">—</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${buckets.isEmpty()}">尚无配额。此时机器放置不受许可约束——享受自由，或制造配额。</p>
+  </section>
+
+  <section class="panel">
+    <h2>区块事件单 / Chunk gluttony incidents</h2>
+    <table class="grid" th:if="${!incidents.isEmpty()}">
+      <thead><tr><th>#</th><th>租户</th><th>维度</th><th>区块</th><th>开销评分</th><th>状态</th></tr></thead>
+      <tbody>
+      <tr th:each="i : ${incidents}">
+        <td class="pixel" th:text="${i.id}">-</td>
+        <td class="pixel" th:text="${i.tenantId}">-</td>
+        <td th:text="${i.dimension}">-</td>
+        <td class="pixel" th:text="${i.chunk}">-</td>
+        <td class="num pixel" th:text="${i.costScore}">0</td>
+        <td><span class="status" th:text="${i.status}">OPEN</span></td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${incidents.isEmpty()}">没有区块在吃服务器。管理层暂时无所事事。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

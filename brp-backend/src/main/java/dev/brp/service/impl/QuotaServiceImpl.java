@@ -57,6 +57,11 @@ public class QuotaServiceImpl implements QuotaService {
     }
 
     @Override
+    public List<QuotaBucketResponse> all() {
+        return mapper.toDtoList(buckets.findAll());
+    }
+
+    @Override
     @Atomic
     public PlacementVerdict recordMachinePlaced(String tenantId, String machineId) {
         var bucket = buckets.findById(new QuotaBucketEntity.Pk(tenantId, QuotaService.RESOURCE_MACHINE_SLOT))

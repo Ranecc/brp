@@ -19,6 +19,9 @@ public interface QuotaService {
 
     List<QuotaBucketResponse> usage(String tenantId);
 
+    /** Fleet-wide buckets for the console. */
+    List<QuotaBucketResponse> all();
+
     PlacementVerdict recordMachinePlaced(String tenantId, String machineId);
 
     void recordChunkPerformance(String tenantId, String dimension, String chunk, double costScore);

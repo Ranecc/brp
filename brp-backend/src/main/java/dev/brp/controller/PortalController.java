@@ -4,7 +4,12 @@ import dev.brp.dto.ApprovalDtos.Decision;
 import dev.brp.dto.ApprovalDtos.WithdrawalRequestResponse;
 import dev.brp.dto.EconomyDtos.EconomyDailyResponse;
 import dev.brp.dto.TpsReportResponse;
+import dev.brp.dto.CurrencyDtos.CurrencyResponse;
+import dev.brp.dto.QuotaDtos.ChunkIncidentResponse;
+import dev.brp.dto.QuotaDtos.QuotaBucketResponse;
 import dev.brp.service.AgentMonitorService;
+import dev.brp.service.CurrencyService;
+import dev.brp.service.QuotaService;
 import dev.brp.service.ApprovalService;
 import dev.brp.service.EconomyReportService;
 import dev.brp.service.TpsReportService;
@@ -31,13 +36,42 @@ public class PortalController {
     private final AgentMonitorService monitor;
     private final TpsReportService tpsReports;
     private final ApprovalService approvals;
+    private final CurrencyService currencies;
+    private final QuotaService quotas;
 
     public PortalController(EconomyReportService economy, AgentMonitorService monitor,
-                            TpsReportService tpsReports, ApprovalService approvals) {
+                            TpsReportService tpsReports, ApprovalService approvals,
+                            CurrencyService currencies, QuotaService quotas) {
         this.economy = economy;
         this.monitor = monitor;
         this.tpsReports = tpsReports;
         this.approvals = approvals;
+        this.currencies = currencies;
+        this.quotas = quotas;
+    }
+
+    @GetMapping("/economy")
+    public String economy(Model model) {
+        var registered = currencies.list();
+        model.addAttribute("today", registered.stream()
+                .map(c -> economy.materializeToday(c.code())).toList());
+        model.addAttribute("history", economy.history("BRC"));
+        model.addAttribute("currencies", registered);
+        return "portal/economy";
+    }
+
+    @GetMapping("/quotas")
+    public String quotasPage(Model model) {
+        model.addAttribute("buckets", quotas.all());
+        model.addAttribute("incidents", quotas.incidents(null));
+        return "portal/quotas";
+    }
+
+    @PostMapping("/quotas/{tenantId}/{resource}")
+    public String setQuota(@PathVariable String tenantId, @PathVariable String resource,
+                           @RequestParam long limit) {
+        quotas.setLimit(tenantId, resource, limit);
+        return "redirect:/portal/quotas";
     }
 
     @GetMapping

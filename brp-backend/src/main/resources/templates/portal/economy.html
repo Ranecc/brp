@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 经济')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('economy')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('经济 Economy')}"></header>
+<main class="content">
+  <section class="cards">
+    <div class="card" th:each="d : ${today}">
+      <div class="card-label" th:text="${d.currency} + ' · 今日货币总量 M'">BRC</div>
+      <div class="card-value pixel" th:text="${d.moneyMassCents}">0</div>
+      <div class="unit">净投放 <span class="pixel" th:text="${d.netEmissionCents}">0</span> ·
+        V <span class="pixel" th:text="${d.velocity}">0.0</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>每日经济 / The money printer log <span class="tag">if it didn't journal, it didn't happen</span></h2>
+    <table class="grid" th:if="${!history.isEmpty()}">
+      <thead><tr><th>日期</th><th>币种</th><th>M (cents)</th><th>净投放</th><th>成交额</th><th>速度 V</th></tr></thead>
+      <tbody>
+      <tr th:each="r : ${history}">
+        <td class="pixel" th:text="${r.date}">-</td>
+        <td th:text="${r.currency}">-</td>
+        <td class="num pixel" th:text="${r.moneyMassCents}">0</td>
+        <td class="num pixel" th:text="${r.netEmissionCents}">0</td>
+        <td class="num pixel" th:text="${r.tradedVolumeCents}">0</td>
+        <td class="num pixel" th:text="${r.velocity}">0</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${history.isEmpty()}">暂无历史。铸币窗口尚未开张。</p>
+  </section>
+
+  <section class="panel">
+    <h2>法定货币登记册 / Registry of legal tender</h2>
+    <table class="grid">
+      <thead><tr><th>代码</th><th>名称</th><th>符号</th><th>精度</th><th>状态</th></tr></thead>
+      <tbody>
+      <tr th:each="c : ${currencies}">
+        <td class="pixel" th:text="${c.code}">-</td>
+        <td th:text="${c.name}">-</td>
+        <td th:text="${c.symbol}">-</td>
+        <td class="num pixel" th:text="${c.decimals}">2</td>
+        <td><span class="status" th:text="${c.status}">ACTIVE</span></td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="meta">Finance cannot invent money; that is the faucet's job.</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>
