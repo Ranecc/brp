@@ -213,7 +213,12 @@ public final class BackendSupervisor {
         if (p == null || !running.get()) {
             return;
         }
-        if (!p.isAlive() || !healthy()) {
+        if (healthy()) {
+            restarts.set(0);   // healthy again: the budget heals; recovery
+                               // must not require restarting the game server
+            return;
+        }
+        if (!p.isAlive()) {
             if (restarts.incrementAndGet() > cfg.maxRestarts()) {
                 cfg.log().accept("[BRP] backend restart budget exhausted, giving up"
                         + " (game continues on WAL degradation — docs/01 section 5)");
