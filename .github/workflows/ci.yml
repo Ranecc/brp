@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '21', cache: maven }
-      - name: Install brp-common + build backend jar (embed order: common -> backend -> mod)
+      - name: "Install brp-common + build backend jar (embed order: common -> backend -> mod)"
         run: |
           mvn -B -pl brp-common install -DskipTests
           mvn -B -pl brp-backend -am package -DskipTests

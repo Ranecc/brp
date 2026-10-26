@@ -1,8 +1,0 @@
-name: ci-probe
-on:
-  push: { branches: [main] }
-jobs:
-  probe:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "startup probe: if you can read this, the file-level parse works"
