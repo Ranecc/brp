@@ -202,6 +202,70 @@ paths:
       parameters: [{name: tenantId, in: query, schema: {type: string}}]
       responses:
         "200": {description: the paperwork of server-eating chunks}
+  /api/v1/chunks/{tenantId}:
+    post:
+      summary: Register a managed chunk slot (idempotent per tenant/dimension/chunkKey)
+      parameters: [{name: tenantId, in: path, required: true, schema: {type: string}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dimension, chunkKey]
+              properties:
+                dimension: {type: string}
+                chunkKey: {type: string, description: '"x,z"'}
+                registeredBy: {type: string}
+      responses:
+        "200": {description: the slot (re-registration returns the existing one)}
+    get:
+      summary: Managed chunk slots for a tenant
+      parameters: [{name: tenantId, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: slot rows with credit balances}
+  /api/v1/chunks/{tenantId}/governor:
+    get:
+      summary: Governor read model for the agent (RUN/THROTTLE/HALT per chunk, docs/09 §4)
+      parameters: [{name: tenantId, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: verdicts with stable reason codes}
+  /api/v1/chunks/{tenantId}/{dimension}/{chunkKey}/power:
+    put:
+      summary: Admin remote switch (DISABLED = governor HALTs BRP machinery, never players)
+      parameters:
+        - {name: tenantId, in: path, required: true, schema: {type: string}}
+        - {name: dimension, in: path, required: true, schema: {type: string}}
+        - {name: chunkKey, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: {type: boolean}
+      responses:
+        "200": {description: the slot, switched and audited}
+  /api/v1/chunks/{tenantId}/{dimension}/{chunkKey}/grant:
+    put:
+      summary: Grant chunk-load minutes (FAUCET wiring lands with P2-05)
+      parameters:
+        - {name: tenantId, in: path, required: true, schema: {type: string}}
+        - {name: dimension, in: path, required: true, schema: {type: string}}
+        - {name: chunkKey, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [minutes]
+              properties:
+                minutes: {type: integer, format: int64, minimum: 1}
+      responses:
+        "200": {description: the slot, with fresh credit}
 
   /api/v1/players/batch:
     post:

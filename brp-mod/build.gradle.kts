@@ -30,6 +30,15 @@ dependencies {
     // caffeine to dev.brp.shaded.caffeine so core code only sees CacheFront).
     // jarJar("org.xerial:sqlite-jdbc:[3.46,)")
     // jarJar("com.github.ben-manes.caffeine:caffeine:[3.2,)")
+
+    // Pure-Java units (governor decision tables etc.) run as plain JUnit —
+    // no Minecraft bootstrap, no client, no excuses.
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 neoForge {

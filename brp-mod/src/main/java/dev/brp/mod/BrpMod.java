@@ -1,5 +1,7 @@
 package dev.brp.mod;
 
+import dev.brp.mod.block.BrpBlocks;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
@@ -13,9 +15,9 @@ import org.slf4j.LoggerFactory;
  * - CLIENT           -> start the Client UI runtime (read-only, proxied writes)
  *
  * Dist detection happens here once; everything downstream receives a runtime
- * object and stays dist-agnostic. P1 fills in the actual event-bus wiring
- * (player tracking, container hooks, block registration for the BRP blocks
- * listed in docs/02-integrations.md section 6).
+ * object and stays dist-agnostic. P2 adds the shop-floor terminals
+ * (docs/09): registration runs on the mod bus for BOTH dists — the server
+ * must know the blocks exist before it can govern them.
  */
 @Mod(BrpMod.MOD_ID)
 public final class BrpMod {
@@ -23,7 +25,8 @@ public final class BrpMod {
     public static final String MOD_ID = "brp";
     public static final Logger LOG = LoggerFactory.getLogger("BRP");
 
-    public BrpMod() {
+    public BrpMod(IEventBus modBus) {
+        BrpBlocks.register(modBus);
         switch (FMLEnvironment.dist) {
             case DEDICATED_SERVER -> LOG.info("[BRP] agent runtime starting (server side)");
             case CLIENT -> LOG.info("[BRP] client UI runtime starting (player side)");

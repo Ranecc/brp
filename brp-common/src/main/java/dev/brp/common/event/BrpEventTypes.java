@@ -19,6 +19,7 @@ public final class BrpEventTypes {
     public static final String MACHINE_PLACED = "machine.placed";
     public static final String CHUNK_PERFORMANCE = "chunk.performance";
     public static final String QUOTA_EXCEEDED = "quota.exceeded";
+    public static final String CHUNK_LOAD_MINUTES = "chunk.load.minutes";
 
     private BrpEventTypes() {}
 }

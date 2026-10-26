@@ -30,6 +30,7 @@ a major; breaking changes spawn a new event type and a two-version freeze.
 | economy.tx.requested | CRITICAL | mirrors PostJournalRequest + human intent |
 | quota.exceeded | TELEMETRY | `{tenant, resource, limit}` |
 | agent.heartbeat | TELEMETRY | `{tps, mspt, backlogSize}` (feeds TPS-commodity metrics, docs/03 §6) |
+| chunk.load.minutes | TELEMETRY | `{dimension, chunkKey, minutes}` (chunk governance metering, docs/09 §3; billed hourly via `chunk:{tenant}:{minute}` idem keys, P2-04) |
 
 Rules:
 1. CRITICAL events are never dropped by the agent WAL, regardless of pressure.

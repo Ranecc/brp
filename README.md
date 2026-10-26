@@ -37,7 +37,7 @@ brp/
 ├── docs/          # design docs (canonical English, .zh.md translations)
 ├── brp-contract/  # OpenAPI + event contract (single truth for both sides)
 ├── brp-common/    # zero-dependency shared kit: @Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot service (compiles; 38/38 tests green, CI-enforced)
+├── brp-backend/   # Spring Boot service (compiles; 42/42 tests green (+4 mod-side governor units), CI-enforced)
 └── brp-mod/       # universal single-jar mod: ACL ports, sidecar supervisor,
                    # adapter SPI, WAL queue, SQLite/Caffeine local store plan
 ```
@@ -58,13 +58,14 @@ server) or fully standalone via docker-compose — same jar either way
 - [06-transactions](docs/06-transactions.md) — idempotency, outbox, saga, ledger concurrency ⭐
 - [07-tenants](docs/07-tenants.md) — guild-specialized tenants, native + FTB Teams compat
 - [08-bridge-api](docs/08-bridge-api.md) — stable surface for third-party bridge mods
+- [09-shop-floor](docs/09-shop-floor.md) — P2: shop-floor terminals (dispatch/line/form), chunk governance, APS balancing, task board ⭐
 
 ## Quick start (backend)
 
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # 38/38 green or no commit: ledger, saga, approvals, portal — go touch grass while it runs
+mvn -pl brp-backend -am test    # 42/42 green or no commit: ledger, saga, approvals, chunk governance, portal — go touch grass while it runs
 ```
 
 ## Roadmap

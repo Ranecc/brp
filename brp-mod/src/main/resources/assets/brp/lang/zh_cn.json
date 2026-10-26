@@ -1,0 +1,10 @@
+{
+  "itemGroup.brp.terminals": "BRP 终端",
+  "block.brp.dispatch_terminal": "调度终端",
+  "block.brp.line_controller": "产线控制器",
+  "block.brp.form_terminal": "表单终端",
+  "block.brp.dispatch_terminal.status.idle": "工单进，信号出。此台一直在看。",
+  "block.brp.line_controller.status.unprogrammed": "未装载程序。产线闲置，概不负责。",
+  "screen.brp.form_terminal": "表单终端",
+  "screen.brp.form_terminal.hint": "点击表单以选中。提交经 agent 路由。"
+}

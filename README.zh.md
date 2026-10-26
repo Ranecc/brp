@@ -37,7 +37,7 @@ brp/
 ├── docs/          # 设计文档（英文主文档 + .zh.md 中文译本）
 ├── brp-contract/  # OpenAPI + 事件契约（前后端唯一真理）
 ├── brp-common/    # 零依赖共享件：@Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot 服务（可编译，38/38 测试全绿，CI 把关）
+├── brp-backend/   # Spring Boot 服务（可编译，42/42 测试全绿（另有 mod 侧 4 个治理单元），CI 把关）
 └── brp-mod/       # 单 jar 通用模组：防腐层端口、sidecar 进程管理、
                    # 适配器 SPI、WAL 队列、SQLite/Caffeine 内嵌方案
 ```
@@ -56,13 +56,14 @@ brp/
 - [06-transactions](docs/06-transactions.md) — 幂等、Outbox、Saga、账本并发 ⭐
 - [07-tenants](docs/07-tenants.md) — 公会租户模型、native + FTB 兼容
 - [08-bridge-api](docs/08-bridge-api.md) — 第三方桥接模组稳定接口
+- [09-shop-floor](docs/09-shop-floor.md) — P2：车间终端（调度/产线/表单）、区块治理、产能平衡、任务板 ⭐
 
 ## 快速开始（后端）
 
 ```bash
 cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
 docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
-mvn -pl brp-backend -am test    # 38/38 全绿：账本幂等、Saga、审批、门户……趁跑测试去摸摸草（方块或真草均可）
+mvn -pl brp-backend -am test    # 42/42 全绿：账本幂等、Saga、审批、区块治理、门户……趁跑测试去摸摸草（方块或真草均可）
 ```
 
 ## 路线图
