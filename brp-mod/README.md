@@ -39,6 +39,17 @@ src/main/java/dev/brp/mod/
 └── adapters/            # guarded integration stubs (AE2 / Create / CC:T)
 ```
 
+## Building from CN networks (mirror notes)
+
+- Gradle dist: Huawei mirror (`https://mirrors.huaweicloud.com/gradle/`) —
+  the official CDN crawls at ~1MB/min from CN.
+- Maven Central via Aliyun (`~/.gradle/init.gradle`, see the repo wiki snippet).
+- **`maven.neoforged.net` has NO mirror anywhere** (NeoForged does not
+  publish to Central) and some sandboxes/regions cannot reach it at all —
+  verified 2026-10 from this very box. If it is unreachable for you, local
+  mod builds are a network impossibility: the CI workflow's `mod` job
+  (GitHub runners reach it fine) is the compile verdict of record.
+
 ## Build (requires JDK 21 + Gradle 8.9+)
 
 ```
