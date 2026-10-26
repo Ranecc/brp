@@ -34,7 +34,7 @@ jobs:
           ls -lh brp-mod/src/main/resources/backend/
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.14"
 
