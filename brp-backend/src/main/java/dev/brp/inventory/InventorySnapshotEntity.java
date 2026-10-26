@@ -38,6 +38,7 @@ public class InventorySnapshotEntity {
     public String getContainerId() { return containerId; }
     public String getItemId() { return itemId; }
     public long getAmount() { return amount; }
+    public Instant getCapturedAt() { return capturedAt; }
 
     void setAmount(long amount) { this.amount = amount; }
     void setCapturedAt(Instant capturedAt) { this.capturedAt = capturedAt; }

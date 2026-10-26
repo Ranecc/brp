@@ -2,9 +2,10 @@ package dev.brp;
 
 import dev.brp.player.PlayerNameHistoryRepository;
 import dev.brp.player.PlayerRepository;
-import dev.brp.player.PlayerSyncController.PlayerDto;
-import dev.brp.player.PlayerSyncController.PlayerSyncRequest;
-import dev.brp.player.PlayerSyncController.SyncAck;
+import dev.brp.player.PlayerService;
+import dev.brp.player.dto.PlayerDtos.PlayerDto;
+import dev.brp.player.dto.PlayerDtos.PlayerSyncRequest;
+import dev.brp.player.dto.PlayerDtos.SyncAck;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 class PlayerSyncTest {
 
-    @Autowired dev.brp.player.PlayerSyncController sync;
+    @Autowired PlayerService sync;
     @Autowired PlayerRepository players;
     @Autowired PlayerNameHistoryRepository history;
 

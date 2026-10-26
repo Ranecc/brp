@@ -1,16 +1,23 @@
 # BRP — Better Resource Plan
 
-> An "enterprise-grade" resource planning suite for Minecraft servers (ERP for Minecraft).
-> Guilds are tenants, redstone farms are capacity, management blocks are probes,
-> and the ledger is the single source of truth.
+![enterprise readiness](https://img.shields.io/badge/enterprise%20readiness-TBD-important)
+![seriousness](https://img.shields.io/badge/seriousness-0%25-red)
+![emeralds lost](https://img.shields.io/badge/emeralds%20lost-0-brightgreen)
+
+> Delivering an *unadulterated*, E-n-t-e-r-p-r-i-s-e-grade Spring Boot experience in Minecraft XD
 >
-> [中文版](README.zh.md)
+> It is my great honour to introduce: SaaS multi-tenant player guilds,
+> guild SCM & EHR, vanilla-redstone / mod-powered MES/APS, material WMS,
+> server-wide financial markets & consolidated finance,
+> and a server TPS market (๑•̀ㅂ•́)و✧
+>
+> [中文版](README.zh.md) · fellow coding agents: read [AGENTS.md](AGENTS.md) first, sit down and be relaxing.
 
 ## What it is
 
 | Component | Form | Stack | Responsibility |
 |---|---|---|---|
-| **brp-backend** | Standalone process, never inside the game JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | Ledger, tenants/RBAC, WMS/MRP/APS, monetary policy, anomaly detection, web API |
+| **brp-backend** | Standalone process, never inside the game JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | Ledger, tenants/RBAC, WMS/MRP/APS/EHR/SCM, monetary policy, anomaly detection, web API |
 | **brp-mod** | ONE universal jar (NeoForge 1.21.1), installed on both sides | Java + Gson (feign-style declarative client over JDK HttpClient) | On the dedicated server: the **Agent** (collect/probe/execute/disk-queued). On the player client: the **UI runtime** (read-only, proxied writes) |
 
 One mod file for everyone — server admins and players install the same jar;
@@ -58,7 +65,7 @@ server) or fully standalone via docker-compose — same jar either way
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # 14/14: ledger idempotency, saga, teams, ...
+mvn -pl brp-backend -am test    # 14/14 green: ledger idempotency, saga, teams — go touch grass while it runs
 ```
 
 ## Roadmap
@@ -71,3 +78,24 @@ mvn -pl brp-backend -am test    # 14/14: ledger idempotency, saga, teams, ...
 | P3 | MRP (BOM explosion + work orders) | ⬜ |
 | P4 | APS + machine monitoring + signal hub | ⬜ |
 | P5 | exchange/futures, k8s + helm chart (the performance-art finale) | ⬜ |
+
+## Licensing
+
+Deliberately inconsistent, like every real enterprise:
+
+| Module | License | Rationale |
+|---|---|---|
+| `brp-mod` | MIT | players and pack authors deserve zero friction |
+| `brp-common` | MIT | shared by both sides — keeps the mod jar clean |
+| `brp-backend` | Apache-2.0 | the *enterprise* is load-bearing here: explicit patent grant, NOTICE file, the full ritual |
+| `brp-contract` | Apache-2.0 | the single source of truth gets a legal department |
+
+The backend never ships inside the game JVM, so the two regimes never mix.
+None of this touches the Mojang EULA — these licenses cover *our* code only;
+Minecraft itself remains proprietary, obfuscated, and firmly not ours to license.
+
+## Acknowledgements
+
+Graceful thanks to my **GLM Fox** 🦊, **Big FAT Fish** (DeepSeek) 🐟
+and **Qwen Rabbit** 🐰. They help me escape from the hell of CRUD —
+by letting me build an even bigger CRUD bombe. 

@@ -1,10 +1,11 @@
 package dev.brp;
 
 import dev.brp.ledger.LedgerService;
-import dev.brp.team.TeamController.CreateTeamRequest;
-import dev.brp.team.TeamController.MemberDto;
-import dev.brp.team.TeamController.TeamDto;
-import dev.brp.team.TeamController.TeamSyncRequest;
+import dev.brp.team.TeamService;
+import dev.brp.team.dto.TeamDtos.CreateTeamRequest;
+import dev.brp.team.dto.TeamDtos.MemberDto;
+import dev.brp.team.dto.TeamDtos.TeamDto;
+import dev.brp.team.dto.TeamDtos.TeamSyncRequest;
 import dev.brp.team.TeamMemberRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 class TeamTest {
 
-    @Autowired dev.brp.team.TeamController teams;
+    @Autowired TeamService teams;
     @Autowired TeamMemberRepository members;
     @Autowired LedgerService ledger;
 

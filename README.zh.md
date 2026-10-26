@@ -1,25 +1,25 @@
 # BRP — Better Resource Plan
 
-> 给 Minecraft 服务器的一套"企业级"资源计划系统（ERP for Minecraft）。  
-> 公会是租户，红石农场是产能，管理方块是探针，账本是唯一真理。  
-> 英文版为主文档：[README.md](README.md)
+![enterprise readiness](https://img.shields.io/badge/enterprise%20readiness-TBD-important)
+![seriousness](https://img.shields.io/badge/seriousness-0%25-red)
+![emeralds lost](https://img.shields.io/badge/emeralds%20lost-0-brightgreen)
+
+> 为 Minecraft 交付原汁原味、企业级福报的 Spring Boot 体验 XD
+>
+> 非常荣幸向你介绍：SaaS 多租户玩家公会、公会 SCM 与 EHR、
+> 原版生电 / mod 产电 MES/APS、物资 WMS、全服金融市场与财务统筹、
+> 服务器 TPS 交易市场 (๑•̀ㅂ•́)و✧
+>
+> 英文版为主文档：[README.md](README.md) · AI 动手前先读 [AGENTS.md](AGENTS.md)，并坐和放宽。
 
 ## 这是什么
 
 | 组件 | 形态 | 技术 | 职责 |
 |---|---|---|---|
-| **brp-backend** | 独立进程，不进游戏 JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | 账本、租户/RBAC、WMS/MRP/APS、经济政策、异常检测、Web API |
+| **brp-backend** | 独立进程，不进游戏 JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | 账本、租户/RBAC、WMS/MRP/APS/EHR/SCM、经济政策、异常检测、Web API |
 | **brp-mod** | **单个通用 jar**（NeoForge 1.21.1），客户端与服务器装同一个文件 | Java + Gson（feign 风格声明式客户端，JDK HttpClient 实现） | 装在**专用服务器**上 = **Agent**（采集/探针/执行/磁盘队列）；装在**玩家客户端**上 = **UI 运行时**（只读展示，写入经代理） |
 
 一个模组文件走天下——服主和玩家装同一个 jar，跑什么由运行环境（dist）决定（见 docs/00-overview.md）。
-
-## 版本决策（2026-10 调研结论）
-
-- **主战场：Minecraft 1.21.1 + NeoForge**。Create 6 与 AE2 均官方支持 1.21.1，
-  2026 年 9 月更新的整合包（如 All Of NeoForge）仍以 1.21.1 为基准；科技 mod 生态最深。
-- MC 已于 2026 年切换年份版本号（26.1 ≈ 旧 1.22，26.2 为第二次 drop，NeoForge 模板已支持到 26.3）。
-  26.x 是前瞻目标，等 Create 官方登陆后再做移植评估。
-- Create 官方仅 NeoForge → **加载器锁定 NeoForge**，不做 Forge/Fabric 双出（见 docs/02 论证）。
 
 ## 仓库结构
 
@@ -51,7 +51,7 @@ brp/
 ```bash
 cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
 docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
-mvn -pl brp-backend -am test    # 14/14：账本幂等、Saga、公会……
+mvn -pl brp-backend -am test    # 14/14 全绿：账本幂等、Saga、公会……趁跑测试去摸摸草（方块或真草均可）
 ```
 
 ## 路线图
@@ -64,3 +64,27 @@ mvn -pl brp-backend -am test    # 14/14：账本幂等、Saga、公会……
 | P3 | MRP（BOM 展开 + 工单） | ⬜ |
 | P4 | APS + 机器监控 + 信号中枢 | ⬜ |
 | P5 | 交易所/期货、k8s + helm chart（行为艺术收尾） | ⬜ |
+
+## 许可证
+
+致力于为您打造一个干净的，*“企业级”* 的环境：
+
+| 模块 | 许可证 | 理由 |
+|---|---|---|
+| `brp-mod` | MIT | 玩家和整合包作者值得零门槛 |
+| `brp-common` | MIT | 两边共用，保持 mod jar 干净 |
+| `brp-backend` | Apache-2.0 | *企业级*仪式感：显式专利授权、NOTICE 文件，全套仪式感 |
+| `brp-contract` | Apache-2.0 | 请寻找法务部盖章 |
+
+万一 Backend 真的是个好ERP呢？
+
+## 免责声明
+
+请注意：本 Backend 是专门面向 Minecraft 玩家的资源计划与管理系统。其底层数据模型与真实的现代企业业务模型完全脱节。因此，我们强烈不建议您将其用于任何真实的生产经营环境，否则您的公司大概率会在第二个游戏刻面临破产清算。对于任何因尝试在现实中复刻本系统而导致的财务造假、资产流失或公司倒闭，本项目组不承担任何连带责任。
+但是，如果您真的想在 Minecraft 服务器里合法合规地经营一家企业，我们非常欢迎并可能接受相关的 Issue。
+
+## 鸣谢
+
+非常感谢我的 **GLM 狐狸** 、**大肥鱼**（Let me write the json~） 和 **Qwen 小兔子** 🐰。
+是它们把我从 CRUD 的地狱里解救出来——
+然后我转身造了个更大的、多租户、复式记账的 CRUD。
