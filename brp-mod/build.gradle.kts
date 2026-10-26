@@ -2,7 +2,7 @@ plugins {
     java
     // Correct plugin id: net.neoforged.moddev (NOT ...moddevgradle — the
     // marker artifact for that id exists nowhere, portal or NeoForge maven).
-    id("net.neoforged.moddev") version "2.0.137"
+    id("net.neoforged.moddev") version "2.0.148"
 }
 
 java {
