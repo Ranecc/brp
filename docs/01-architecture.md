@@ -30,7 +30,7 @@ depends on distribution:
 │  │  event collection      │ ──────► │  REST    command plane (low)    │         │
 │  │  inventory/machine     │ ◄────── │  batch   telemetry plane (high) │         │
 │  │  probes                │ poll/ack│  push    signal commands        │         │
-│  │  signal execution      │         │  PostgreSQL / Redis             │         │
+│  │  signal execution      │         │  PostgreSQL(+Redis P1)             │         │
 │  │  disk WAL (degraded)   │         └───────┬────────────────────────┘         │
 │  └────────────────────────┘                 │ web                               │
 │  (same jar on players' clients = UI runtime)┴► portal (OAuth2) + Grafana        │
@@ -108,6 +108,6 @@ dedicated thread pool.
 ## 7. Backend stack
 
 Spring Boot 3.5 / Java 21 · Flyway (single DDL truth) · PostgreSQL 16 ·
-Redis 7 (cache + pub/sub, P1) · Micrometer + Prometheus (self-monitoring,
+Redis only from P1, when the first real consumer lands (SSE fanout / telemetry streams — cache is in-process Caffeine today, and the compose file stays Redis-free until then) · Micrometer + Prometheus (self-monitoring,
 dogfooding the dashboards) · Testcontainers + H2 (tests) · OpenAPI-first
 contracts in brp-contract.

@@ -30,7 +30,7 @@ MC 交互层薄壳化，为将来 26.x 移植留缝。
 │  │  ├ 事件采集(玩家/方块)│──────►│  ├ REST  命令面(低频)         │      │
 │  │  ├ 探针(库存/机器)   │◄──────│  ├ 批量  遥测面(高频)         │      │
 │  │  ├ 信号执行(红石)    │ 轮询/ack│  ├ 推送  信号指令            │      │
-│  │  └ 磁盘队列(降级)    │        │  └ PostgreSQL / Redis         │      │
+│  │  └ 磁盘队列(降级)    │        │  └ PostgreSQL(+Redis P1)         │      │
 │  └──────────────────────┘        └──────┬───────────────────────┘      │
 │  (同一个 jar 装在玩家客户端 = UI 运行时)   │ Web                          │
 │                                   玩家门户(OAuth2) + Grafana            │
@@ -98,6 +98,6 @@ Feign 落地方式（对"用 Feign"执念的尊重与妥协）：
 
 ## 7. 技术栈清单（Backend）
 
-Spring Boot 3.5 / Java 21 · Flyway · PostgreSQL 16 · Redis 7（缓存+pub/sub，P1） ·
+Spring Boot 3.5 / Java 21 · Flyway · PostgreSQL 16 · Redis 仅在 P1 有首个真实消费者时引入（SSE 扇出/遥测流——缓存现为进程内 Caffeine，在那之前 compose 不部署 Redis） ·
 Micrometer + Prometheus（Self-monitoring，吃自己狗粮） · Testcontainers + H2（测试） ·
 OpenAPI 3 契约先行（brp-contract，代码生成 server stub 的选项保留）。

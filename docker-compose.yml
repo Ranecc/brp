@@ -1,26 +1,33 @@
-# BRP local stack: PostgreSQL + Redis + backend.
-# The Minecraft server with the brp-mod jar joins over the host network.
+# BRP local stack.
+#
+# Security posture (production-adjacent defaults):
+# - Every host port is bound to 127.0.0.1 — nothing is reachable off-host
+#   unless you explicitly change it (e.g. front with a reverse proxy).
+# - Credentials come from .env (copy .env.example). BRP_DB_PASS is REQUIRED:
+#   compose refuses to start without it, so the weak "brp/brp" toy defaults
+#   can never silently reach a real machine.
+#
+# Redis is intentionally ABSENT: the backend has no Redis consumer yet
+# (cache = in-process Caffeine; idempotency = DB rows, where durability is
+# the point; push plane = poll+ack). Re-add it only when the first real
+# consumer lands (P1 SSE fanout / telemetry streams) — a service without a
+# consumer is just an attack surface and a port.
 services:
   postgres:
     image: postgres:16
     environment:
       POSTGRES_DB: brp
-      POSTGRES_USER: brp
-      POSTGRES_PASSWORD: brp
+      POSTGRES_USER: ${BRP_DB_USER:-brp}
+      POSTGRES_PASSWORD: ${BRP_DB_PASS:?set BRP_DB_PASS in .env}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - brp-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U brp"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 10
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
 
   backend:
     build:
@@ -31,11 +38,11 @@ services:
         condition: service_healthy
     environment:
       BRP_DB_URL: jdbc:postgresql://postgres:5432/brp
-      BRP_DB_USER: brp
-      BRP_DB_PASS: brp
+      BRP_DB_USER: ${BRP_DB_USER:-brp}
+      BRP_DB_PASS: ${BRP_DB_PASS:?set BRP_DB_PASS in .env}
       BRP_PORT: "8080"
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
 volumes:
   brp-pg:

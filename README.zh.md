@@ -49,9 +49,9 @@ brp/
 ## 快速开始（后端）
 
 ```bash
-cd brp-backend
-docker compose -f ../docker-compose.yml up -d postgres redis
-mvn spring-boot:run   # 或 mvn test 跑幂等/账本测试
+cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
+docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
+mvn -pl brp-backend -am test    # 14/14：账本幂等、Saga、公会……
 ```
 
 ## 路线图

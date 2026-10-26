@@ -56,9 +56,9 @@ server) or fully standalone via docker-compose — same jar either way
 ## Quick start (backend)
 
 ```bash
-cd brp-backend
-docker compose -f ../docker-compose.yml up -d postgres redis
-mvn spring-boot:run   # or: mvn test (ledger idempotency & telemetry dedup tests)
+cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
+docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
+mvn -pl brp-backend -am test    # 14/14: ledger idempotency, saga, teams, ...
 ```
 
 ## Roadmap
