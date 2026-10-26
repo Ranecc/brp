@@ -20,6 +20,7 @@ import dev.brp.repository.TeamMemberRepository;
 import dev.brp.repository.WithdrawalRequestRepository;
 import dev.brp.saga.SagaEngine;
 import dev.brp.service.ApprovalService;
+import dev.brp.service.NotificationService;
 import dev.brp.service.LedgerService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final TeamMemberRepository members;
     private final LedgerService ledger;
     private final SagaEngine saga;
+    private final NotificationService notifications;
     private final WithdrawalRequestMapper mapper;
     private final long rubberStampCents;
     private final long upperManagementCents;
@@ -59,6 +61,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                                TeamMemberRepository members,
                                LedgerService ledger,
                                SagaEngine saga,
+                               NotificationService notifications,
                                WithdrawalRequestMapper mapper,
                                @Value("${brp.approval.rubber-stamp-cents:1000}") long rubberStampCents,
                                @Value("${brp.approval.upper-management-cents:10000}") long upperManagementCents) {
@@ -67,6 +70,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         this.members = members;
         this.ledger = ledger;
         this.saga = saga;
+        this.notifications = notifications;
         this.mapper = mapper;
         this.rubberStampCents = rubberStampCents;
         this.upperManagementCents = upperManagementCents;
@@ -120,17 +124,17 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Atomic
     public WithdrawalRequestResponse approve(String requestId, Decision decision) {
         var entity = requests.findById(requestId)
-                .orElseThrow(() -> new BadRequestException("unknown request: " + requestId));
+                .orElseThrow(() -> BadRequestException.of("approval.unknown"));
         String status = entity.getStatus();
         if (!"PENDING".equals(status) && !"AWAITING_UPPER_MANAGEMENT".equals(status)) {
-            throw new ConflictException("request already " + status.toLowerCase().replace('_', ' '));
+            throw ConflictException.of("approval.request.closed", status);
         }
         if ("AWAITING_UPPER_MANAGEMENT".equals(status)) {
             requireRole(entity.getTeamId(), decision.approverUuid(), "OWNER",
-                    "this amount requires the owner. The buck stops at the top of the org chart.");
+                    "approval.upper.management.required");
         } else {
             requireRole(entity.getTeamId(), decision.approverUuid(), "OFFICER",
-                    "approvals are an OFFICER+ privilege; membership alone won't cut it");
+                    "approval.officer.required");
         }
         actions.save(new ApprovalActionRow(requestId, decision.approverUuid(),
                 "APPROVED", decision.note()));
@@ -141,9 +145,9 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Atomic
     public WithdrawalRequestResponse reject(String requestId, Decision decision) {
         var entity = requests.findById(requestId)
-                .orElseThrow(() -> new BadRequestException("unknown request: " + requestId));
+                .orElseThrow(() -> BadRequestException.of("approval.unknown"));
         requireRole(entity.getTeamId(), decision.approverUuid(), "OFFICER",
-                "rejections are also an OFFICER+ privilege");
+                "approval.officer.required");
         entity.transitionTo("REJECTED");
         requests.save(entity);
         actions.save(new ApprovalActionRow(requestId, decision.approverUuid(),
@@ -154,14 +158,14 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Override
     public NudgeAck perMyLastEmail(String requestId) {
         var entity = requests.findById(requestId)
-                .orElseThrow(() -> new BadRequestException("unknown request: " + requestId));
+                .orElseThrow(() -> BadRequestException.of("approval.unknown"));
         if (!"PENDING".equals(entity.getStatus())
                 && !"AWAITING_UPPER_MANAGEMENT".equals(entity.getStatus())) {
-            throw new ConflictException("nudging a " + entity.getStatus()
-                    + " request is a new level of corporate cardio");
+            throw ConflictException.of("approval.nudge.settled");
         }
         // P1 wires Discord/webhook here; today the reminder echoes into the void
         log.info("per my last email: request {} awaits your timely attention", requestId);
+        notifications.enqueue("approval.nudged", "approval.nudge.ok");
         actions.save(new ApprovalActionRow(requestId, entity.getRequesterUuid(),
                 "NUDGED", "per my last email"));
         String[] buzzwords = {"synergy", "circling back", "quick sync", "bandwidth",
@@ -233,21 +237,20 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     private void requireMember(String teamId, String uuid) {
         if (members.findByTeamIdAndPlayerUuid(teamId, uuid).isEmpty()) {
-            throw new BadRequestException(
-                    "requester is not on the team roster; HR will not process this form");
+            throw BadRequestException.of("approval.hr.rejected");
         }
     }
 
-    private void requireRole(String teamId, String uuid, String atLeast, String message) {
+    private void requireRole(String teamId, String uuid, String atLeast, String messageKey) {
         TeamMemberRow member = members.findByTeamIdAndPlayerUuid(teamId, uuid)
-                .orElseThrow(() -> new BadRequestException(message));
+                .orElseThrow(() -> BadRequestException.of(messageKey));
         String role = member.getRole();
         boolean ok = switch (atLeast) {
             case "OWNER" -> "OWNER".equals(role);
             default -> "OWNER".equals(role) || "OFFICER".equals(role);
         };
         if (!ok) {
-            throw new ConflictException(message);
+            throw ConflictException.of(messageKey);
         }
     }
 }

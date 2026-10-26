@@ -13,6 +13,11 @@ to read this too, but the meme budget is earmarked.
   migrations or security code — those stay aggressively boring.
 - We are already over-engineered *on purpose*. Adding more ceremony is only
   funny if it compiles and the tests stay green. Which brings us to:
+- **The meme boundary**: user-facing copy (messages[_xx].properties, error
+  text, docs, method names) may judge you freely; business BEHAVIOR stays
+  compliant — no jokes in state machines, thresholds, or money math. The
+  i18n bundle is canonical dark humor; every new endpoint ships keyed copy
+  in `messages.properties` + `messages_en/_zh.properties`.
 
 ## Red lines (hard, no exceptions)
 

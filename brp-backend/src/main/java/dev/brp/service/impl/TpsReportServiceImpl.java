@@ -21,8 +21,7 @@ public class TpsReportServiceImpl implements TpsReportService {
     public TpsReportResponse fileWeeklyReport(boolean withCoverSheet) {
         if (!withCoverSheet) {
             // https://www.youtube.com/watch?v=Fy3rjFgrLlI — the memo was sent.
-            throw new BadRequestException(
-                    "TPS reports now require a cover sheet. Didn't you get the memo?");
+            throw BadRequestException.of("tps.cover.sheet.missing");
         }
         return new TpsReportResponse(
                 "tps-" + UUID.randomUUID().toString().substring(0, 8),

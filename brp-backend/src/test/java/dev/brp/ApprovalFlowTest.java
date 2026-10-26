@@ -82,7 +82,7 @@ class ApprovalFlowTest {
         assertThatThrownBy(() -> approvals.approve(resp.id(),
                 new Decision(g.member(), "nice try")))
                 .isInstanceOf(ConflictException.class)
-                .hasMessageContaining("requires the owner");
+                .hasMessageContaining("approval.upper.management.required");
 
         // the OWNER is upper management; the buck stops here
         var approved = approvals.approve(resp.id(),
@@ -134,6 +134,6 @@ class ApprovalFlowTest {
                 UUID.randomUUID().toString(), g.teamId(),
                 UUID.randomUUID().toString(), 500L, "hostile takeover")))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("HR");
+                .hasMessageContaining("approval.hr.rejected");
     }
 }

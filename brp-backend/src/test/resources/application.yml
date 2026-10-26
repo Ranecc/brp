@@ -1,4 +1,7 @@
 spring:
+  messages:
+    basename: messages
+    encoding: UTF-8
   datasource:
     url: jdbc:h2:mem:brp;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
     username: sa
