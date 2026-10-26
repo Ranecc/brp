@@ -4,6 +4,14 @@
 ![seriousness](https://img.shields.io/badge/seriousness-0%25-red)
 ![emeralds lost](https://img.shields.io/badge/emeralds%20lost-0-brightgreen)
 
+```shields.io
+![build](https://img.shields.io/badge/build-maybe%20(somehow)-success)
+![coverage](https://img.shields.io/badge/coverage-0%25%20(trust%20me%20bro)-yellow)
+![code%20style](https://img.shields.io/badge/code%20style-AI%20hallucinated-blueviolet)
+![dependencies](https://img.shields.io/badge/dependencies-Eventually%20Consistent-orange)
+![PRs](https://img.shields.io/badge/PRs-welcome%20(but%20will%20break%20everything)-brightgreen)
+```
+
 > Delivering an *unadulterated*, E-n-t-e-r-p-r-i-s-e-grade Spring Boot experience in Minecraft XD
 >
 > It is my great honour to introduce: SaaS multi-tenant player guilds,
@@ -71,21 +79,32 @@ mvn -pl brp-backend -am test    # 14/14 green: ledger idempotency, saga, teams �
 
 ## Licensing
 
-Deliberately inconsistent, give you a real ENTERPRISE experience:
+Committed to building you a clean, *"enterprise-grade"* environment:
 
 | Module | License | Rationale |
 |---|---|---|
 | `brp-mod` | MIT | players and pack authors deserve zero friction |
 | `brp-common` | MIT | shared by both sides — keeps the mod jar clean |
-| `brp-backend` | Apache-2.0 | the *enterprise* ritual: explicit patent grant, NOTICE file, the full ritual |
+| `brp-backend` | Apache-2.0 | the *enterprise* ritual: explicit patent grant, NOTICE file, the full ceremony |
 | `brp-contract` | Apache-2.0 | Please find the Legal Department's stamp |
 
-The backend never ships inside the game JVM, so the two regimes never mix.
-None of this touches the Mojang EULA — these licenses cover *our* code only;
-Minecraft itself remains proprietary, obfuscated, and firmly not ours to license.
+None of our licenses override or interfere with the Mojang EULA; these licenses apply strictly to *our* original code.
+Minecraft itself remains the proprietary property of Mojang. We claim no ownership over its codebase, nor do we have the right to license it.
+
+Maybe the backend is a good ERP?
+
+## Disclaimer
+
+Please note: This Backend is a resource planning and management system explicitly tailored for Minecraft players. Its underlying data model is fundamentally incompatible with real-world modern enterprise business models.
+
+Therefore, we **strongly advise against** using it in any real-world production or operational environment. Otherwise, your company will most likely face bankruptcy and liquidation within the second game tick.
+
+**The project team shall not be held liable** for any financial fraud, asset loss, or corporate bankruptcy resulting from attempts to replicate this system in reality.
+
+However, if you genuinely intend to operate a fully compliant enterprise *within* a Minecraft server, we would be more than happy to entertain your Issues (and might just accept them).
 
 ## Acknowledgements
 
 Graceful thanks to my **GLM Fox** 🦊, **Big FAT Fish** (DeepSeek) 🐟
 and **Qwen Rabbit** 🐰. They help me escape from the hell of CRUD —
-by letting me build an even bigger CRUD bombe. 
+by letting me build an even bigger CRUD *bombe*.

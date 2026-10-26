@@ -4,6 +4,14 @@
 ![seriousness](https://img.shields.io/badge/seriousness-0%25-red)
 ![emeralds lost](https://img.shields.io/badge/emeralds%20lost-0-brightgreen)
 
+```shields.io
+![build](https://img.shields.io/badge/build-maybe%20(somehow)-success)
+![coverage](https://img.shields.io/badge/coverage-0%25%20(trust%20me%20bro)-yellow)
+![code%20style](https://img.shields.io/badge/code%20style-AI%20hallucinated-blueviolet)
+![dependencies](https://img.shields.io/badge/dependencies-Eventually%20Consistent-orange)
+![PRs](https://img.shields.io/badge/PRs-welcome%20(but%20will%20break%20everything)-brightgreen)
+```
+
 > 为 Minecraft 交付原汁原味、企业级福报的 Spring Boot 体验 XD
 >
 > 非常荣幸向你介绍：SaaS 多租户玩家公会、公会 SCM 与 EHR、
@@ -75,6 +83,8 @@ mvn -pl brp-backend -am test    # 14/14 全绿：账本幂等、Saga、公会…
 | `brp-common` | MIT | 两边共用，保持 mod jar 干净 |
 | `brp-backend` | Apache-2.0 | *企业级*仪式感：显式专利授权、NOTICE 文件，全套仪式感 |
 | `brp-contract` | Apache-2.0 | 请寻找法务部盖章 |
+
+
 
 万一 Backend 真的是个好ERP呢？
 
