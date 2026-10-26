@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: brp-backend
+  datasource:
+    url: ${BRP_DB_URL:jdbc:postgresql://localhost:5432/brp}
+    username: ${BRP_DB_USER:brp}
+    password: ${BRP_DB_PASS:brp}
+  jpa:
+    hibernate:
+      ddl-auto: none      # Flyway is the single source of truth for DDL
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${BRP_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+# v0 assumes a trusted internal network; HMAC instance auth lands in P1 (docs/01 §6)
+brp:
+  telemetry:
+    max-batch-size: 1000
