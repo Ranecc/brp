@@ -9,7 +9,7 @@ COPY brp-common/src brp-common/src
 COPY brp-backend/src brp-backend/src
 RUN mvn -q -pl brp-backend -am package -DskipTests
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /src/brp-backend/target/brp-backend-*.jar app.jar
 EXPOSE 8080
