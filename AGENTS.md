@@ -41,8 +41,9 @@ to read this too, but the meme budget is earmarked.
    only as `.zh.md` translations. An English doc edit without its `.zh.md`
    mirror is only half a PR.
 9. **Tests green before every commit**: `mvn -pl brp-backend -am test`
-   (the CI workflow is the count's single source of truth — never hardcode
-   numbers in docs). New domain = tests for its idempotency + failure paths.
+   (36/36 today — update this number when it lies; the CI workflow remains the
+   count's single source of truth). New domain = tests for its idempotency +
+   failure paths.
 10. **Deploy posture:** host ports bind 127.0.0.1; credentials via env
     (`BRP_DB_PASS` required — compose refuses to start without it); weak
     defaults never reach compose files.

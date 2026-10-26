@@ -37,7 +37,7 @@ brp/
 ├── docs/          # design docs (canonical English, .zh.md translations)
 ├── brp-contract/  # OpenAPI + event contract (single truth for both sides)
 ├── brp-common/    # zero-dependency shared kit: @Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot service (compiles; tests CI-enforced)
+├── brp-backend/   # Spring Boot service (compiles; 36/36 tests green, CI-enforced)
 └── brp-mod/       # universal single-jar mod: ACL ports, sidecar supervisor,
                    # adapter SPI, WAL queue, SQLite/Caffeine local store plan
 ```
@@ -62,7 +62,7 @@ server) or fully standalone via docker-compose — same jar either way
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # all green or no commit: ledger idempotency, saga, teams — go touch grass while it runs
+mvn -pl brp-backend -am test    # 36/36 green or no commit: ledger, saga, approvals, portal — go touch grass while it runs
 ```
 
 ## Roadmap
@@ -104,6 +104,6 @@ However, if you genuinely intend to operate a fully compliant enterprise *within
 
 ## Acknowledgements
 
-Graceful thanks to my **GLM Fox** 🦊, **Big FAT Fish** (DeepSeek) 🐟
-and **Qwen Rabbit** 🐰. They help me escape from the hell of CRUD —
+*Graceful* thanks to my **GLM Fox** , **Big FAT Fish** (DeepSeek) 
+and **Qwen Rabbit** . They help me escape from the hell of CRUD —
 by letting me build an even bigger CRUD *bombe*.

@@ -1,5 +1,6 @@
 package dev.brp.controller;
 
+import dev.brp.dto.ApprovalDtos.Decision;
 import dev.brp.dto.ApprovalDtos.WithdrawalRequestResponse;
 import dev.brp.dto.EconomyDtos.EconomyDailyResponse;
 import dev.brp.dto.TpsReportResponse;
@@ -10,6 +11,9 @@ import dev.brp.service.TpsReportService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -54,5 +58,22 @@ public class PortalController {
     public String approvals(Model model) {
         model.addAttribute("pending", approvals.latestPending());
         return "portal/approvals";
+    }
+
+    // v0 console actions: form posts, PRG; RBAC wires real identity later
+    @PostMapping("/approvals/{id}/approve")
+    public String approve(@PathVariable String id,
+                          @RequestParam String approverUuid,
+                          @RequestParam(required = false) String note) {
+        approvals.approve(id, new Decision(approverUuid, note));
+        return "redirect:/portal/approvals";
+    }
+
+    @PostMapping("/approvals/{id}/reject")
+    public String reject(@PathVariable String id,
+                         @RequestParam String approverUuid,
+                         @RequestParam(required = false) String note) {
+        approvals.reject(id, new Decision(approverUuid, note));
+        return "redirect:/portal/approvals";
     }
 }

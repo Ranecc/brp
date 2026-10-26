@@ -8,7 +8,7 @@
   <section class="panel">
     <h2>审批收件箱 / The corporate labyrinth</h2>
     <table class="grid" th:if="${!pending.isEmpty()}">
-      <thead><tr><th>ID</th><th>团队</th><th>申请人</th><th>金额(cents)</th><th>备注</th><th>状态</th><th>提交时间</th></tr></thead>
+      <thead><tr><th>ID</th><th>团队</th><th>申请人</th><th>金额(cents)</th><th>备注</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead>
       <tbody>
       <tr th:each="r : ${pending}">
         <td class="pixel" th:text="${r.id}">-</td>
@@ -18,6 +18,18 @@
         <td th:text="${r.memo}">-</td>
         <td><span class="status" th:text="${r.status}">PENDING</span></td>
         <td th:text="${r.createdAt}">-</td>
+        <td>
+          <form class="verdict" th:action="@{'/portal/approvals/' + ${r.id} + '/approve'}" method="post">
+            <input name="approverUuid" placeholder="审批人 uuid" required/>
+            <input name="note" placeholder="批注"/>
+            <button type="submit" class="btn approve">批准</button>
+          </form>
+          <form class="verdict" th:action="@{'/portal/approvals/' + ${r.id} + '/reject'}" method="post">
+            <input name="approverUuid" placeholder="审批人 uuid" required/>
+            <input name="note" placeholder="circle back..."/>
+            <button type="submit" class="btn reject">驳回</button>
+          </form>
+        </td>
       </tr>
       </tbody>
     </table>
