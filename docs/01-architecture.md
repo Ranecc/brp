@@ -43,6 +43,24 @@ Why Spring never lives inside the game JVM (project rule #1, restated):
 - crash isolation, both directions
 - backend deploys without restarting the game server
 
+### 2.5 Deployment modes: managed sidecar (default) or standalone
+
+Two supported modes; same jar, same behavior, only lifecycle differs:
+
+| Mode | Who starts the backend | Good for |
+|---|---|---|
+| **Managed sidecar** (default) | The agent spawns `brp/brp-backend.jar` as a **child process** (`BackendSupervisor`: health poll `/actuator/health`, exponential-backoff restarts with a budget, graceful stop with the server) | Small/medium servers: drop two files in the server dir, done |
+| **Standalone** | docker-compose / systemd / k8s | Big servers, shared backends, ops teams |
+
+Sidecar tradeoffs (accepted, documented):
+- MC death kills the child — fine: the backend is stateless (state in
+  PostgreSQL) and the agent WAL replays anything missed
+- child ≠ in-process: we keep FULL JVM isolation, zero classloader coupling;
+  this is the single-file-install UX without giving up rule #1
+- heap/ports configured once via `brp.agent.supervisor` config
+- restart budget exhausted → supervisor gives up and the agent degrades to
+  WAL mode (docs 01 section 5), the game never suffers
+
 ## 3. Three communication planes
 
 | Plane | Direction | Protocol | Rate | Semantics |

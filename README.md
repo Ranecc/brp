@@ -32,9 +32,16 @@ what runs depends on the distribution (docs/00-overview.md).
 brp/
 ├── docs/          # design docs (canonical English, .zh.md translations)
 ├── brp-contract/  # OpenAPI + event contract (single truth for both sides)
-├── brp-backend/   # Spring Boot service (compiles, tested)
-└── brp-mod/       # universal single-jar mod skeleton + adapter SPI
+├── brp-common/    # zero-dependency shared kit: @Idempotent/@Cached/@Atomic/@Compensable
+├── brp-backend/   # Spring Boot service (compiles, 10/10 tests green)
+└── brp-mod/       # universal single-jar mod: ACL ports, sidecar supervisor,
+                   # adapter SPI, WAL queue, SQLite/Caffeine local store plan
 ```
+
+Deployment: the backend runs as a **managed sidecar** (the agent spawns
+`brp/brp-backend.jar` as a child process, restarts it, stops it with the
+server) or fully standalone via docker-compose — same jar either way
+(docs/01 section 2.5).
 
 ## Design docs
 

@@ -25,11 +25,16 @@
 
 ```
 brp/
-├── docs/                  # 设计文档（00-06）
-├── brp-contract/          # OpenAPI + 事件契约（前后端唯一真理）
-├── brp-backend/           # Spring Boot 服务（可编译，含测试）
-└── brp-mod/               # NeoForge mod 骨架 + 适配器 SPI
+├── docs/          # 设计文档（英文主文档 + .zh.md 中文译本）
+├── brp-contract/  # OpenAPI + 事件契约（前后端唯一真理）
+├── brp-common/    # 零依赖共享件：@Idempotent/@Cached/@Atomic/@Compensable
+├── brp-backend/   # Spring Boot 服务（可编译，10/10 测试绿）
+└── brp-mod/       # 单 jar 通用模组：防腐层端口、sidecar 进程管理、
+                   # 适配器 SPI、WAL 队列、SQLite/Caffeine 内嵌方案
 ```
+
+部署：Backend 以**受管 sidecar** 运行（Agent 把 `brp/brp-backend.jar` 当子进程
+拉起/重启/随服停止），或 docker-compose 独立部署——同一个 jar（docs/01 §2.5）。
 
 ## 设计文档索引
 

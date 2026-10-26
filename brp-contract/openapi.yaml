@@ -60,6 +60,31 @@ paths:
         "200": {description: ack with duplicate count, content: {application/json: {schema: {$ref: '#/components/schemas/TelemetryAck'}}}}
         "400": {description: batch too large or malformed}
 
+  /api/v1/players/batch:
+    post:
+      summary: Bulk upsert player identity (agent-pulled uuid/name, rename history kept)
+      description: Idempotent on batchId (@Idempotent) and atomic per batch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [batchId, players]
+              properties:
+                batchId: {type: string}
+                players:
+                  type: array
+                  items:
+                    type: object
+                    required: [uuid, name]
+                    properties:
+                      uuid: {type: string}
+                      name: {type: string}
+      responses:
+        "200":
+          description: "{inserted, renamed, refreshed} (replayed identically on duplicate batchId)"
+
   /api/v1/tenants/{tenantId}/inventory/snapshots:
     post:
       summary: Upsert inventory snapshots (SNAPSHOT or DELTA batch)

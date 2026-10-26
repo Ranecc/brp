@@ -64,3 +64,17 @@ Backend 宕机时文件无限增长？→ 磁盘水位保护：超阈值丢最�
 
 - `schemaVersion` 只加不减；后端兼容 N 与 N-1 两个大版本
 - 破坏性变更 = 新 type 名 + 旧 type 冻结通知期（两个版本周期），Agent 拒绝升级则停用新功能不下线旧链路
+
+## 7. 注解套件（brp-common，后端与 agent 共享）
+
+| 注解 | Backend 语义 | Agent 语义 |
+|---|---|---|
+| `@Idempotent(key, ttl)` | SpEL 键；`idem_store` 存响应；重放返回首响应；并发由 PK 裁决 | 入队前按 eventId/键做 WAL 去重 |
+| `@Cached(key, ttl, maxSize)` | Caffeine，写入起算 TTL，null 不缓存 | CacheFront（Caffeine 包装，可整体重定位） |
+| `@Atomic(timeoutMs)` | 一个数据库事务，全有或全无 | LocalStore 的一个 SQLite 事务 |
+| `@Compensable(saga, step, compensation)` | 持久化 RUNNING→DONE/FAILED 审计行；补偿派发引擎 P1 落地 | 记入本地日志，随遥测上传 |
+
+切面顺序（外→内）：`@Cached` → `@Idempotent` → `@Atomic` → `@Compensable`
+——缓存命中短路一切，重放跳过事务，saga 步骤保持原子。
+
+诚实条款：`@Idempotent` 在成功**之后**存响应——效果与存储之间崩溃可能重放执行。因此资金类操作用账本的同事务幂等行（§2/§5），不用这个切面。

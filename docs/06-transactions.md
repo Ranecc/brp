@@ -75,3 +75,20 @@ second, any failure lands safely.
 - `schemaVersion` additive-only within a major; backend supports N and N-1
 - breaking change = new event type name + two-version freeze on the old one;
   agents that refuse upgrade lose new features, never the old pipeline
+
+## 7. Annotation kit (brp-common, shared by backend and agent)
+
+| Annotation | Backend semantics | Agent semantics |
+|---|---|---|
+| `@Idempotent(key, ttl)` | SpEL key; `idem_store` row stores the response; replays return it; races resolved by PK | WAL dedup by eventId / key before enqueue |
+| `@Cached(key, ttl, maxSize)` | Caffeine, TTL from write, nulls not cached | CacheFront (Caffeine wrapper, relocation-safe) |
+| `@Atomic(timeoutMs)` | one DB transaction, all-or-nothing | one SQLite transaction via LocalStore |
+| `@Compensable(saga, step, compensation)` | durable RUNNING→DONE/FAILED audit row; engine dispatch lands P1 | recorded into the local log, uploaded with telemetry |
+
+Aspect order (outer→inner): `@Cached` → `@Idempotent` → `@Atomic` → `@Compensable`
+— cache hits short-circuit everything, replays skip transactions, saga steps
+stay atomic.
+
+Honesty clause: `@Idempotent` stores the response AFTER success — a crash
+between effect and store can re-execute. Financial mutations therefore use the
+ledger's same-transaction idempotency row (section 2/5), not this aspect.

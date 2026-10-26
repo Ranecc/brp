@@ -42,6 +42,21 @@ MC 交互层薄壳化，为将来 26.x 移植留缝。
 - 崩溃隔离：双向独立存活
 - 后端发版不重启游戏服（玩家无感）
 
+### 2.5 部署模式：受管 sidecar（默认）或独立部署
+
+同一个 jar，两种生命周期：
+
+| 模式 | 谁拉起 Backend | 适合 |
+|---|---|---|
+| **受管 sidecar**（默认） | Agent 把 `brp/brp-backend.jar` 作为**子进程**拉起（`BackendSupervisor`：健康轮询 `/actuator/health`、指数退避重启+预算、随服优雅停止） | 中小服：服务器目录丢两个文件就完事 |
+| **独立部署** | docker-compose / systemd / k8s | 大服、共享后端、有运维 |
+
+Sidecar 的取舍（接受并写明）：
+- MC 挂了子进程跟着死——没问题：Backend 无状态（状态在 PostgreSQL），Agent WAL 会重放补账
+- 子进程 ≠ 进程内：保留**完整 JVM 隔离**，零类加载耦合；这是"单文件安装体验"但不牺牲铁律 #1
+- 堆内存/端口用 `brp.agent.supervisor` 配置一次
+- 重启预算耗尽 → supervisor 放弃，Agent 降级为 WAL 模式（见 §5），游戏永远不受影响
+
 ## 3. 通信三平面
 
 | 平面 | 方向 | 协议 | 频率 | 语义 |
