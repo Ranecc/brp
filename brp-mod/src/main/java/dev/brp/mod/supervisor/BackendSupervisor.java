@@ -102,7 +102,7 @@ public final class BackendSupervisor {
      * extraction — the "single file" is the distribution artifact, not the
      * runtime topology (docs/01 section 2.5).
      */
-    static void extractEmbedded(String resource, Path target) throws IOException {
+    void extractEmbedded(String resource, Path target) throws IOException {
         String want = digestOf(in -> {
             try (var src = BackendSupervisor.class.getResourceAsStream(resource)) {
                 if (src == null) {
@@ -124,8 +124,8 @@ public final class BackendSupervisor {
         Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
         long size;
         try (var src = BackendSupervisor.class.getResourceAsStream(resource);
-             var out = java.nio.channels.Channels.newChannel(Files.newOutputStream(tmp))) {
-            size = src.transferTo(out);   // streaming: no heap spike on a 1G server
+             var out = Files.newOutputStream(tmp)) {
+            size = src.transferTo(out);   // streams through a buffer: no heap spike on a 1G server
         }
         Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
                 java.nio.file.StandardCopyOption.ATOMIC_MOVE);
