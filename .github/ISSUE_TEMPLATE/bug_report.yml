@@ -1,0 +1,62 @@
+name: Bug report
+description: The ledger never lies, but the code might.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for filing this incident report. Please fill the form in
+        full — incomplete forms will be forwarded to the appropriate
+        department, which currently does not exist.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us what you expected to happen. Screenshots are admissible evidence.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start the dedicated server with the agent installed
+        2. ...
+    validations:
+      required: true
+
+  - type: input
+    id: tick
+    attributes:
+      label: Game tick of first anomaly (optional)
+      description: For the audit trail. Estimates accepted; the ledger will reconcile.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Emeralds lost
+      options:
+        - "0 (the ledger balanced, somehow)"
+        - "1–64"
+        - "more than a stack"
+        - "don't ask"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Minecraft version, NeoForge version, BRP version, backend deployment mode (sidecar / standalone), OS.
+      placeholder: MC 1.21.1, NeoForge 21.1.x, BRP 0.1.x, sidecar mode, Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste instead of screenshotting text. The finance department thanks you.
+      render: shell

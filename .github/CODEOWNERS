@@ -1,0 +1,4 @@
+# CODEOWNERS
+# The org chart is short. Per docs/07, the OWNER role holds treasury
+# control — and, apparently, every file in this repository.
+* @Ranecc

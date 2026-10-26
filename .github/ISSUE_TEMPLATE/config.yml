@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/Ranecc/brp/discussions
+    about: Questions, empire-building strategy, and general economic theory as it applies to redstone.
+  - name: Design docs
+    url: https://github.com/Ranecc/brp/tree/main/docs
+    about: The canonical lore. Read before proposing to rewrite the ledger — it has been rewritten before, and it won.

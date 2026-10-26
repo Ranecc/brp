@@ -1,0 +1,41 @@
+name: Feature request
+description: File a requisition with the appropriate enterprise department.
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: department
+    attributes:
+      label: Which department files this request?
+      options:
+        - Tenancy (guilds, RBAC, membership)
+        - EHR (player profiles, attendance)
+        - SCM (procurement, logistics)
+        - WMS (warehouses, stock, vaults)
+        - MES / APS (farms, capacity, scheduling)
+        - Finance (ledger, markets, TPS commodities)
+        - Other / cross-departmental initiative
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: A feature without a problem is called art. We do allow some art.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: roadmap
+    attributes:
+      label: Roadmap awareness
+      options:
+        - label: I have checked the roadmap and this is not already scheduled for P4 (it's always P4)
+          required: true

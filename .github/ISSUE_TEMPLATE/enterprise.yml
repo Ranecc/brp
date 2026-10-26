@@ -1,0 +1,39 @@
+name: Enterprise compliance review
+description: For organizations genuinely operating inside a Minecraft server. We said we would entertain these. We are entertaining them.
+labels: ["enterprise-critical"]
+body:
+  - type: input
+    id: company
+    attributes:
+      label: Registered company name (as known on this server)
+      description: Guild tag preferred, for indexing in the tenant registry.
+    validations:
+      required: true
+
+  - type: input
+    id: jurisdiction
+    attributes:
+      label: Jurisdiction
+      description: Link to the server rules you claim compliance with.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: attestations
+    attributes:
+      label: Attestations
+      options:
+        - label: We accept that TPS is a commodity and may be traded against us
+          required: true
+        - label: We accept that the ledger is the single source of truth, including when it is wrong
+          required: true
+        - label: We confirm this is not an attempt to run a real-world business on a game server
+          required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Business justification
+      description: Bullet points are fine. PowerPoint is also fine, but it will be read aloud.
+    validations:
+      required: true

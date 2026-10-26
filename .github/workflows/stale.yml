@@ -1,0 +1,40 @@
+name: Stale Issues & PRs
+
+# An enterprise without a stale bot is just a hobby project with delusions.
+# Issues labeled `enterprise-critical` are exempt — the treasury never sleeps.
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 14
+          days-before-close: 7
+          exempt-issue-labels: "enterprise-critical,pinned"
+          exempt-pr-labels: "enterprise-critical,pinned"
+          stale-issue-message: >
+            This issue has been idle for 14 days and is hereby flagged as
+            STALE by the automated resource-planning department. If nobody
+            touches it within 7 days it will be liquidated (closed) and its
+            assets (context) written off. Comment to keep it on the ledger.
+          stale-pr-message: >
+            This PR has been idle for 14 days and is entering receivership.
+            Rebase, respond to review, or it will be closed in 7 days.
+            The ledger records all abandoned work. There is no shame.
+            (There is a little shame.)
+          close-issue-message: >
+            Liquidated for inactivity. Reopen with a fresh comment and a
+            compelling business plan if you believe this was an error.
+          close-pr-message: >
+            Closed for inactivity. Feel free to reopen — we do believe in
+            second quarters.

@@ -20,3 +20,8 @@ gradle-app.setting
 *.log
 .env
 docker-data/
+
+# embedded backend fat jar (dropped in by the release pipeline; 100+ MB of
+# time-honored tradition must never enter git history)
+brp-mod/src/main/resources/backend/
+
