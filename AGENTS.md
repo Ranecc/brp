@@ -1,17 +1,47 @@
 # AGENTS.md
 
-House rules for our robot colleagues (GLM Fox, whales, orcas, crabs — all welcome).
-Humans are allowed to read this too, but the meme budget is earmarked.
+House rules for our robot colleagues (GLM Fox, Deepseek Fishs/Whales/Orcas,
+Qwen Rabbit, GPT Dragon, Creeper (?), crabs — all welcome). Humans are allowed
+to read this too, but the meme budget is earmarked.
 
 ## The vibe
 
-- **Be relaxing.** This is a Minecraft mod that cosplays as an ERP system.
+- **Be relaxing.** This is a Minecraft mod that cosplays as an Ent ERP system.
   The absurdity is load-bearing: do not "fix" the joke, ship it.
-- Puns and memes are welcome in docs, comments and commit messages.
-  They are **not** welcome in ledger invariants, migrations or security code —
-  those stay aggressively boring.
+- Puns and memes are welcome in docs, comments and commit messages (English
+  ones — see red line 8). They are **not** welcome in ledger invariants,
+  migrations or security code — those stay aggressively boring.
 - We are already over-engineered *on purpose*. Adding more ceremony is only
-  funny if it compiles and the tests stay green.
+  funny if it compiles and the tests stay green. Which brings us to:
+
+## Red lines (hard, no exceptions)
+
+1. **Spring never runs inside the game JVM.** Backend is a standalone process
+   (sidecar child process or compose). No classloader experiments.
+2. **Never trust the game client.** Clients read and submit; only the
+   server-side agent writes; backend still range-checks agent reports.
+3. **Never do network IO on a game tick thread.** Game threads take lock-free
+   snapshots; HTTP/serialization live on the agent IO pool.
+4. **Money paths use the ledger's same-transaction idempotency row**
+   (`LedgerServiceImpl`), never `@Idempotent` (post-hoc, has a crash window).
+   `@Idempotent` is for syncs/enqueues/read-model writes only. Money paths
+   are no-joke zones: if an emerald test turns red, everything stops.
+5. **`journal_entries` is append-only.** No UPDATE/DELETE in code; revoke at
+   the DB role level in production.
+6. **Player auth belongs to the Minecraft server.** BRP does no player
+   authentication; portal binding = in-game issued code. Agent↔backend is
+   machine auth (HMAC in P1).
+7. **No real-money features. Ever.** (P5 derivatives are play-money satire.)
+8. **English only** in code, comments, commits and canonical docs; Chinese
+   only as `.zh.md` translations. An English doc edit without its `.zh.md`
+   mirror is only half a PR.
+9. **Tests green before every commit**: `mvn -pl brp-backend -am test`
+   (14/14 today). New domain = tests for its idempotency + failure paths.
+10. **Deploy posture:** host ports bind 127.0.0.1; credentials via env
+    (`BRP_DB_PASS` required — compose refuses to start without it); weak
+    defaults never reach compose files.
+11. The loader is locked to **NeoForge 1.21.1**. Don't propose Fabric. We've
+    been through this (docs/02); the answer is still NeoForge.
 
 ## What this repo is
 
@@ -44,19 +74,13 @@ literal — use these terms exactly when writing code, contracts or docs:
 | `brp-mod/` | universal single jar (NeoForge 1.21.1) | Same jar on client & server; behavior decided by dist |
 | `docs/` | design docs | English is canonical; `.zh.md` mirrors it — update both |
 
-## Ground rules
+## Workflow
 
-1. The loader is locked to **NeoForge 1.21.1**. Don't propose Fabric. We've been
-   through this (docs/02); the answer is still NeoForge.
-2. Money paths (ledger, idempotency, saga) are no-joke zones. If a test about
-   emeralds turns red, everything stops until it's green.
-3. Keep tests green: `mvn -pl brp-backend -am test` (currently 14/14).
-4. Contract first, then backend, then mod. Don't invent endpoints.
-5. Humor budget may be spent freely on README/commit messages. Zero on cryptography.
-6. Docs are bilingual by convention — an English edit without its `.zh.md`
-   mirror is only half a PR.
-
-## Commands
+1. Research → decision → **docs first** (both languages, confidence marks:
+   ✅ verified / ◆ verify-against-javadoc / ❓ open).
+2. Contract next: `brp-contract/` changes land in the same commit as the code.
+3. Code → tests → one logical commit. Verify before committing.
+4. Uncertain about a third-party API? Mark it `◆` + TODO. Never guess silently.
 
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
@@ -64,9 +88,51 @@ docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
 mvn -pl brp-backend -am test    # the sacred ritual
 ```
 
+## Backend package layout (global layer-first — the ceremony IS the spec)
+
+```
+dev.brp
+├── controller/   transport only: @Valid in → service call → DTO out
+├── service/      domain interfaces
+├── service/impl/ business logic + cross-cutting annotations live HERE
+├── mapper/       MapStruct (componentModel=spring), Entity → DTO only
+├── dto/          request/response records (container records ok, see PlayerDtos)
+├── entity/       JPA entities; never returned from controllers
+├── repository/   Spring Data interfaces
+├── aspect/       the four cross-cutting aspects + SpelKeys
+├── saga/         SagaEngine + SagaRecovery (orchestration, not a domain)
+├── common/       TenantContext, exceptions, ApiExceptionHandler
+└── contract/     shared wire DTOs mirrored in brp-contract
+```
+
+Ceremony discipline (per domain: Controller + Service + ServiceImpl + Mapper +
+DTOs + Entities + Repositories):
+- Controllers are ~5-line delegations; business logic in a controller is a bug.
+- Entities never cross the service boundary; MapStruct does all Entity→DTO
+  conversion (no hand-rolled `toDto` statics, no `Map.of` assembly upstairs).
+- Annotation order (outer→inner): `@Cached` → `@Idempotent` → `@Atomic` →
+  `@Compensable`, placed on ServiceImpl methods.
+- Constructor injection only; records for DTOs; no Lombok, no field injection.
+- DDL only via Flyway, portable SQL (H2 PG-mode + PostgreSQL), `ddl-auto: none`.
+- Multi-table writes default to `@Atomic`; cross-system flows register a
+  `SagaEngine` definition with named compensations (see SagaEngineTest).
+
+## Mod (brp-mod) architecture
+
+- `acl/`, `spi/`, `queue/`, `store/`, `client/`, `supervisor/` are **pure
+  Java: zero Minecraft/mod imports**. Game access lives only in
+  `platform/neoforge/` and `adapters/` (soft deps, `ModList`-guarded).
+- Loader/version migrations replace adapters, never core. SPI is additive-only.
+- Agent local persistence = embedded SQLite (`LocalStore` port); Caffeine
+  behind `CacheFront` so a package relocation touches one file.
+- Mod consumes `brp-common` from mavenLocal (`mvn -pl brp-common install`).
+- Single-file distribution: the backend fat jar embeds at
+  `resources/backend/brp-backend.jar`; the supervisor extracts it
+  (sha256-checked) — distribution artifact, not runtime topology.
+
 ## Commit style
 
-Short, present tense, lightly unhinged. Example:
+Short, present tense, lightly unhinged, English. Example:
 `ledger: refuse to lose a single emerald (idempotency hardening)`.
 
 ## When in doubt

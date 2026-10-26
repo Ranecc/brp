@@ -1,11 +1,11 @@
 package dev.brp;
 
-import dev.brp.player.PlayerNameHistoryRepository;
-import dev.brp.player.PlayerRepository;
-import dev.brp.player.PlayerService;
-import dev.brp.player.dto.PlayerDtos.PlayerDto;
-import dev.brp.player.dto.PlayerDtos.PlayerSyncRequest;
-import dev.brp.player.dto.PlayerDtos.SyncAck;
+import dev.brp.repository.PlayerNameHistoryRepository;
+import dev.brp.repository.PlayerRepository;
+import dev.brp.service.PlayerService;
+import dev.brp.dto.PlayerDtos.PlayerDto;
+import dev.brp.dto.PlayerDtos.PlayerSyncRequest;
+import dev.brp.dto.PlayerDtos.SyncAck;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

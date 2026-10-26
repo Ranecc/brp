@@ -1,6 +1,6 @@
 package dev.brp;
 
-import dev.brp.common.aspect.store.SagaInstanceRepository;
+import dev.brp.repository.SagaInstanceRepository;
 import dev.brp.saga.SagaEngine;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

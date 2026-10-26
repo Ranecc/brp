@@ -2,8 +2,8 @@ package dev.brp.saga;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.brp.common.aspect.store.SagaInstanceRepository;
-import dev.brp.common.aspect.store.SagaInstanceRow;
+import dev.brp.repository.SagaInstanceRepository;
+import dev.brp.entity.SagaInstanceRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

@@ -5,7 +5,7 @@ import dev.brp.contract.LedgerDtos.CreateAccountRequest;
 import dev.brp.contract.LedgerDtos.JournalLine;
 import dev.brp.contract.LedgerDtos.PostJournalRequest;
 import dev.brp.contract.LedgerDtos.PostJournalResponse;
-import dev.brp.ledger.LedgerService;
+import dev.brp.service.LedgerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

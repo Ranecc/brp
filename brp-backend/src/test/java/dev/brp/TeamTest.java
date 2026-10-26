@@ -1,12 +1,12 @@
 package dev.brp;
 
-import dev.brp.ledger.LedgerService;
-import dev.brp.team.TeamService;
-import dev.brp.team.dto.TeamDtos.CreateTeamRequest;
-import dev.brp.team.dto.TeamDtos.MemberDto;
-import dev.brp.team.dto.TeamDtos.TeamDto;
-import dev.brp.team.dto.TeamDtos.TeamSyncRequest;
-import dev.brp.team.TeamMemberRepository;
+import dev.brp.service.LedgerService;
+import dev.brp.service.TeamService;
+import dev.brp.dto.TeamDtos.CreateTeamRequest;
+import dev.brp.dto.TeamDtos.MemberDto;
+import dev.brp.dto.TeamDtos.TeamDto;
+import dev.brp.dto.TeamDtos.TeamSyncRequest;
+import dev.brp.repository.TeamMemberRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

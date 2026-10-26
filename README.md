@@ -9,7 +9,7 @@
 > It is my great honour to introduce: SaaS multi-tenant player guilds,
 > guild SCM & EHR, vanilla-redstone / mod-powered MES/APS, material WMS,
 > server-wide financial markets & consolidated finance,
-> and a server TPS market (๑•̀ㅂ•́)و✧
+> and a server TPS trade market (๑•̀ㅂ•́)و✧
 >
 > [中文版](README.zh.md) · fellow coding agents: read [AGENTS.md](AGENTS.md) first, sit down and be relaxing.
 
@@ -22,16 +22,6 @@
 
 One mod file for everyone — server admins and players install the same jar;
 what runs depends on the distribution (docs/00-overview.md).
-
-## Version decision (researched 2026-10)
-
-- **Primary target: Minecraft 1.21.1 + NeoForge.** Create 6 and AE2 both ship
-  official 1.21.1 NeoForge builds, and major packs (e.g. "All Of NeoForge",
-  updated Sept 2026) still baseline on it — the deepest tech-mod ecosystem.
-- Minecraft moved to year-based versioning in 2026 (26.1 ≈ the old 1.22, 26.2 the
-  second drop; NeoForge tooling supports up to 26.3). 26.x is the forward target
-  once Create lands there.
-- Create is NeoForge-only → **loader locked to NeoForge** (rationale in docs/02).
 
 ## Repository layout
 
@@ -81,13 +71,13 @@ mvn -pl brp-backend -am test    # 14/14 green: ledger idempotency, saga, teams �
 
 ## Licensing
 
-Deliberately inconsistent, like every real enterprise:
+Deliberately inconsistent, give you a real ENTERPRISE experience:
 
 | Module | License | Rationale |
 |---|---|---|
 | `brp-mod` | MIT | players and pack authors deserve zero friction |
 | `brp-common` | MIT | shared by both sides — keeps the mod jar clean |
-| `brp-backend` | Apache-2.0 | the *enterprise* is load-bearing here: explicit patent grant, NOTICE file, the full ritual |
+| `brp-backend` | Apache-2.0 | the *enterprise* ritual: explicit patent grant, NOTICE file, the full ritual |
 | `brp-contract` | Apache-2.0 | the single source of truth gets a legal department |
 
 The backend never ships inside the game JVM, so the two regimes never mix.

@@ -1,7 +1,7 @@
 package dev.brp.saga;
 
-import dev.brp.common.aspect.store.SagaInstanceRepository;
-import dev.brp.common.aspect.store.SagaInstanceRow;
+import dev.brp.repository.SagaInstanceRepository;
+import dev.brp.entity.SagaInstanceRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
