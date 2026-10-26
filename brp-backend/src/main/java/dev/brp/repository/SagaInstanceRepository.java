@@ -10,4 +10,6 @@ public interface SagaInstanceRepository extends JpaRepository<SagaInstanceRow, L
             String saga, String correlation, String step, String state);
 
     List<SagaInstanceRow> findByCorrelationAndStateIn(String correlation, List<String> states);
+    List<SagaInstanceRow> findByStateIn(List<String> states);
+    List<SagaInstanceRow> findBySagaAndCorrelationAndStateIn(String saga, String correlation, List<String> states);
 }

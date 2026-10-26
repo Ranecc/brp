@@ -1,8 +1,4 @@
 package dev.brp.service.impl;
-import dev.brp.entity.*;
-import dev.brp.repository.*;
-import dev.brp.service.CurrencyService;
-import dev.brp.service.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,9 +9,11 @@ import dev.brp.contract.LedgerDtos.CreateAccountRequest;
 import dev.brp.contract.LedgerDtos.JournalLine;
 import dev.brp.contract.LedgerDtos.PostJournalRequest;
 import dev.brp.contract.LedgerDtos.PostJournalResponse;
+import dev.brp.entity.*;
+import dev.brp.repository.*;
+import dev.brp.service.CurrencyService;
+import dev.brp.service.LedgerService;
 import dev.brp.mapper.AccountMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -24,19 +22,20 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Double-entry ledger core (docs/06 section 5). The idempotency row is the
- * LAST insert of the work transaction; concurrent duplicates lose the PK race,
- * roll back entirely, and replay the winner's stored response.
+ * Double-entry ledger core (docs/06 section 5). Money path: aggressively
+ * boring, TENANT-SCOPED idempotency (V9 composite PK (tenantId, idemKey) —
+ * the same key in another tenant is a different operation), narrow exception
+ * handling (only OUR key race replays; other integrity violations surface),
+ * currency-matched legs, service-side positivity guard, TOCTOU as 400.
  */
 @Service
 public class LedgerServiceImpl implements LedgerService {
-
-    private static final Logger log = LoggerFactory.getLogger(LedgerServiceImpl.class);
 
     private final AccountRepository accounts;
     private final JournalEntryRepository journal;
@@ -48,8 +47,8 @@ public class LedgerServiceImpl implements LedgerService {
 
     public LedgerServiceImpl(AccountRepository accounts, JournalEntryRepository journal,
                              IdempotencyKeyRepository keys, CurrencyService currencies,
-                             AccountMapper accountMapper,
-                             ObjectMapper mapper, TransactionTemplate tx) {
+                             AccountMapper accountMapper, ObjectMapper mapper,
+                             TransactionTemplate tx) {
         this.accounts = accounts;
         this.journal = journal;
         this.keys = keys;
@@ -63,36 +62,40 @@ public class LedgerServiceImpl implements LedgerService {
     public AccountDto createAccount(String tenantId, CreateAccountRequest req) {
         requireTradableCurrency(req.currency());
         accounts.findByTenantIdAndAccountNo(tenantId, req.accountNo()).ifPresent(a -> {
-            throw new ConflictException("account already exists: " + req.accountNo());
+            throw ConflictException.of("ledger.account.duplicate");
         });
         try {
             var saved = tx.execute(status ->
                     accounts.save(new AccountEntity(tenantId, req.accountNo(),
                             req.accountType(), req.currency())));
             return accountMapper.toDto(saved);
-        } catch (DataIntegrityViolationException race) {
-            throw new ConflictException("account already exists: " + req.accountNo());
+        } catch (DataIntegrityViolationException e) {
+            // Only our unique constraint means "already exists"; anything else
+            // (future FK, column length) propagates with the real cause.
+            if (accounts.findByTenantIdAndAccountNo(tenantId, req.accountNo()).isPresent()) {
+                throw ConflictException.of("ledger.account.duplicate");
+            }
+            throw e;
         }
     }
 
     @Override
     public PostJournalResponse post(String tenantId, PostJournalRequest req) {
-        var existing = keys.findById(req.idempotencyKey());
+        // Fast path: replay ONLY this tenant's stored response (V9).
+        var existing = keys.findById(new IdempotencyKeyEntity.Pk(tenantId, req.idempotencyKey()));
         if (existing.isPresent()) {
             return replay(existing.get());
         }
         validate(tenantId, req);
         try {
             return tx.execute(status -> doPost(tenantId, req));
-        } catch (DataIntegrityViolationException lost) {
-            var winner = keys.findById(req.idempotencyKey()).orElse(null);
-            if (winner == null) {
-                throw new IllegalStateException("idempotency row missing after unique violation", lost);
-            }
+        } catch (DataIntegrityViolationException e) {
+            // Key race in OUR tenant -> replay the winner; anything else rethrows.
+            var winner = keys.findById(new IdempotencyKeyEntity.Pk(tenantId, req.idempotencyKey()))
+                    .orElseThrow(() -> e);
             return replay(winner);
         } catch (ObjectOptimisticLockingFailureException e) {
-            throw new ConflictException(
-                    "concurrent update on the same account, retry with the SAME idempotency key");
+            throw ConflictException.of("ledger.concurrent.retry");
         }
     }
 
@@ -102,10 +105,16 @@ public class LedgerServiceImpl implements LedgerService {
                 .map(accountMapper::toDto).toList();
     }
 
-    // --- internals (unchanged semantics, moved verbatim from the former class) ---
+    // --- internals ---
 
     private PostJournalResponse doPost(String tenantId, PostJournalRequest req) {
-        Map<String, AccountEntity> byNo = loadAccounts(tenantId, req.lines());
+        Map<String, AccountEntity> byNo;
+        try {
+            byNo = loadAccounts(tenantId, req.lines());
+        } catch (NoSuchElementException e) {
+            // account vanished between validate() and here (TOCTOU): 400, not 500
+            throw BadRequestException.of("ledger.account.unknown");
+        }
         List<AccountEntity> touched = new ArrayList<>();
         for (JournalLine line : req.lines()) {
             AccountEntity acc = byNo.get(line.accountNo());
@@ -120,7 +129,7 @@ public class LedgerServiceImpl implements LedgerService {
         }
         var response = new PostJournalResponse(journalId, false,
                 touched.stream().map(accountMapper::toDto).toList());
-        keys.save(new IdempotencyKeyEntity(req.idempotencyKey(), tenantId, toJson(response)));
+        keys.save(new IdempotencyKeyEntity(tenantId, req.idempotencyKey(), toJson(response)));
         return response;
     }
 
@@ -135,28 +144,41 @@ public class LedgerServiceImpl implements LedgerService {
 
     private void validate(String tenantId, PostJournalRequest req) {
         requireTradableCurrency(req.currency());
+        if (req.lines() == null || req.lines().isEmpty()) {
+            throw BadRequestException.of("ledger.lines.empty");
+        }
         boolean dirsOk = req.lines().stream()
                 .allMatch(l -> "DEBIT".equals(l.direction()) || "CREDIT".equals(l.direction()));
         if (!dirsOk) {
-            throw new BadRequestException("direction must be DEBIT or CREDIT");
+            throw BadRequestException.of("ledger.direction.invalid");
         }
-        long debit = req.lines().stream()
-                .filter(l -> "DEBIT".equals(l.direction())).mapToLong(JournalLine::amountCents).sum();
-        long credit = req.lines().stream()
-                .filter(l -> "CREDIT".equals(l.direction())).mapToLong(JournalLine::amountCents).sum();
+        long debit = 0, credit = 0;
+        for (JournalLine l : req.lines()) {
+            if (l.amountCents() == null || l.amountCents() <= 0) {
+                // negative + balanced = silent reverse booking; not on our watch
+                throw BadRequestException.of("ledger.amount.positive");
+            }
+            if ("DEBIT".equals(l.direction())) debit += l.amountCents();
+            else credit += l.amountCents();
+        }
         if (debit != credit || debit == 0) {
-            throw new BadRequestException(
-                    "unbalanced journal: debit=%d credit=%d".formatted(debit, credit));
+            throw BadRequestException.of("ledger.unbalanced");
         }
-        if (req.lines().stream().anyMatch(l ->
-                accounts.findByTenantIdAndAccountNo(tenantId, l.accountNo()).isEmpty())) {
-            throw new BadRequestException("journal references unknown account in tenant");
+        for (JournalLine l : req.lines()) {
+            var acc = accounts.findByTenantIdAndAccountNo(tenantId, l.accountNo());
+            if (acc.isEmpty()) {
+                throw BadRequestException.of("ledger.account.unknown");
+            }
+            // cross-currency legs are a laundering vector, not a feature
+            if (!req.currency().equals(acc.get().getCurrency())) {
+                throw BadRequestException.of("ledger.currency.mismatch");
+            }
         }
     }
 
     private void requireTradableCurrency(String code) {
         if (!currencies.isTradable(code)) {
-            throw dev.brp.common.BadRequestException.of("economy.currency.unknown", code);
+            throw BadRequestException.of("economy.currency.unknown", code);
         }
     }
 

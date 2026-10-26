@@ -54,6 +54,34 @@ class LedgerIdempotencyTest {
     }
 
     @Test
+    void sameKeyInDifferentTenantsAreTwoDifferentOperations() {
+        String key = "shared-key-" + UUID.randomUUID();
+        String tenantA = tenant();
+        String tenantB = tenant();
+        for (String t : List.of(tenantA, tenantB)) {
+            ledger.createAccount(t, new CreateAccountRequest("alice", "PLAYER", "BRC"));
+            ledger.createAccount(t, new CreateAccountRequest("faucet", "SYSTEM_FAUCET", "BRC"));
+        }
+        var line = List.of(
+                new JournalLine("alice", "DEBIT", 100L, null),
+                new JournalLine("faucet", "CREDIT", 100L, null));
+
+        var a = ledger.post(tenantA, new PostJournalRequest(key, "BRC", line));
+        var b = ledger.post(tenantB, new PostJournalRequest(key, "BRC", line));
+
+        // neither replayed the other: separate journal ids, separate books
+        assertThat(a.replayed()).isFalse();
+        assertThat(b.replayed()).isFalse();
+        assertThat(a.journalId()).isNotEqualTo(b.journalId());
+        assertThat(ledger.listAccounts(tenantA).stream()
+                .filter(x -> x.accountNo().equals("alice")).findFirst().orElseThrow()
+                .balanceCents()).isEqualTo(100L);
+        assertThat(ledger.listAccounts(tenantB).stream()
+                .filter(x -> x.accountNo().equals("alice")).findFirst().orElseThrow()
+                .balanceCents()).isEqualTo(100L);
+    }
+
+    @Test
     void distinctKeysPostDistinctJournals() {
         String tenant = tenant();
         ledger.createAccount(tenant, new CreateAccountRequest("alice", "PLAYER", "BRC"));

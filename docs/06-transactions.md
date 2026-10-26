@@ -92,3 +92,17 @@ stay atomic.
 Honesty clause: `@Idempotent` stores the response AFTER success — a crash
 between effect and store can re-execute. Financial mutations therefore use the
 ledger's same-transaction idempotency row (section 2/5), not this aspect.
+
+## 9. Hardened invariants (code review round, 2026-10)
+
+- Idempotency keys are TENANT-SCOPED (composite PK (tenant_id, idem_key), V9):
+  replay never crosses tenants; the same key in another tenant is a different
+  operation.
+- Integrity violations replay ONLY when the tenant's own key row exists;
+  everything else propagates with its real cause.
+- Saga rows are written REQUIRES_NEW (SagaRecorder): the audit trail survives
+  the caller's rollback, so SagaRecovery recovers facts, not fiction.
+- Recovery scopes (saga, correlation) — business correlations collide — and
+  compensates in REVERSE definition order.
+- Journals validate currency match, positive amounts (service-side), and
+  treat TOCTOU account disappearance as 400, not 500.

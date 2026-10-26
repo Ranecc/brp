@@ -71,10 +71,12 @@ public class SagaEngine {
 
     private final Map<String, Definition> registry = new ConcurrentHashMap<>();
     private final SagaInstanceRepository rows;
+    private final SagaRecorder recorder;
     private final ObjectMapper mapper;
 
-    public SagaEngine(SagaInstanceRepository rows, ObjectMapper mapper) {
+    public SagaEngine(SagaInstanceRepository rows, SagaRecorder recorder, ObjectMapper mapper) {
         this.rows = rows;
+        this.recorder = recorder;
         this.mapper = mapper;
     }
 
@@ -93,12 +95,10 @@ public class SagaEngine {
                     step.compensationName(), payload);
             try {
                 step.body().apply(payload);
-                row.done();
-                rows.save(row);
+                recorder.done(row);
                 completed.add(step);
             } catch (Throwable t) {
-                row.failed();
-                rows.save(row);
+                recorder.failed(row);
                 List<String> compensated = compensate(def, correlation, completed, payload);
                 log.warn("saga {} failed at step {}: compensated {}",
                         sagaName, step.name(), compensated, t);
@@ -150,7 +150,8 @@ public class SagaEngine {
                                    String compensation, Object payload) {
         SagaInstanceRow row = new SagaInstanceRow(saga, step, correlation, compensation);
         row.setPayload(safeJson(payload));
-        return rows.saveAndFlush(row);
+        // REQUIRES_NEW: survives a caller's rollback (docs/06 section 4)
+        return recorder.record(row);
     }
 
     private String safeJson(Object payload) {

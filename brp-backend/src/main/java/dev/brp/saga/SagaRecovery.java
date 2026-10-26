@@ -1,7 +1,7 @@
 package dev.brp.saga;
 
-import dev.brp.repository.SagaInstanceRepository;
 import dev.brp.entity.SagaInstanceRow;
+import dev.brp.repository.SagaInstanceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -13,8 +13,11 @@ import java.util.List;
 /**
  * Crash recovery: on startup, find saga rows stuck RUNNING/FAILED and
  * compensate their already-DONE siblings (the safe default — re-running an
- * uncertain forward step risks double effects, compensating a DONE step is
- * idempotent by contract). Unregistered saga names are logged for ops.
+ * uncertain forward step risks double effects; compensating a DONE step is
+ * idempotent by contract). Scoping is (saga, correlation) — business
+ * correlations collide (batchIds, order numbers) and cross-saga compensation
+ * is sabotage. Compensation runs in REVERSE definition order, not query
+ * order. Unregistered sagas are left for ops, untouched.
  */
 @Component
 public class SagaRecovery implements ApplicationRunner {
@@ -31,9 +34,7 @@ public class SagaRecovery implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<SagaInstanceRow> stuck = rows.findAll().stream()
-                .filter(r -> "RUNNING".equals(r.getState()) || "FAILED".equals(r.getState()))
-                .toList();
+        List<SagaInstanceRow> stuck = rows.findByStateIn(List.of("RUNNING", "FAILED"));
         if (stuck.isEmpty()) {
             return;
         }
@@ -44,26 +45,22 @@ public class SagaRecovery implements ApplicationRunner {
     }
 
     private void recover(SagaInstanceRow stuck) {
-        List<SagaInstanceRow> done = rows.findByCorrelationAndStateIn(
-                stuck.getCorrelation(), List.of("DONE"));
-        if (done.isEmpty()) {
-            stuck.failed();  // nothing completed: mark terminal, no compensation needed
-            rows.save(stuck);
+        List<SagaInstanceRow> done = rows.findBySagaAndCorrelationAndStateIn(
+                stuck.getSaga(), stuck.getCorrelation(), List.of("DONE"));
+        var def = engine.registryView().get(stuck.getSaga());
+        if (def == null) {
+            log.warn("saga recovery: saga {} not registered, leaving row {} for ops",
+                    stuck.getSaga(), stuck.getId());
             return;
         }
-        for (SagaInstanceRow completed : done) {
-            SagaEngine.Definition def = engine.registryView().get(completed.getSaga());
-            if (def == null) {
-                log.warn("saga recovery: saga {} not registered, skipping manual row {}",
-                        completed.getSaga(), completed.getId());
-                continue;
+        // reverse definition order; compensating a DONE step is idempotent
+        List<SagaEngine.StepSpec> steps = def.steps();
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            SagaEngine.StepSpec step = steps.get(i);
+            boolean wasDone = done.stream().anyMatch(d -> step.name().equals(d.getStep()));
+            if (wasDone) {
+                engine.compensateRecovered(def, stuck.getCorrelation(), step);
             }
-            def.steps().stream()
-                    .filter(s -> s.name().equals(completed.getStep()))
-                    .findFirst()
-                    .ifPresent(s -> {
-                        engine.compensateRecovered(def, stuck.getCorrelation(), s);
-                    });
         }
         stuck.failed();
         rows.save(stuck);

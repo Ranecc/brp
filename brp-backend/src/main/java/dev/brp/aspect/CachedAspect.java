@@ -10,13 +10,16 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Caffeine-backed read-through cache for {@link Cached}. Outermost aspect so
- * cache hits short-circuit everything else. TTL is fixed from write time;
- * null results are not cached.
+ * cache hits short-circuit everything else. TTL fixed from write time; null
+ * results not cached. Reads do NOT extend TTL (returning the remaining
+ * duration, not 0 — 0 meant "expire on read", which made the cache
+ * single-use; found in review, fixed with prejudice).
  */
 @Aspect
 @Order(0)
@@ -34,7 +37,7 @@ public class CachedAspect {
                     return v.ttlNanos();
                 }
                 @Override public long expireAfterRead(String k, CachedValue v, long now, long d) {
-                    return 0; // no read-refresh
+                    return d; // keep the remaining TTL; a read is not a renewal
                 }
             };
 
@@ -45,7 +48,11 @@ public class CachedAspect {
     public Object around(ProceedingJoinPoint pjp, Cached cached) throws Throwable {
         String key = SpelKeys.method(pjp).getDeclaringClass().getName()
                 + "#" + SpelKeys.method(pjp).getName()
-                + (cached.key().isEmpty() ? "" : ":" + SpelKeys.eval(cached.key(), pjp));
+                + (cached.key().isEmpty()
+                        // no SpEL key: fall back to argument identity — a bare
+                        // class#method key would collide across parameters
+                        ? ":" + Arrays.deepHashCode(pjp.getArgs())
+                        : ":" + SpelKeys.eval(cached.key(), pjp));
         Cache<String, CachedValue> cache = byMaxSize.computeIfAbsent(cached.maxSize(),
                 max -> Caffeine.newBuilder().maximumSize(max).expireAfter(TTL).build());
 

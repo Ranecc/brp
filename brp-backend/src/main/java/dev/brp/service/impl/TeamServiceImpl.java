@@ -84,13 +84,16 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public List<TeamResponse> list(String source) {
-        List<TeamResponse> out = new ArrayList<>();
-        for (TeamEntity t : teams.findAll().stream()
+        List<TeamEntity> wanted = teams.findAll().stream()
                 .filter(t -> source == null || source.equals(t.getSource()))
-                .toList()) {
-            out.add(mapper.toDto(t, members.findByTeamId(t.getId())));
-        }
-        return out;
+                .toList();
+        // one query for ALL rosters, grouped — no N+1
+        Map<String, List<dev.brp.entity.TeamMemberRow>> rosters =
+                members.findAll().stream().collect(Collectors.groupingBy(
+                        dev.brp.entity.TeamMemberRow::getTeamId));
+        return wanted.stream()
+                .map(t -> mapper.toDto(t, rosters.getOrDefault(t.getId(), List.of())))
+                .toList();
     }
 
     /** Replace roster wholesale but keep joined_at for continuing members. */

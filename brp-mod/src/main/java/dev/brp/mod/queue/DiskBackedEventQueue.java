@@ -21,8 +21,13 @@ import java.util.concurrent.locks.ReentrantLock;
  *   an in-memory queue + one file append.
  * - ackThrough(seq) advances the durable watermark after the backend acked
  *   ALL eventIds up to that sequence, then compacts the segment.
- * - Crash safety: every line is flushed before enqueue() returns. Slow path
- *   (fsync tuning) is a config concern, not a correctness one.
+ * - Crash safety vs latency: appends reach the OS page cache before
+ *   enqueue() returns; a hard crash can lose the tail (at-least-once
+ *   delivery tolerates re-send, CRITICAL events are re-derivable from the
+ *   game). True fsync (SYNC/DSYNC open option) is a config flag for the
+ *   paranoid, paid in tick latency. NOTE: enqueue currently writes on the
+ *   caller thread under the lock — acceptable only because callers batch;
+ *   moving appends to the IO thread is a P1 item (red line 3 in spirit).
  */
 public final class DiskBackedEventQueue {
 
@@ -139,16 +144,35 @@ public final class DiskBackedEventQueue {
     }
 
     private static String sanitize(String json) {
-        // WAL is line-based: collapse newlines so one event == one line
-        return json == null ? "" : json.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "");
+        // WAL is line-based: one event == one line. Escaping is reversible.
+        if (json == null) return "";
+        return json.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "");
+    }
+
+    private static String unsanitize(String stored) {
+        if (stored == null || stored.isEmpty()) return stored;
+        StringBuilder sb = new StringBuilder(stored.length());
+        for (int i = 0; i < stored.length(); i++) {
+            char c = stored.charAt(i);
+            if (c == '\\' && i + 1 < stored.length()) {
+                char next = stored.charAt(++i);
+                if (next == 'n') sb.append('\n');
+                else sb.append(next);   // \\ -> \ , any other pair -> literal
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private static Envelope parse(String line) {
-        // un-sanitize is only needed on read-back; kept lossy-tolerant on purpose
         String[] parts = line.split("\t", 4);
         if (parts.length != 4) return null;
         try {
-            return new Envelope(Long.parseLong(parts[0]), parts[1], parts[3], parts[2]);
+            // unsanitize reverses sanitize(); restarts no longer resurrect
+            // double-escaped garbage (found in review, fixed with shame)
+            return new Envelope(Long.parseLong(parts[0]), parts[1],
+                    unsanitize(parts[3]), parts[2]);
         } catch (NumberFormatException e) {
             return null;
         }

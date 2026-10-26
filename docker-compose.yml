@@ -41,6 +41,7 @@ services:
       BRP_DB_USER: ${BRP_DB_USER:-brp}
       BRP_DB_PASS: ${BRP_DB_PASS:?set BRP_DB_PASS in .env}
       BRP_PORT: "8080"
+      BRP_SERVER_ADDRESS: 0.0.0.0   # host port stays bound to 127.0.0.1 above
     ports:
       - "127.0.0.1:8080:8080"
 

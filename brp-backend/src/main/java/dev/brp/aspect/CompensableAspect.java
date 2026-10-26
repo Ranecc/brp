@@ -1,8 +1,8 @@
 package dev.brp.aspect;
 
 import dev.brp.common.annotation.Compensable;
-import dev.brp.repository.SagaInstanceRepository;
 import dev.brp.entity.SagaInstanceRow;
+import dev.brp.saga.SagaRecorder;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Saga step recorder (docs/06 section 4): durable RUNNING row before the
+ * Saga step recorder (docs/06 section 4): RUNNING row written REQUIRES_NEW so it
+ * survives an outer @Atomic rollback; DONE/FAILED equally independent. The
  * body, DONE on success, FAILED + compensation name on exception. P0 treats
  * the table as the audit trail for ops-driven compensation; the dispatching
  * saga engine is the first P1 business feature to build on it.
@@ -26,10 +27,10 @@ public class CompensableAspect {
 
     private static final Logger log = LoggerFactory.getLogger(CompensableAspect.class);
 
-    private final SagaInstanceRepository sagas;
+    private final SagaRecorder recorder;
 
-    public CompensableAspect(SagaInstanceRepository sagas) {
-        this.sagas = sagas;
+    public CompensableAspect(SagaRecorder recorder) {
+        this.recorder = recorder;
     }
 
     @Around("@annotation(comp)")
@@ -37,16 +38,14 @@ public class CompensableAspect {
         String correlation = comp.correlation().isEmpty()
                 ? UUID.randomUUID().toString()
                 : SpelKeys.eval(comp.correlation(), pjp);
-        SagaInstanceRow row = sagas.saveAndFlush(new SagaInstanceRow(
+        SagaInstanceRow row = recorder.record(new SagaInstanceRow(
                 comp.saga(), comp.step(), correlation, comp.compensation()));
         try {
             Object result = pjp.proceed();
-            row.done();
-            sagas.save(row);
+            recorder.done(row);
             return result;
         } catch (Throwable t) {
-            row.failed();
-            sagas.save(row);
+            recorder.failed(row);
             log.warn("saga step failed: saga={} step={} correlation={} compensation={}",
                     comp.saga(), comp.step(), correlation, comp.compensation(), t);
             throw t;

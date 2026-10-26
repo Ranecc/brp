@@ -75,7 +75,8 @@ class AnnotationKitTest {
     void cachedSkipsExecutionForHotKeys() {
         String a1 = target.cached("hot");
         String a2 = target.cached("hot");
-        assertThat(a2).isEqualTo(a1);
+        String a3 = target.cached("hot");   // regression: reads must not expire the entry
+        assertThat(a3).isEqualTo(a2).isEqualTo(a1);
         assertThat(target.cacheCalls()).isEqualTo(1);
         target.cached("cold");
         assertThat(target.cacheCalls()).isEqualTo(2);

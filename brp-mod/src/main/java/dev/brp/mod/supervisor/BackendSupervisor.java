@@ -103,17 +103,17 @@ public final class BackendSupervisor {
      * runtime topology (docs/01 section 2.5).
      */
     static void extractEmbedded(String resource, Path target) throws IOException {
-        byte[] bytes;
-        try (var in = BackendSupervisor.class.getResourceAsStream(resource)) {
-            if (in == null) {
-                throw new IOException("embedded backend not found in mod jar: " + resource);
+        String want = digestOf(in -> {
+            try (var src = BackendSupervisor.class.getResourceAsStream(resource)) {
+                if (src == null) {
+                    throw new IOException("embedded backend not found in mod jar: " + resource);
+                }
+                src.transferTo(in);
             }
-            bytes = in.readAllBytes();
-        }
-        String want = sha256(bytes);
+        });
         if (Files.isRegularFile(target)) {
             try {
-                if (sha256(Files.readAllBytes(target)).equals(want)) {
+                if (digestOf(sink -> Files.copy(target, sink)).equals(want)) {
                     return; // same version already extracted
                 }
             } catch (IOException e) {
@@ -122,16 +122,35 @@ public final class BackendSupervisor {
         }
         Files.createDirectories(target.getParent());
         Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
-        Files.write(tmp, bytes);
+        long size;
+        try (var src = BackendSupervisor.class.getResourceAsStream(resource);
+             var out = java.nio.channels.Channels.newChannel(Files.newOutputStream(tmp))) {
+            size = src.transferTo(out);   // streaming: no heap spike on a 1G server
+        }
         Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
                 java.nio.file.StandardCopyOption.ATOMIC_MOVE);
-        cfgLog("extracted embedded backend to " + target + " (" + bytes.length / 1024 / 1024 + " MB)");
+        cfgLog("extracted embedded backend to " + target + " (" + size / 1024 / 1024 + " MB)");
     }
 
-    private static String sha256(byte[] data) throws java.security.NoSuchAlgorithmException {
-        byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(data);
-        StringBuilder sb = new StringBuilder(d.length * 2);
-        for (byte b : d) {
+    @FunctionalInterface
+    private interface StreamWriter {
+        void writeTo(java.io.OutputStream out) throws IOException;
+    }
+
+    /** Stream-through digest: sha256 without buffering the whole payload. */
+    private static String digestOf(StreamWriter writer) throws IOException {
+        java.security.MessageDigest md;
+        try {
+            md = java.security.MessageDigest.getInstance("SHA-256");
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("JVM without SHA-256; impressive", e);
+        }
+        try (var out = new java.security.DigestOutputStream(
+                java.io.OutputStream.nullOutputStream(), md)) {
+            writer.writeTo(out);
+        }
+        StringBuilder sb = new StringBuilder(md.getDigestLength() * 2);
+        for (byte b : md.digest()) {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
@@ -148,7 +167,7 @@ public final class BackendSupervisor {
     /** Stop the child gracefully (SIGTERM then force after grace). */
     public synchronized void shutdown() {
         running.set(false);
-        watchdog.shutdownNow();
+        watchdog.shutdownNow();   // start() recreates it; shutdown is not terminal
         Process p = child;
         if (p != null && p.isAlive()) {
             p.destroy();
