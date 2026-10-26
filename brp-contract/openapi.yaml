@@ -60,6 +60,78 @@ paths:
         "200": {description: ack with duplicate count, content: {application/json: {schema: {$ref: '#/components/schemas/TelemetryAck'}}}}
         "400": {description: batch too large or malformed}
 
+  /api/v1/approvals/requests:
+    post:
+      summary: Submit a treasury withdrawal request (the begging begins)
+      description: >
+        Rubber-stamp threshold auto-approves and executes; upper-management
+        threshold escalates to OWNER approval. Idempotent on idempotencyKey.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idempotencyKey, teamId, requesterUuid, amountCents]
+              properties:
+                idempotencyKey: {type: string}
+                teamId: {type: string}
+                requesterUuid: {type: string}
+                amountCents: {type: integer, format: int64}
+                memo: {type: string}
+      responses:
+        "200": {description: "request state (PENDING / AWAITING_UPPER_MANAGEMENT / EXECUTED)"}
+        "400": {description: "requester not on the roster; HR declines to process"}
+    get:
+      summary: The team's approval inbox (default status=PENDING)
+      parameters:
+        - {name: teamId, in: query, required: true, schema: {type: string}}
+        - {name: status, in: query, schema: {type: string}}
+      responses:
+        "200": {description: pending paperwork, faithfully listed}
+
+  /api/v1/approvals/requests/{id}/approve:
+    post:
+      summary: Approve (OFFICER+; OWNER required above the upper-management threshold)
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approverUuid]
+              properties:
+                approverUuid: {type: string}
+                note: {type: string}
+      responses:
+        "200": {description: "EXECUTED via the vault-withdraw saga (freeze -> dispense -> settle)"}
+        "409": {description: "already decided, or insufficient org-chart altitude"}
+
+  /api/v1/approvals/requests/{id}/reject:
+    post:
+      summary: Reject with a note ("circle back next quarter")
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: REJECTED, treasury untouched}
+
+  /api/v1/approvals/requests/{id}/nudge:
+    post:
+      summary: "'Per my last email' — the sacred reminder ritual"
+      parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: "reminder sent, corporate buzzword attached"}
+        "409": {description: "nudging a settled request is corporate cardio"}
+
+  /api/v1/tps-reports/weekly:
+    get:
+      summary: Weekly TPS report (yes, that kind of TPS)
+      parameters:
+        - {name: withCoverSheet, in: query, schema: {type: boolean, default: true}}
+      responses:
+        "200": {description: "synergy metrics, flair count, Monday detection"}
+        "400": {description: "TPS reports now require a cover sheet. Didn't you get the memo?"}
+
   /api/v1/players/batch:
     post:
       summary: Bulk upsert player identity (agent-pulled uuid/name, rename history kept)

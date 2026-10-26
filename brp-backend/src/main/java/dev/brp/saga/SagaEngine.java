@@ -46,21 +46,26 @@ public class SagaEngine {
         public List<StepSpec> steps() { return steps; }
     }
 
-    public static final class Builder {
+    public static final class Builder<T> {
         private final String name;
         private final List<StepSpec> steps = new ArrayList<>();
         private Builder(String name) { this.name = name; }
 
-        public Builder step(String name, Function<Object, Object> body,
-                            String compensationName, Function<Object, Object> compensation) {
-            steps.add(new StepSpec(name, body, compensationName, compensation));
+        public Builder<T> step(String name, Function<T, Object> body,
+                               String compensationName, Function<T, Object> compensation) {
+            steps.add(new StepSpec(name, cast(body), compensationName, cast(compensation)));
             return this;
         }
 
         public Definition build() { return new Definition(name, steps); }
+
+        @SuppressWarnings("unchecked")
+        private static <U> Function<Object, Object> cast(Function<U, Object> fn) {
+            return (Function<Object, Object>) fn;
+        }
     }
 
-    public static Builder saga(String name) { return new Builder(name); }
+    public static <T> Builder<T> saga(String name) { return new Builder<>(name); }
 
     public record Outcome(boolean success, String failedStep, List<String> compensated) {}
 
