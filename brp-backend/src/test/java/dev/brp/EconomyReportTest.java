@@ -5,6 +5,8 @@ import dev.brp.contract.LedgerDtos.JournalLine;
 import dev.brp.contract.LedgerDtos.PostJournalRequest;
 import dev.brp.dto.EconomyDtos.EconomyDailyResponse;
 import dev.brp.service.LedgerService;
+import dev.brp.dto.CurrencyDtos.RegisterCurrencyRequest;
+import dev.brp.service.CurrencyService;
 import dev.brp.service.EconomyReportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ import static org.assertj.core.api.Assertions.within;
 class EconomyReportTest {
 
     @Autowired EconomyReportService economy;
+    @Autowired CurrencyService currencies;
     @Autowired LedgerService ledger;
 
     private String account(String tenant, String no, String type, String currency) {
@@ -41,6 +44,7 @@ class EconomyReportTest {
     void massEmissionAndVelocityComeStraightFromTheJournal() {
         String currency = "OBS" + UUID.randomUUID().toString().substring(0, 4);
         String tenant = "econ-" + UUID.randomUUID().toString().substring(0, 6);
+        currencies.register(new RegisterCurrencyRequest(currency, "Observability Test", "O", 2));
         account(tenant, "faucet", "SYSTEM_FAUCET", currency);
         account(tenant, "sink", "SYSTEM_SINK", currency);
         account(tenant, "alice", "PLAYER", currency);
@@ -63,6 +67,7 @@ class EconomyReportTest {
     void sinksShrinkTheMassWithoutInflatingVolume() {
         String currency = "OBS" + UUID.randomUUID().toString().substring(0, 4);
         String tenant = "econ-" + UUID.randomUUID().toString().substring(0, 6);
+        currencies.register(new RegisterCurrencyRequest(currency, "Observability Test", "O", 2));
         account(tenant, "faucet", "SYSTEM_FAUCET", currency);
         account(tenant, "sink", "SYSTEM_SINK", currency);
         account(tenant, "bob", "PLAYER", currency);

@@ -90,3 +90,18 @@ The joke that turns out to be the most useful module:
 P1 ledger + observability (M/V/net/CPI dailies) → P2 the three knobs (tax,
 commission, spread) → P3 circuit breakers → P4 quota market → P5
 exchange/futures (performance-art ceiling; options stay sealed forever, thanks).
+
+## 8. Currency registry & legacy-plugin compatibility
+
+- The ledger accepts **registered currencies only** (V8; BRC pre-registered,
+  ACTIVE/RETIRED status). Owners mint currencies from the web console —
+  `POST /api/v1/currencies`. Finance cannot invent money; that's the faucet's job.
+- Legacy currency plugins (Vault-style plugin servers, mod economies) integrate
+  as **adapter-mirrored external currencies**: an exchange account per adapter
+  currency, balances synced one-way into BRP as an exchange rate against a
+  registered BRP currency. External money never becomes ledger money without
+  going through an exchange journal — mirrors don't dilute M.
+- Machine placement is a **licensed activity** (quota resource `machine_slot`):
+  the compute quota is the economy lever that caps mass production. Overruns
+  and high-cost chunks (`chunk.performance` telemetry over threshold) NOTIFY
+  admins via the outbox; enforcement stays a human choice by design.

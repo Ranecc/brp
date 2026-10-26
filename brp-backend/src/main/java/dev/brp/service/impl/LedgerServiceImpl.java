@@ -1,6 +1,7 @@
 package dev.brp.service.impl;
 import dev.brp.entity.*;
 import dev.brp.repository.*;
+import dev.brp.service.CurrencyService;
 import dev.brp.service.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,16 +41,19 @@ public class LedgerServiceImpl implements LedgerService {
     private final AccountRepository accounts;
     private final JournalEntryRepository journal;
     private final IdempotencyKeyRepository keys;
+    private final CurrencyService currencies;
     private final AccountMapper accountMapper;
     private final ObjectMapper mapper;
     private final TransactionTemplate tx;
 
     public LedgerServiceImpl(AccountRepository accounts, JournalEntryRepository journal,
-                             IdempotencyKeyRepository keys, AccountMapper accountMapper,
+                             IdempotencyKeyRepository keys, CurrencyService currencies,
+                             AccountMapper accountMapper,
                              ObjectMapper mapper, TransactionTemplate tx) {
         this.accounts = accounts;
         this.journal = journal;
         this.keys = keys;
+        this.currencies = currencies;
         this.accountMapper = accountMapper;
         this.mapper = mapper;
         this.tx = tx;
@@ -57,6 +61,7 @@ public class LedgerServiceImpl implements LedgerService {
 
     @Override
     public AccountDto createAccount(String tenantId, CreateAccountRequest req) {
+        requireTradableCurrency(req.currency());
         accounts.findByTenantIdAndAccountNo(tenantId, req.accountNo()).ifPresent(a -> {
             throw new ConflictException("account already exists: " + req.accountNo());
         });
@@ -129,6 +134,7 @@ public class LedgerServiceImpl implements LedgerService {
     }
 
     private void validate(String tenantId, PostJournalRequest req) {
+        requireTradableCurrency(req.currency());
         boolean dirsOk = req.lines().stream()
                 .allMatch(l -> "DEBIT".equals(l.direction()) || "CREDIT".equals(l.direction()));
         if (!dirsOk) {
@@ -145,6 +151,12 @@ public class LedgerServiceImpl implements LedgerService {
         if (req.lines().stream().anyMatch(l ->
                 accounts.findByTenantIdAndAccountNo(tenantId, l.accountNo()).isEmpty())) {
             throw new BadRequestException("journal references unknown account in tenant");
+        }
+    }
+
+    private void requireTradableCurrency(String code) {
+        if (!currencies.isTradable(code)) {
+            throw dev.brp.common.BadRequestException.of("economy.currency.unknown", code);
         }
     }
 

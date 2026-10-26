@@ -6,6 +6,7 @@ import dev.brp.service.*;
 import dev.brp.common.BadRequestException;
 import dev.brp.common.event.BrpEventTypes;
 import dev.brp.service.AgentMonitorService;
+import dev.brp.service.QuotaService;
 import dev.brp.contract.TelemetryDtos.TelemetryAck;
 import dev.brp.contract.TelemetryDtos.TelemetryBatch;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,12 +25,15 @@ public class TelemetryServiceImpl implements TelemetryService {
 
     private final TelemetryRepository events;
     private final AgentMonitorService monitor;
+    private final QuotaService quotas;
     private final int maxBatchSize;
 
     public TelemetryServiceImpl(TelemetryRepository events, AgentMonitorService monitor,
+                                QuotaService quotas,
                                 @Value("${brp.telemetry.max-batch-size:1000}") int maxBatchSize) {
         this.events = events;
         this.monitor = monitor;
+        this.quotas = quotas;
         this.maxBatchSize = maxBatchSize;
     }
 
@@ -58,12 +62,26 @@ public class TelemetryServiceImpl implements TelemetryService {
 
     /** Heartbeats feed the fleet monitor; a malformed payload never kills the batch. */
     private void fanOut(dev.brp.contract.TelemetryDtos.EventEnvelope e) {
-        if (!BrpEventTypes.AGENT_HEARTBEAT.equals(e.type()) || !(e.payload() instanceof Map<?, ?> p)) {
+        if (!(e.payload() instanceof Map<?, ?> p)) {
             return;
         }
         try {
-            monitor.recordHeartbeat(e.agentId(),
-                    num(p.get("mspt")), num(p.get("tps")), (int) num(p.get("backlog")));
+            switch (e.type() == null ? "" : e.type()) {
+                case BrpEventTypes.AGENT_HEARTBEAT -> monitor.recordHeartbeat(e.agentId(),
+                        num(p.get("mspt")), num(p.get("tps")), (int) num(p.get("backlog")));
+                case BrpEventTypes.MACHINE_PLACED -> {
+                    if (e.tenantId() != null) {
+                        quotas.recordMachinePlaced(e.tenantId(), str(p.get("machineId")));
+                    }
+                }
+                case BrpEventTypes.CHUNK_PERFORMANCE -> {
+                    if (e.tenantId() != null) {
+                        quotas.recordChunkPerformance(e.tenantId(), str(p.get("dimension")),
+                                str(p.get("chunk")), num(p.get("costScore")));
+                    }
+                }
+                default -> { /* plain telemetry, no fan-out */ }
+            }
         } catch (RuntimeException bad) {
             org.slf4j.LoggerFactory.getLogger(TelemetryServiceImpl.class)
                     .warn("malformed heartbeat from {}: {}", e.agentId(), bad.getMessage());
@@ -72,5 +90,9 @@ public class TelemetryServiceImpl implements TelemetryService {
 
     private static double num(Object v) {
         return v instanceof Number n ? n.doubleValue() : 0.0;
+    }
+
+    private static String str(Object v) {
+        return v == null ? null : String.valueOf(v);
     }
 }

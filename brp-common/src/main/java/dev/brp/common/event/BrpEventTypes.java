@@ -16,6 +16,8 @@ public final class BrpEventTypes {
     public static final String FLOW_SAMPLE = "flow.sample";
     public static final String SIGNAL_EXECUTED = "signal.executed";
     public static final String AGENT_HEARTBEAT = "agent.heartbeat";
+    public static final String MACHINE_PLACED = "machine.placed";
+    public static final String CHUNK_PERFORMANCE = "chunk.performance";
     public static final String QUOTA_EXCEEDED = "quota.exceeded";
 
     private BrpEventTypes() {}

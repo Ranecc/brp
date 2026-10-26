@@ -150,6 +150,59 @@ paths:
       responses:
         "200": {description: previous printer statuses, faithfully archived}
 
+  /api/v1/currencies:
+    post:
+      summary: Register a currency (owner console; BRC ships pre-registered)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name, symbol]
+              properties:
+                code: {type: string, maxLength: 8}
+                name: {type: string}
+                symbol: {type: string}
+                decimals: {type: integer, minimum: 0, maximum: 8}
+      responses:
+        "200": {description: registered}
+        "409": {description: duplicate code — minting duplicates is a three-letter agency's job}
+    get:
+      summary: List registered tender
+      responses:
+        "200": {description: the registry of legal tender}
+
+  /api/v1/quotas/{tenantId}/{resource}:
+    put:
+      summary: Set a quota limit (0 = unlimited licensing)
+      parameters:
+        - {name: tenantId, in: path, required: true, schema: {type: string}}
+        - {name: resource, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [limit]
+              properties:
+                limit: {type: integer, format: int64, minimum: 0}
+      responses:
+        "200": {description: the bucket, updated}
+  /api/v1/quotas/{tenantId}:
+    get:
+      summary: Quota usage for a tenant
+      parameters: [{name: tenantId, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: usage rows}
+  /api/v1/quotas/incidents:
+    get:
+      summary: Chunk gluttony incidents (OPEN until a human decides otherwise)
+      parameters: [{name: tenantId, in: query, schema: {type: string}}]
+      responses:
+        "200": {description: the paperwork of server-eating chunks}
+
   /api/v1/players/batch:
     post:
       summary: Bulk upsert player identity (agent-pulled uuid/name, rename history kept)
