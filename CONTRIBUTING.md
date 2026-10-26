@@ -26,6 +26,11 @@ docker compose up -d --build
 
 ## The rules that actually matter
 
+0. **Docs are part of the change.** If your change moves behavior, the
+   relevant `docs/NN-*.md` AND its `.zh.md` mirror, plus README indexes,
+   update in the same commit — a code change that outruns its docs is half
+   a PR (the reviewers of the future are agents; feed them). Test counts in
+   README/AGENTS resync to the real surefire number when you touch tests.
 1. **Contract first.** API or event changes start in `brp-contract`, then
    backend, then mod. Don't invent endpoints.
 2. **Tests stay green.** `mvn -pl brp-backend -am test` must pass. If a ledger

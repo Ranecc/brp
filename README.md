@@ -72,7 +72,7 @@ mvn -pl brp-backend -am test    # 38/38 green or no commit: ledger, saga, approv
 | Phase | Scope | Status |
 |---|---|---|
 | P0 | repo + contracts + ledger core (idempotent, double-entry) + agent skeleton | ✅ this repo |
-| P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V), currency registry, machine-slot quotas + chunk incidents done; portal, agent upload pipeline pending | 🚧 |
+| P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V), currency registry, machine-slot quotas + chunk incidents, i18n copy, outbox + Discord wiring, portal console (overview/approvals/economy/quotas pages + verdict actions) done; portal auth/RBAC + agent runtime wiring pending | 🚧 |
 | P2 | WMS adapters (vanilla → AE2 → Create) + dashboards + alerts | ⬜ |
 | P3 | MRP (BOM explosion + work orders) | ⬜ |
 | P4 | APS + machine monitoring + signal hub | ⬜ |

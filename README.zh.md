@@ -62,7 +62,7 @@ brp/
 ```bash
 cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
 docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
-mvn -pl brp-backend -am test    # 14/14 全绿：账本幂等、Saga、公会……趁跑测试去摸摸草（方块或真草均可）
+mvn -pl brp-backend -am test    # 38/38 全绿：账本幂等、Saga、审批、门户……趁跑测试去摸摸草（方块或真草均可）
 ```
 
 ## 路线图
@@ -70,7 +70,7 @@ mvn -pl brp-backend -am test    # 14/14 全绿：账本幂等、Saga、公会…
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | P0 | 仓库 + 契约 + 账本核心（幂等/复式） + Agent 骨架 | ✅ 本仓库 |
-| P1 | 租户/公会、玩家同步、Saga 引擎、审批迷宫、TPS 报告（真实 mspt）、心跳、经济可观测（M/V）、货币登记制、机器槽位配额 + 区块事件已铺；门户、Agent 上报链路待做 | 🚧 |
+| P1 | 租户/公会、玩家同步、Saga 引擎、审批迷宫、TPS 报告（真实 mspt）、心跳、经济可观测（M/V）、货币登记制、机器槽位配额 + 区块事件、i18n 文案、outbox + Discord 接线、门户控制台（总览/审批/经济/配额四页 + 一键裁决）已铺；门户认证/RBAC、Agent 运行时接线待做 | 🚧 |
 | P2 | WMS 适配器（原版→AE2→Create）+ 仪表盘 + 告警 | ⬜ |
 | P3 | MRP（BOM 展开 + 工单） | ⬜ |
 | P4 | APS + 机器监控 + 信号中枢 | ⬜ |

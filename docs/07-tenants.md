@@ -56,6 +56,25 @@ code (short-lived, player must be online) — the game server is the only
 identity authority; BRP is a relying party. Agent↔backend uses instance
 provisioning (HMAC in P1), which is machine auth, not player auth.
 
+## 6. The approval labyrinth (shipped: backend + portal)
+
+The treasury withdrawal flow is live end to end — REST under
+`/api/v1/approvals` plus the portal's approvals page with one-click
+verdict actions:
+
+- OFFICERs approve within policy; amounts at/above the upper-management
+  threshold park in `AWAITING_UPPER_MANAGEMENT` until an OWNER signs
+  (config: `brp.approval.rubber-stamp-cents` / `upper-management-cents`)
+- amounts within the rubber-stamp threshold auto-approve — bureaucracy
+  efficient enough to skip itself, memo filed, KPIs met
+- every touch appends an `approval_action` row (SUBMITTED / RUBBER_STAMPED /
+  APPROVED / REJECTED / NUDGED): the paper trail IS the product
+- the per-my-last-email nudge (`POST /requests/{id}/nudge`) records the
+  escalation theater and returns one (1) buzzword; delivery rides the outbox
+- execution runs the `vault-withdraw` saga (freeze → dispense → settle,
+  compensated in reverse) with deterministic idempotency keys derived from
+  requestId — the memes are for humans, the invariants for the database
+
 ## Sources
 
 - FTB Teams (NeoForge): https://www.curseforge.com/minecraft/mc-mods/ftb-teams-forge

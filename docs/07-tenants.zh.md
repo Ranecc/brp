@@ -49,6 +49,22 @@ BRP **不自建玩家认证**：游戏内身份 = MC 服务器会话（在线模
 玩家必须在线）——游戏服是唯一身份权威，BRP 是依赖方。Agent↔Backend 用
 实例注册（P1 上 HMAC），那是机器认证，不是玩家认证。
 
+## 6. 审批迷宫（已上线：后端 + 门户）
+
+金库提现流程端到端已通——REST 在 `/api/v1/approvals`，门户审批页带
+一键裁决动作：
+
+- OFFICER 在策略内审批；金额达到/超过"高层管理"阈值进入
+  `AWAITING_UPPER_MANAGEMENT`，等 OWNER 签字（配置：
+  `brp.approval.rubber-stamp-cents` / `upper-management-cents`）
+- 橡皮图章阈值内自动批准——官僚体系高效到跳过自己，备忘归档，KPI 达成
+- 每次操作追加一条 `approval_action`（SUBMITTED / RUBBER_STAMPED /
+  APPROVED / REJECTED / NUDGED）：留痕本身就是产品
+- per-my-last-email 催办（`POST /requests/{id}/nudge`）记录升格表演并
+  返回一个（就一个）黑话词；投递走 outbox
+- 执行跑 `vault-withdraw` saga（冻结 → 发放 → 结算，反向补偿），幂等键由
+  requestId 派生——梗给人看，不变量给数据库看
+
 ## 来源
 
 - FTB Teams (NeoForge): https://www.curseforge.com/minecraft/mc-mods/ftb-teams-forge

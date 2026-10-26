@@ -37,6 +37,13 @@ depends on distribution:
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+Web-side reality check: v0 ships a **web console** — server-rendered
+Thymeleaf MVC pages under `/portal` (overview, approvals with verdict
+actions, economy, quotas) in the classic admin chrome. v0 posture is
+**no-auth, trusted internal network only** (ports bind 127.0.0.1); the
+OAuth2/OIDC + RBAC player portal of section 6 is the destination, not the
+current state.
+
 Why Spring never lives inside the game JVM (project rule #1, restated):
 - bundled Netty/Guava/log4j in the MC server vs Spring Boot's managed deps =
   guaranteed conflicts; ModLauncher/SecureJarHandler isolation is misery
@@ -49,7 +56,7 @@ Two supported modes; same jar, same behavior, only lifecycle differs:
 
 | Mode | Who starts the backend | Good for |
 |---|---|---|
-| **Managed sidecar** (default) | The agent spawns `brp/brp-backend.jar` as a **child process** (`BackendSupervisor`: health poll `/actuator/health`, exponential-backoff restarts with a budget, graceful stop with the server) | Small/medium servers: drop two files in the server dir, done |
+| **Managed sidecar** (default) | The agent spawns `brp/brp-backend.jar` as a **child process** (`BackendSupervisor`: health poll `/actuator/health`, exponential-backoff restarts with a budget, graceful — and restartable — stop with the server, embedded-jar extraction streamed through sha256 (no heap spike on a 1G server)) | Small/medium servers: drop two files in the server dir, done |
 | **Standalone** | docker-compose / systemd / k8s | Big servers, shared backends, ops teams |
 
 Sidecar tradeoffs (accepted, documented):
@@ -102,7 +109,8 @@ dedicated thread pool.
   nonce replay cache (v0: static bearer token on a trusted network; HMAC in P1)
 - transport: plain HTTP on a private network is fine; TLS/wireguard otherwise
 - player portal: OAuth2/OIDC, in-game code binding to MC account; RBAC synced
-  from LuckPerms
+  from LuckPerms (the v0 web console is the deliberate exception: no-auth,
+  internal-only — see section 2)
 - every write lands in an append-only audit log
 
 ## 7. Backend stack

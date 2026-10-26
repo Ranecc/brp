@@ -37,6 +37,11 @@ MC 交互层薄壳化，为将来 26.x 移植留缝。
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+Web 侧现状核查：v0 已上线**网页控制台**——`/portal` 下的 Thymeleaf MVC
+服务端渲染页面（总览、审批+一键裁决、经济、配额），经典管理后台配色。
+v0 姿态为**免认证、仅限可信内网**（端口只绑 127.0.0.1）；§6 的
+OAuth2/OIDC + RBAC 玩家门户是目的地，不是现状。
+
 为什么 Spring 不进游戏 JVM（重申，这是本项目第一铁律）：
 - MC 服务端捆绑的 Netty/Guava/log4j 与 Spring Boot 依赖管理必然冲突，ModLauncher/SecureJarHandler 隔离是灾难
 - 崩溃隔离：双向独立存活
@@ -48,7 +53,7 @@ MC 交互层薄壳化，为将来 26.x 移植留缝。
 
 | 模式 | 谁拉起 Backend | 适合 |
 |---|---|---|
-| **受管 sidecar**（默认） | Agent 把 `brp/brp-backend.jar` 作为**子进程**拉起（`BackendSupervisor`：健康轮询 `/actuator/health`、指数退避重启+预算、随服优雅停止） | 中小服：服务器目录丢两个文件就完事 |
+| **受管 sidecar**（默认） | Agent 把 `brp/brp-backend.jar` 作为**子进程**拉起（`BackendSupervisor`：健康轮询 `/actuator/health`、指数退避重启+预算、随服优雅停止且可再拉起、内嵌 jar 走 sha256 流式解压（1G 服务器也不堆内存尖峰）） | 中小服：服务器目录丢两个文件就完事 |
 | **独立部署** | docker-compose / systemd / k8s | 大服、共享后端、有运维 |
 
 Sidecar 的取舍（接受并写明）：
@@ -93,7 +98,7 @@ Feign 落地方式（对"用 Feign"执念的尊重与妥协）：
 - 注册：Agent 首次启动用一次性 provisioning token 向 Backend 换取 `instance_id + secret`
 - 请求：HMAC-SHA256 签名（instance_id, 时间戳, nonce, body 摘要）+ 时间窗 ±30s + nonce 去重（v0 可先 Bearer token，HMAC P1 上）
 - 通道：内网 HTTP 即可，公网必须 TLS 或 wireguard
-- 玩家门户：OAuth2/OIDC（游戏内发码绑定 MC 账号），权限走 RBAC（对接 LuckPerms 组同步）
+- 玩家门户：OAuth2/OIDC（游戏内发码绑定 MC 账号），权限走 RBAC（对接 LuckPerms 组同步）；v0 网页控制台是刻意的例外——免认证、仅内网（见 §2）
 - 审计：所有写操作进 `audit_log`，不可删
 
 ## 7. 技术栈清单（Backend）

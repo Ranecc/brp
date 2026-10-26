@@ -84,7 +84,9 @@ literal — use these terms exactly when writing code, contracts or docs:
 ## Workflow
 
 1. Research → decision → **docs first** (both languages, confidence marks:
-   ✅ verified / ◆ verify-against-javadoc / ❓ open).
+   ✅ verified / ◆ verify-against-javadoc / ❓ open). Docs are part of the
+   change, not its aftermath: behavior moves → the matching `docs/NN-*` pair
+   and README indexes move in the SAME commit (see CONTRIBUTING rule 0).
 2. Contract next: `brp-contract/` changes land in the same commit as the code.
 3. Code → tests → one logical commit. Verify before committing.
 4. Uncertain about a third-party API? Mark it `◆` + TODO. Never guess silently.
