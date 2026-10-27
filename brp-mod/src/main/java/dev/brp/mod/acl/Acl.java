@@ -51,6 +51,13 @@ public final class Acl {
         long gameTime();
         double mspt();       // mean ms per tick, for the TPS-commodity metrics
         double tps();
+
+        /**
+         * Force-loaded chunks as "dimension|x,z" keys (P2-12 metering).
+         * Default = none: fakes and future ports stay honest by claiming
+         * nothing rather than guessing.
+         */
+        default java.util.Set<String> forcedChunks() { return java.util.Set.of(); }
     }
 
     /**

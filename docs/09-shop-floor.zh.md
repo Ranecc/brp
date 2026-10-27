@@ -95,7 +95,7 @@ HALT 永远不等于「区块卸载」：原版模拟、移动与交互照常。
 | P2-09 ✓ | Mod：终端门控——HALT 时经 `GovernorFeed` 拒绝履职（拉取接线随 P2-12） | mod |
 | P2-10 | Mod：调度终端工单收发 + 表单终端实数据（走 `BrpServerApi`） | mod |
 | P2-11 ✓ | Mod：产线控制器流水线程序 + 条件开机求值器（`PipelineProgram`） | mod |
-| P2-12 | Mod：区块 ticket agent + 加载分钟上报 + 治理轮询（喂 `GovernorFeed`） | mod |
+| P2-12 ✓ | Mod：加载分钟上报（`chunk.load.minutes`）+ 治理轮询喂 `GovernorFeed` + 专用服生命周期接线（BrpAgent） | mod |
 | P2-13 ✓ | 门户：区块控制台（列表/开关/信用充值） | portal |
 | P2-14 | 适配器：AE2 + Create 计量钩子（ModList 守卫后） | mod |
 | P2-15 | APS：公平份额调度器 + 产线速率上限执行（依赖 P2-11 运行时接线） | backend+mod |

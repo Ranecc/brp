@@ -76,12 +76,12 @@ public final class BrpBlocks {
     public static final net.minecraft.network.chat.Component STRIKE_MSG =
             net.minecraft.network.chat.Component.translatable("block.brp.strike");
 
-    /** The one gate every terminal passes before duty: chunk key + governor verdict. */
+    /** The one gate every terminal passes before duty: the governor's cached verdict. */
     public static ChunkGovernor.Verdict verdictAt(net.minecraft.world.level.Level level,
                                                   net.minecraft.core.BlockPos pos) {
         String dimension = level.dimension().location().toString();
         String chunkKey = (pos.getX() >> 4) + "," + (pos.getZ() >> 4);
-        return ChunkGovernor.rule(GovernorFeed.stateFor(dimension, chunkKey));
+        return GovernorFeed.verdictFor(dimension, chunkKey);
     }
 
     private BrpBlocks() {}

@@ -7,7 +7,11 @@ import dev.brp.mod.acl.Acl.WorldAccess;
 import dev.brp.mod.client.BrpServerApi;
 import dev.brp.mod.client.BrpServerApi.EventDto;
 import dev.brp.mod.client.BrpServerApi.PlayerRef;
+import dev.brp.common.event.BrpEventTypes;
+import dev.brp.mod.governor.ChunkGovernor;
+import dev.brp.mod.governor.GovernorFeed;
 import dev.brp.mod.queue.DiskBackedEventQueue;
+import java.util.Set;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,11 +37,12 @@ import java.util.function.Consumer;
 public final class AgentRuntime {
 
     public record Config(String agentId, String tenantId, Duration heartbeatEvery,
-                         Duration sendEvery, Duration playerSyncEvery, int batchSize) {
+                         Duration sendEvery, Duration playerSyncEvery,
+                         Duration governorEvery, int batchSize) {
         public static Config defaults(String agentId, String tenantId) {
             return new Config(agentId, tenantId,
                     Duration.ofSeconds(10), Duration.ofSeconds(5),
-                    Duration.ofMinutes(5), 200);
+                    Duration.ofMinutes(5), Duration.ofSeconds(30), 200);
         }
     }
 
@@ -74,6 +79,8 @@ public final class AgentRuntime {
         schedule(this::sampleHeartbeat, cfg.heartbeatEvery());
         schedule(this::drainWal, cfg.sendEvery());
         schedule(this::syncPlayers, cfg.playerSyncEvery());
+        schedule(this::pollGovernor, cfg.governorEvery());
+        schedule(this::reportChunkMinutes, Duration.ofSeconds(60));
         log.accept("[BRP] agent runtime up: agent=" + cfg.agentId()
                 + " wal=" + wal.backlogSize());
     }
@@ -147,6 +154,71 @@ public final class AgentRuntime {
                 });
     }
 
+    /**
+     * Stage 4 (P2-12): poll the governor read model, publish verdicts into
+     * GovernorFeed (every terminal gate reads it) and refresh the registered
+     * chunk set the meter reports against. Backend down = cache stays as-is;
+     * a stale verdict is still a verdict, an exception is not.
+     */
+    private void pollGovernor() {
+        api.getGovernor(cfg.tenantId()).thenAccept(verdicts -> {
+            for (var v : verdicts) {
+                GovernorFeed.publish(v.dimension(), v.chunkKey(),
+                        ChunkGovernor.Verdict.valueOf(v.verdict()));
+            }
+        }).exceptionally(t -> {
+            log.accept("[BRP] governor poll failed: " + t.getMessage());
+            return null;
+        });
+        api.getChunks(cfg.tenantId()).thenAccept(slots -> {
+            Set<String> registered = new java.util.HashSet<>();
+            for (var slot : slots) {
+                registered.add(slot.dimension() + "|" + slot.chunkKey());
+            }
+            this.registeredChunks = registered;
+        }).exceptionally(t -> {
+            log.accept("[BRP] chunk slot poll failed: " + t.getMessage());
+            return null;
+        });
+    }
+
+    /**
+     * Stage 5 (P2-12): the meter — one chunk.load.minutes event per managed
+     * AND loaded chunk per minute (docs/09 section 3). Loaded-but-unregistered
+     * chunks are the rogue-loader detective's case file (P2-14+), not the
+     * meter's.
+     */
+    private void reportChunkMinutes() {
+        Set<String> loaded = world.forcedChunks();
+        for (Map<String, Object> payload : chunkMinutePayloads(loaded, registeredChunks)) {
+            try {
+                wal.enqueue(UUID.randomUUID().toString(),
+                        gsonlessJson(payload), "TELEMETRY").eventId();
+            } catch (IOException e) {
+                log.accept("[BRP] chunk minute enqueue failed: " + e.getMessage());
+            }
+        }
+    }
+
+    /** Pure intersection: loaded ∩ registered -> typed payloads, "dim|x,z" split. */
+    static List<Map<String, Object>> chunkMinutePayloads(Set<String> loaded, Set<String> registered) {
+        List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (String key : registered) {
+            if (!loaded.contains(key)) {
+                continue;
+            }
+            int split = key.indexOf('|');
+            out.add(Map.of(
+                    "type", BrpEventTypes.CHUNK_LOAD_MINUTES,
+                    "dimension", key.substring(0, split),
+                    "chunkKey", key.substring(split + 1),
+                    "minutes", 1L));
+        }
+        return out;
+    }
+
+    private volatile Set<String> registeredChunks = Set.of();
+
     private void schedule(Runnable task, Duration every) {
         long millis = every.toMillis();
         io.scheduleWithFixedDelay(() -> {
@@ -160,7 +232,7 @@ public final class AgentRuntime {
         }, millis, millis, TimeUnit.MILLISECONDS);
     }
 
-    static String gsonlessJson(Map<Object, Object> m) {   // package-private: units verify the wire format
+    static String gsonlessJson(Map<String, Object> m) {   // package-private: units verify the wire format
         StringBuilder sb = new StringBuilder("{");
         boolean first = true;
         for (var e : m.entrySet()) {

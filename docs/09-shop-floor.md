@@ -113,7 +113,7 @@ when landed.
 | P2-09 ✓ | Mod: BE gating — terminals refuse duty on HALT via `GovernorFeed` (fetch wiring rides P2-12) | mod |
 | P2-10 | Mod: Dispatch Terminal order inbox/outbox + live form feed over `BrpServerApi` | mod |
 | P2-11 ✓ | Mod: Line Controller pipeline program + conditional boot evaluator (`PipelineProgram`) | mod |
-| P2-12 | Mod: chunk ticket agent + load-minute reporter + governor poll (feeds `GovernorFeed`) | mod |
+| P2-12 ✓ | Mod: load-minute reporter (`chunk.load.minutes`) + governor poll feeding `GovernorFeed` + dedicated-server lifecycle wiring (BrpAgent) | mod |
 | P2-13 ✓ | Portal: chunk console (list / power switch / credit grants) | portal |
 | P2-14 | Adapters: AE2 + Create metering hooks behind ModList guards | mod |
 | P2-15 | APS: fair-share scheduler + line rate cap enforcement (needs P2-11 runtime wiring) | backend+mod |

@@ -36,7 +36,19 @@ public interface BrpServerApi {
 
     record TelemetryAck(int accepted, int duplicates) {}
 
+    /** Governor read model row (docs/09 section 4): verdict per managed chunk. */
+    record GovernorVerdict(String dimension, String chunkKey, String verdict, String reason) {}
+
+    /** Managed chunk slot row: what the meter reports minutes against. */
+    record ChunkSlot(String dimension, String chunkKey, String status, long creditMinutes) {}
+
     CompletableFuture<TelemetryAck> postTelemetry(List<EventDto> events);
+
+    /** P2-12: the poll that feeds GovernorFeed — every terminal gate reads it. */
+    CompletableFuture<List<GovernorVerdict>> getGovernor(String tenantId);
+
+    /** P2-12: registered slots; the meter reports loaded ∩ registered only. */
+    CompletableFuture<List<ChunkSlot>> getChunks(String tenantId);
 
     // --- command plane (idempotent writes) ---
 
