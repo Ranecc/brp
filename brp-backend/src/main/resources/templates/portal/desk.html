@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 对账科')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('desk')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('对账科 Reconciliation Desk')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>对账运行 / Last desk run <span class="tag">Σ balances ≡ 0</span></h2>
+    <p th:if="${report.findingsFiled() == 0}">
+      已核对 <span class="pixel" th:text="${report.currenciesChecked()}">0</span> 个币种，账目平衡。复式记账今日无话可说。
+    </p>
+    <p th:if="${report.findingsFiled() > 0}" style="color:#f85149">
+      已核对 <span class="pixel" th:text="${report.currenciesChecked()}">0</span> 个币种，
+      <span class="pixel" th:text="${report.findingsFiled()}">0</span> 个不平。检讨书已归档。
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>差异档案 / Findings</h2>
+    <table class="grid" th:if="${!findings.isEmpty()}">
+      <thead><tr><th>#</th><th>币种</th><th>差额（分）</th><th>状态</th><th>时间</th></tr></thead>
+      <tbody>
+      <tr th:each="f : ${findings}">
+        <td class="pixel" th:text="${f.id}">-</td>
+        <td class="pixel" th:text="${f.currency}">BRC</td>
+        <td class="num pixel" th:text="${f.imbalanceCents}">0</td>
+        <td><span class="status" th:text="${f.status}">OPEN</span></td>
+        <td class="pixel" th:text="${f.createdAt}">-</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${findings.isEmpty()}">没有差异档案。要么账本完美，要么还没人查。</p>
+  </section>
+
+  <section class="panel">
+    <h2>L1 热规则 / Hot rules</h2>
+    <form class="verdict" th:action="@{/portal/desk/rules}" method="post">
+      <input name="name" placeholder="规则名 / name" required/>
+      <input name="eventType" placeholder="事件类型 / e.g. agent.heartbeat" required/>
+      <input name="field" placeholder="字段 / e.g. mspt" required/>
+      <input name="op" placeholder="GT/GTE/LT/LTE/EQ" value="GT" required style="min-width:80px"/>
+      <input name="threshold" type="number" step="any" placeholder="阈值" required style="min-width:80px"/>
+      <button type="submit" class="btn approve">立规</button>
+    </form>
+    <table class="grid" th:if="${!rules.isEmpty()}">
+      <thead><tr><th>#</th><th>名称</th><th>事件</th><th>字段</th><th>条件</th><th>状态</th></tr></thead>
+      <tbody>
+      <tr th:each="r : ${rules}">
+        <td class="pixel" th:text="${r.id}">-</td>
+        <td th:text="${r.name}">-</td>
+        <td class="pixel" th:text="${r.eventType}">-</td>
+        <td class="pixel" th:text="${r.field}">-</td>
+        <td class="pixel" th:text="${r.op} + ' ' + ${r.threshold}">GT 0</td>
+        <td><span class="status" th:text="${r.status}">ACTIVE</span></td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${rules.isEmpty()}">尚无热规则。异常目前采用信任制。</p>
+  </section>
+
+  <section class="panel">
+    <h2>近期触发 / Recent hits</h2>
+    <table class="grid" th:if="${!hits.isEmpty()}">
+      <thead><tr><th>#</th><th>规则</th><th>事件</th><th>观测值</th><th>级别</th><th>时间</th></tr></thead>
+      <tbody>
+      <tr th:each="h : ${hits}">
+        <td class="pixel" th:text="${h.id}">-</td>
+        <td th:text="${h.ruleName}">-</td>
+        <td class="pixel" th:text="${h.eventType}">-</td>
+        <td class="num pixel" th:text="${h.observed}">0</td>
+        <td><span class="status" th:text="${h.severity}">WARN</span></td>
+        <td class="pixel" th:text="${h.createdAt}">-</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${hits.isEmpty()}">没有触发记录。数字们暂时表现良好。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

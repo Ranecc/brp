@@ -118,6 +118,9 @@ when landed.
 | P2-14 | Adapters: AE2 + Create metering hooks behind ModList guards | mod |
 | P2-15 | APS: fair-share scheduler + line rate cap enforcement (needs P2-11 runtime wiring) | backend+mod |
 | P2-16 ✓ | Contract sync: OpenAPI + events.md for everything above (kept live per slice) | contract |
+| P2-17 ✓ | Backend: reconciliation desk v1 (Σ balances ≡ 0, findings + hourly job + portal page) — docs/10 R-1 | backend |
+| P2-18 ✓ | Backend: L1 hot-rule table on fanOut (rules as data, hits + notify) — docs/10 R-2 | backend |
+| P2-19 ✓ | Backend: time-of-use chunk pricing (peak surcharge, integral cents) — docs/10 R-3b | backend |
 
 Task board discipline: a task leaves the board only with its tests and its
 docs in the same commit (CONTRIBUTING rule 0 still rules).

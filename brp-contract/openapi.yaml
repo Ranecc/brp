@@ -304,6 +304,45 @@ paths:
       responses:
         "200": {description: the slot, with fresh credit}
 
+  /api/v1/anomaly/rules:
+    get:
+      summary: L1 hot rules (rules are data, not code)
+      responses:
+        "200": {description: rule rows}
+    post:
+      summary: Create a hot rule (GT/GTE/LT/LTE/EQ on a numeric payload field)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, eventType, field, op, threshold]
+              properties:
+                name: {type: string}
+                eventType: {type: string}
+                field: {type: string}
+                op: {type: string, enum: [GT, GTE, LT, LTE, EQ]}
+                threshold: {type: number}
+                severity: {type: string}
+      responses:
+        "200": {description: the rule, live on the next telemetry batch}
+  /api/v1/anomaly/hits:
+    get:
+      summary: Recent rule firings (the paperwork of bad numbers)
+      responses:
+        "200": {description: hit rows}
+  /api/v1/reconciliation/run:
+    post:
+      summary: Run the reconciliation desk now (also scheduled hourly)
+      responses:
+        "200": {description: "{currenciesChecked, findingsFiled}"}
+  /api/v1/reconciliation/findings:
+    get:
+      summary: Imbalance findings, newest first
+      responses:
+        "200": {description: finding rows}
+
   /api/v1/teams:
     post:
       summary: Create a team (provisions the treasury account; docs/07)

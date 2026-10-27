@@ -6,8 +6,11 @@ import dev.brp.dto.ChunkDtos.GrantMinutesRequest;
 import dev.brp.dto.ChunkDtos.PowerRequest;
 import dev.brp.dto.EconomyDtos.EconomyDailyResponse;
 import dev.brp.dto.TpsReportResponse;
+import dev.brp.dto.AnomalyDtos.SetRuleRequest;
 import dev.brp.service.AgentMonitorService;
 import dev.brp.service.ChunkService;
+import dev.brp.service.HotRuleService;
+import dev.brp.service.ReconciliationService;
 import dev.brp.service.CurrencyService;
 import dev.brp.service.QuotaService;
 import dev.brp.service.ApprovalService;
@@ -39,11 +42,14 @@ public class PortalController {
     private final CurrencyService currencies;
     private final QuotaService quotas;
     private final ChunkService chunks;
+    private final ReconciliationService reconciliation;
+    private final HotRuleService hotRules;
 
     public PortalController(EconomyReportService economy, AgentMonitorService monitor,
                             TpsReportService tpsReports, ApprovalService approvals,
                             CurrencyService currencies, QuotaService quotas,
-                            ChunkService chunks) {
+                            ChunkService chunks, ReconciliationService reconciliation,
+                            HotRuleService hotRules) {
         this.economy = economy;
         this.monitor = monitor;
         this.tpsReports = tpsReports;
@@ -51,6 +57,8 @@ public class PortalController {
         this.currencies = currencies;
         this.quotas = quotas;
         this.chunks = chunks;
+        this.reconciliation = reconciliation;
+        this.hotRules = hotRules;
     }
 
     @GetMapping("/economy")
@@ -96,6 +104,26 @@ public class PortalController {
                              @PathVariable String chunkKey, @RequestParam long minutes) {
         chunks.grantMinutes(tenantId, dimension, chunkKey, new GrantMinutesRequest(minutes));
         return "redirect:/portal/chunks";
+    }
+
+    /** The reconciliation desk (docs/10 R-1/R-2): invariants, rules, hits. */
+    @GetMapping("/desk")
+    public String desk(Model model) {
+        model.addAttribute("report", reconciliation.reconcile());
+        model.addAttribute("findings", reconciliation.findings());
+        model.addAttribute("rules", hotRules.rules());
+        model.addAttribute("hits", hotRules.hits());
+        return "portal/desk";
+    }
+
+    @PostMapping("/desk/rules")
+    public String addRule(@org.springframework.web.bind.annotation.RequestParam String name,
+                          @org.springframework.web.bind.annotation.RequestParam String eventType,
+                          @org.springframework.web.bind.annotation.RequestParam String field,
+                          @org.springframework.web.bind.annotation.RequestParam String op,
+                          @org.springframework.web.bind.annotation.RequestParam double threshold) {
+        hotRules.create(new SetRuleRequest(name, eventType, field, op, threshold, "WARN"));
+        return "redirect:/portal/desk";
     }
 
     @GetMapping

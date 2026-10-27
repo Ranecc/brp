@@ -100,6 +100,9 @@ HALT 永远不等于「区块卸载」：原版模拟、移动与交互照常。
 | P2-14 | 适配器：AE2 + Create 计量钩子（ModList 守卫后） | mod |
 | P2-15 | APS：公平份额调度器 + 产线速率上限执行（依赖 P2-11 运行时接线） | backend+mod |
 | P2-16 ✓ | 契约同步：OpenAPI + events.md 随切片保持同步 | contract |
+| P2-17 ✓ | 后端：对账科 v1（Σ余额≡0 + 差异档案 + 小时任务 + 门户页）——docs/10 R-1 | backend |
+| P2-18 ✓ | 后端：L1 热规则表挂 fanOut（规则即数据 + 触发记录 + 通知）——docs/10 R-2 | backend |
+| P2-19 ✓ | 后端：区块分时电价（高峰加价，整数分）——docs/10 R-3b | backend |
 
 任务板纪律：任务离开看板时，测试与文档必须同 commit（CONTRIBUTING
 规则 0 依旧执政）。

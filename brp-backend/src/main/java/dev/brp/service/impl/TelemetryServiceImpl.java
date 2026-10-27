@@ -27,15 +27,18 @@ public class TelemetryServiceImpl implements TelemetryService {
     private final AgentMonitorService monitor;
     private final QuotaService quotas;
     private final dev.brp.service.ChunkService chunks;
+    private final dev.brp.service.HotRuleService hotRules;
     private final int maxBatchSize;
 
     public TelemetryServiceImpl(TelemetryRepository events, AgentMonitorService monitor,
                                 QuotaService quotas, dev.brp.service.ChunkService chunks,
+                                dev.brp.service.HotRuleService hotRules,
                                 @Value("${brp.telemetry.max-batch-size:1000}") int maxBatchSize) {
         this.events = events;
         this.monitor = monitor;
         this.quotas = quotas;
         this.chunks = chunks;
+        this.hotRules = hotRules;
         this.maxBatchSize = maxBatchSize;
     }
 
@@ -55,6 +58,9 @@ public class TelemetryServiceImpl implements TelemetryService {
                 events.saveAndFlush(new IngestedEventEntity(e.eventId(), e.agentId(), e.type()));
                 accepted++;
                 fanOut(e);
+                if (e.payload() instanceof Map<?, ?> p) {
+                    hotRules.evaluate(e.type() == null ? "" : e.type(), p);   // docs/10 R-2
+                }
             } catch (DataIntegrityViolationException race) {
                 duplicates++;
             }
