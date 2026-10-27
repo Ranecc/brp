@@ -6,8 +6,7 @@
 > on a close operational read — an underrated playbook. Summarized
 > below in our standard quarterly-review format. Shipped items are
 > checked; the remainder is scheduled. The unchecked ones are the
-> ones that would have shipped us; the first domino is already
-> minuted.
+> ones that would have shipped us.
 
 ## Volume I — production (doing more with less)
 
