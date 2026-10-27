@@ -3,6 +3,7 @@
 ![enterprise readiness](https://img.shields.io/badge/enterprise%20readiness-TBD-important)
 ![seriousness](https://img.shields.io/badge/seriousness-0%25-red)
 ![emeralds lost](https://img.shields.io/badge/emeralds%20lost-0-brightgreen)
+![compatibility](https://img.shields.io/badge/compatibility-best%20effort-orange)
 ![CI](https://github.com/Ranecc/brp/actions/workflows/ci.yml/badge.svg) <!-- the only real one -->
 
 
