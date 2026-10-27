@@ -9,6 +9,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import dev.brp.mod.desk.FormDesk;
 import net.minecraft.world.item.Items;
 
 import java.util.List;
@@ -22,22 +23,26 @@ import java.util.List;
  */
 public class FormTerminalMenu extends AbstractContainerMenu {
 
-    /** A pending form as the desk sees it. P2-10 replaces this stub feed. */
-    public record PendingForm(String formKey, String title, String submitter) {}
-
     private static final int TRAY_SIZE = 6;
 
-    private final List<PendingForm> forms;
+    private final List<FormDesk.PendingForm> forms;
     private int selected = -1;
 
     public FormTerminalMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, List.of(
-                new PendingForm("approval.withdrawal", "Withdrawal Request", "officer"),
-                new PendingForm("economy.repeg.vote", "Re-peg Vote", "owner"),
-                new PendingForm("wms.transfer", "Warehouse Transfer", "member")));
+        // P2-10: live paper when the agent has heard from the backend,
+        // sample tray when the wire is quiet — the desk never lies about
+        // which mode it is in.
+        this(containerId, playerInventory, FormDesk.live()
+                ? FormDesk.forms()
+                : List.of(new dev.brp.mod.desk.FormDesk.PendingForm(
+                                "approval.withdrawal", "Withdrawal Request", "officer"),
+                          new FormDesk.PendingForm(
+                                "economy.repeg.vote", "Re-peg Vote", "owner"),
+                          new FormDesk.PendingForm(
+                                "wms.transfer", "Warehouse Transfer", "member")));
     }
 
-    public FormTerminalMenu(int containerId, Inventory playerInventory, List<PendingForm> forms) {
+    public FormTerminalMenu(int containerId, Inventory playerInventory, List<FormDesk.PendingForm> forms) {
         super(BrpBlocks.FORM_TERMINAL_MENU.get(), containerId);
         this.forms = List.copyOf(forms);
 
@@ -77,11 +82,11 @@ public class FormTerminalMenu extends AbstractContainerMenu {
     }
 
     /** @return the form the player pointed at, or null (the desk stays calm). */
-    public PendingForm selectedForm() {
+    public FormDesk.PendingForm selectedForm() {
         return selected >= 0 && selected < forms.size() ? forms.get(selected) : null;
     }
 
-    public List<PendingForm> forms() {
+    public List<FormDesk.PendingForm> forms() {
         return forms;
     }
 

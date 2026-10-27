@@ -71,6 +71,11 @@ public class DispatchTerminalBlock extends BaseEntityBlock {
         }
 
         public net.minecraft.network.chat.Component statusLine() {
+            int orders = dev.brp.mod.desk.SignalDesk.pendingCount();
+            if (orders > 0) {
+                return net.minecraft.network.chat.Component.literal(
+                        orders + " signal order" + (orders == 1 ? "" : "s") + " pending");
+            }
             return net.minecraft.network.chat.Component.translatable(
                     "block.brp.dispatch_terminal.status.idle");
         }

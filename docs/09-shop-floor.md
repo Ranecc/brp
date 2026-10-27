@@ -111,7 +111,7 @@ when landed.
 | P2-07 ✓ | Mod: Form Terminal native menu/screen (form picker, vanilla widgets) | mod |
 | P2-08 ✓ | Mod: ChunkGovernor decision engine (pure Java) + unit tests | mod |
 | P2-09 ✓ | Mod: BE gating — terminals refuse duty on HALT via `GovernorFeed` (fetch wiring rides P2-12) | mod |
-| P2-10 | Mod: Dispatch Terminal order inbox/outbox + live form feed over `BrpServerApi` | mod |
+| P2-10 ✓ | Mod: live form feed (`FormDesk` -> Form Terminal tray) + Dispatch Terminal signal status (`SignalDesk`) | mod |
 | P2-11 ✓ | Mod: Line Controller pipeline program + conditional boot evaluator (`PipelineProgram`) | mod |
 | P2-12 ✓ | Mod: load-minute reporter (`chunk.load.minutes`) + governor poll feeding `GovernorFeed` + dedicated-server lifecycle wiring (BrpAgent) | mod |
 | P2-13 ✓ | Portal: chunk console (list / power switch / credit grants) | portal |

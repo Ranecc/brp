@@ -50,6 +50,11 @@ public interface BrpServerApi {
     /** P2-12: registered slots; the meter reports loaded ∩ registered only. */
     CompletableFuture<List<ChunkSlot>> getChunks(String tenantId);
 
+    /** P2-10: the tenant's PENDING forms — the Form Terminal's paper tray. */
+    record FormRow(String id, String memo, long amountCents, String requesterUuid) {}
+
+    CompletableFuture<List<FormRow>> getForms(String tenantId);
+
     // --- command plane (idempotent writes) ---
 
     record JournalLine(String accountNo, String direction, long amountCents, String memo) {}

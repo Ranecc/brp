@@ -8,6 +8,8 @@ import dev.brp.mod.client.BrpServerApi;
 import dev.brp.mod.client.BrpServerApi.EventDto;
 import dev.brp.mod.client.BrpServerApi.PlayerRef;
 import dev.brp.common.event.BrpEventTypes;
+import dev.brp.mod.desk.FormDesk;
+import dev.brp.mod.desk.SignalDesk;
 import dev.brp.mod.governor.ChunkGovernor;
 import dev.brp.mod.governor.GovernorFeed;
 import dev.brp.mod.queue.DiskBackedEventQueue;
@@ -81,6 +83,7 @@ public final class AgentRuntime {
         schedule(this::syncPlayers, cfg.playerSyncEvery());
         schedule(this::pollGovernor, cfg.governorEvery());
         schedule(this::reportChunkMinutes, Duration.ofSeconds(60));
+        schedule(this::pollDesks, cfg.governorEvery());   // P2-10: paper and orders
         log.accept("[BRP] agent runtime up: agent=" + cfg.agentId()
                 + " wal=" + wal.backlogSize());
     }
@@ -215,6 +218,33 @@ public final class AgentRuntime {
                     "minutes", 1L));
         }
         return out;
+    }
+
+    /**
+     * Stage 6 (P2-10): feed the Form Terminal's paper tray and the Dispatch
+     * Terminal's order count from the backend. Empty results are honest —
+     * no pending forms IS the happy path of bureaucracy.
+     */
+    private void pollDesks() {
+        api.getForms(cfg.tenantId()).thenAccept(rows ->
+                FormDesk.publish(rows.stream()
+                        .map(r -> new FormDesk.PendingForm(
+                                "approval.withdrawal",
+                                (r.memo() == null || r.memo().isBlank()
+                                        ? "Withdrawal request" : r.memo())
+                                        + " (" + (r.amountCents() / 100) + " BRC)",
+                                r.requesterUuid()))
+                        .toList()))
+                .exceptionally(t -> {
+                    log.accept("[BRP] form desk poll failed: " + t.getMessage());
+                    return null;
+                });
+        api.pollSignals(cfg.tenantId()).thenAccept(poll ->
+                        SignalDesk.publish(poll.pending() == null ? 0 : poll.pending().size()))
+                .exceptionally(t -> {
+                    log.accept("[BRP] signal desk poll failed: " + t.getMessage());
+                    return null;
+                });
     }
 
     private volatile Set<String> registeredChunks = Set.of();

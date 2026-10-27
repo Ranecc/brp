@@ -97,6 +97,16 @@ public final class HttpBrpClient implements BrpServerApi {
     }
 
     @Override
+    public CompletableFuture<List<FormRow>> getForms(String tenantId) {
+        return send("GET", "/api/v1/approvals/requests?teamId=" + tenantId
+                        + "&status=PENDING", null)
+                .thenApply(body -> {
+                    Type t = new TypeToken<List<FormRow>>() {}.getType();
+                    return gson.<List<FormRow>>fromJson(body, t);
+                });
+    }
+
+    @Override
     public CompletableFuture<SignalPoll> pollSignals(String tenantId) {
         return send("GET", "/api/v1/tenants/" + tenantId + "/signals/poll", null)
                 .thenApply(body -> gson.fromJson(body, SignalPoll.class));
