@@ -28,10 +28,17 @@ public class FormTerminalBlock extends Block {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        if (!level.isClientSide) {
-            player.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> new FormTerminalMenu(id, inv), TITLE));
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
         }
+        // The desk checks credentials with the governor first: HALT means
+        // the paperwork is on strike too (docs/09 section 4).
+        if (BrpBlocks.verdictAt(level, pos) == dev.brp.mod.governor.ChunkGovernor.Verdict.HALT) {
+            player.displayClientMessage(BrpBlocks.STRIKE_MSG, true);
+            return InteractionResult.SUCCESS;
+        }
+        player.openMenu(new SimpleMenuProvider(
+                (id, inv, p) -> new FormTerminalMenu(id, inv), TITLE));
         return InteractionResult.SUCCESS;
     }
 }

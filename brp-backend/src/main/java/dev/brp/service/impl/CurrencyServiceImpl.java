@@ -1,10 +1,12 @@
 package dev.brp.service.impl;
 
+import dev.brp.common.BadRequestException;
 import dev.brp.common.ConflictException;
 import dev.brp.common.annotation.Atomic;
 import dev.brp.common.annotation.Idempotent;
 import dev.brp.dto.CurrencyDtos.CurrencyResponse;
 import dev.brp.dto.CurrencyDtos.RegisterCurrencyRequest;
+import dev.brp.dto.CurrencyDtos.UpdateCurrencyRequest;
 import dev.brp.entity.CurrencyEntity;
 import dev.brp.mapper.CurrencyMapper;
 import dev.brp.repository.CurrencyRepository;
@@ -37,8 +39,20 @@ public class CurrencyServiceImpl implements CurrencyService {
         currencies.findById(req.code()).ifPresent(c -> {
             throw ConflictException.of("economy.currency.duplicate");
         });
-        return mapper.toDto(currencies.save(
-                new CurrencyEntity(req.code(), req.name(), req.symbol(), req.decimals())));
+        CurrencyEntity fresh = new CurrencyEntity(req.code(), req.name(), req.symbol(), req.decimals());
+        fresh.setBearerItemId(req.bearerItemId());
+        return mapper.toDto(currencies.save(fresh));
+    }
+
+    @Override
+    @Atomic
+    public CurrencyResponse update(String code, UpdateCurrencyRequest req) {
+        CurrencyEntity c = currencies.findById(code)
+                .orElseThrow(() -> new BadRequestException("economy.currency.unknown"));
+        c.setName(req.name());
+        c.setSymbol(req.symbol());
+        c.setBearerItemId(req.bearerItemId());   // null = back to pure ledger currency
+        return mapper.toDto(currencies.save(c));
     }
 
     @Override

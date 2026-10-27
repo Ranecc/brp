@@ -47,6 +47,13 @@ public class LineControllerBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (BrpBlocks.verdictAt(level, pos) == ChunkGovernor.Verdict.HALT) {
+            player.displayClientMessage(BrpBlocks.STRIKE_MSG, true);
+            return InteractionResult.SUCCESS;
+        }
         if (level.getBlockEntity(pos) instanceof LineControllerBlockEntity be) {
             player.displayClientMessage(be.statusLine(), true);
         }

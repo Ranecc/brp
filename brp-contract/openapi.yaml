@@ -150,6 +150,23 @@ paths:
       responses:
         "200": {description: previous printer statuses, faithfully archived}
 
+  /api/v1/currencies/{code}:
+    patch:
+      summary: Edit display fields only (name/symbol/bearerItemId); code is immutable — rebranding is marketing, re-identifying is fraud
+      parameters: [{name: code, in: path, required: true, schema: {type: string}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, symbol]
+              properties:
+                name: {type: string}
+                symbol: {type: string}
+                bearerItemId: {type: string, nullable: true, description: null = pure ledger currency}
+      responses:
+        "200": {description: the currency, rebranded but same identity}
   /api/v1/currencies:
     post:
       summary: Register a currency (owner console; BRC ships pre-registered)
@@ -165,6 +182,7 @@ paths:
                 name: {type: string}
                 symbol: {type: string}
                 decimals: {type: integer, minimum: 0, maximum: 8}
+                bearerItemId: {type: string, nullable: true, description: the item the mint window dispenses (V11); null = pure ledger currency}
       responses:
         "200": {description: registered}
         "409": {description: duplicate code — minting duplicates is a three-letter agency's job}
@@ -224,6 +242,25 @@ paths:
       parameters: [{name: tenantId, in: path, required: true, schema: {type: string}}]
       responses:
         "200": {description: slot rows with credit balances}
+  /api/v1/chunks/{tenantId}/{dimension}/{chunkKey}/purchase:
+    post:
+      summary: Buy chunk-load minutes (prepaid; money path through the ledger, idemKey guards money AND minutes)
+      parameters:
+        - {name: tenantId, in: path, required: true, schema: {type: string}}
+        - {name: dimension, in: path, required: true, schema: {type: string}}
+        - {name: chunkKey, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [minutes, idemKey]
+              properties:
+                minutes: {type: integer, format: int64, minimum: 1}
+                idemKey: {type: string}
+      responses:
+        "200": {description: the slot with fresh credit; replays return the same answer}
   /api/v1/chunks/{tenantId}/governor:
     get:
       summary: Governor read model for the agent (RUN/THROTTLE/HALT per chunk, docs/09 §4)

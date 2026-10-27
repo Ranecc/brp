@@ -44,4 +44,29 @@ class PortalConsoleTest {
                 .andExpect(content().string(containsString(tenant)))
                 .andExpect(content().string(containsString("Chunk gluttony")));
     }
+
+    @Test
+    void chunkConsoleListsSlotsVerdictsAndFlipsTheRemoteSwitch() throws Exception {
+        String tenant = "cc-" + java.util.UUID.randomUUID().toString().substring(0, 6);
+        mvc.perform(MockMvcRequestBuilders.get("/portal/chunks"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Managed chunks")));
+
+        // register via API, flip power from the console, verdict follows
+        mvc.perform(MockMvcRequestBuilders.post("/api/v1/chunks/" + tenant)
+                        .contentType("application/json")
+                        .content("{\"dimension\":\"minecraft:overworld\",\"chunkKey\":\"7,7\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(MockMvcRequestBuilders.post(
+                        "/portal/chunks/" + tenant + "/minecraft:overworld/7,7/power")
+                        .param("enabled", "false"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/portal/chunks"));
+
+        mvc.perform(MockMvcRequestBuilders.get("/portal/chunks"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(tenant)))
+                .andExpect(content().string(containsString("HALT")))
+                .andExpect(content().string(containsString("DISABLED_BY_ADMIN")));
+    }
 }

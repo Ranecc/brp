@@ -4,6 +4,7 @@ import dev.brp.dto.ChunkDtos.ChunkSlotResponse;
 import dev.brp.dto.ChunkDtos.GovernorStatusResponse;
 import dev.brp.dto.ChunkDtos.GrantMinutesRequest;
 import dev.brp.dto.ChunkDtos.PowerRequest;
+import dev.brp.dto.ChunkDtos.PurchaseCreditsRequest;
 import dev.brp.dto.ChunkDtos.RegisterChunkRequest;
 import dev.brp.service.ChunkService;
 import jakarta.validation.Valid;
@@ -59,5 +60,14 @@ public class ChunkController {
                                    @PathVariable String chunkKey,
                                    @Valid @RequestBody GrantMinutesRequest req) {
         return chunkService.grantMinutes(tenantId, dimension, chunkKey, req);
+    }
+
+    /** Money path: prepaid credits. Ledger idempotency key rides the request. */
+    @PostMapping("/{tenantId}/{dimension}/{chunkKey}/purchase")
+    public ChunkSlotResponse purchase(@PathVariable String tenantId,
+                                      @PathVariable String dimension,
+                                      @PathVariable String chunkKey,
+                                      @Valid @RequestBody PurchaseCreditsRequest req) {
+        return chunkService.purchaseCredits(tenantId, dimension, chunkKey, req);
     }
 }

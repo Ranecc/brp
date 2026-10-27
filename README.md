@@ -14,7 +14,8 @@
 > Delivering an *unadulterated*, E-n-t-e-r-p-r-i-s-e-grade Spring Boot experience in Minecraft XD
 >
 > It is my great honour to introduce: SaaS multi-tenant player guilds,
-> guild SCM & EHR, vanilla-redstone / mod-powered MES/APS, material WMS,
+> guild SCM & EHR, order-to-cash & escrowed agreements,
+> vanilla-redstone / mod-powered MES/APS, material WMS,
 > server-wide financial markets & consolidated finance,
 > and a server TPS trade market (๑•̀ㅂ•́)و✧
 >
@@ -37,7 +38,7 @@ brp/
 ├── docs/          # design docs (canonical English, .zh.md translations)
 ├── brp-contract/  # OpenAPI + event contract (single truth for both sides)
 ├── brp-common/    # zero-dependency shared kit: @Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot service (compiles; 42/42 tests green (+4 mod-side governor units), CI-enforced)
+├── brp-backend/   # Spring Boot service (compiles; 50/50 tests green (+10 mod-side units), CI-enforced)
 └── brp-mod/       # universal single-jar mod: ACL ports, sidecar supervisor,
                    # adapter SPI, WAL queue, SQLite/Caffeine local store plan
 ```
@@ -59,13 +60,14 @@ server) or fully standalone via docker-compose — same jar either way
 - [07-tenants](docs/07-tenants.md) — guild-specialized tenants, native + FTB Teams compat
 - [08-bridge-api](docs/08-bridge-api.md) — stable surface for third-party bridge mods
 - [09-shop-floor](docs/09-shop-floor.md) — P2: shop-floor terminals (dispatch/line/form), chunk governance, APS balancing, task board ⭐
+- [10-business-map](docs/10-business-map.md) — the missing half of the ERP: order-to-cash spine, agreements, projects; what ships as a field, what is vetoed ⭐
 
 ## Quick start (backend)
 
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # 42/42 green or no commit: ledger, saga, approvals, chunk governance, portal — go touch grass while it runs
+mvn -pl brp-backend -am test    # 50/50 green or no commit: ledger, saga, approvals, chunk billing, currency edits, portal — go touch grass while it runs
 ```
 
 ## Roadmap
@@ -74,9 +76,9 @@ mvn -pl brp-backend -am test    # 42/42 green or no commit: ledger, saga, approv
 |---|---|---|
 | P0 | repo + contracts + ledger core (idempotent, double-entry) + agent skeleton | ✅ this repo |
 | P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V), currency registry, machine-slot quotas + chunk incidents, i18n copy, outbox + Discord wiring, portal console (overview/approvals/economy/quotas pages + verdict actions) done; portal auth/RBAC + agent runtime wiring pending | 🚧 |
-| P2 | WMS adapters (vanilla → AE2 → Create) + dashboards + alerts | ⬜ |
-| P3 | MRP (BOM explosion + work orders) | ⬜ |
-| P4 | APS + machine monitoring + signal hub | ⬜ |
+| P2 | WMS adapters (vanilla → AE2 → Create) + inbound discrepancy & transfer orders + villager-mint metering events (docs/03 §10) + dashboards + alerts | ⬜ |
+| P3 | MRP (sales-order spine → BOM explosion + work orders, completion costing) + agreements/escrow + mint-fee engine | ⬜ |
+| P4 | APS + machine monitoring + downtime ledger + signal hub + projects & asset registry | ⬜ |
 | P5 | exchange/futures, k8s + helm chart (the performance-art finale) | ⬜ |
 
 ## Licensing

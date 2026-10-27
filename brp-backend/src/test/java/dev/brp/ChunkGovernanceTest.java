@@ -20,9 +20,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * The governor's decision table, end to end (docs/09 section 4): register
  * idempotently, feed the meter, flip the remote switch, and never let a
- * verdict touch a player's legs.
+ * verdict touch a player's legs. Starter credits are OFF here — this class
+ * tests the table, not the welcome package (ChunkBillingTest owns that).
  */
-@SpringBootTest
+@SpringBootTest(properties = "brp.chunk.governor.starter-minutes=0")
 class ChunkGovernanceTest {
 
     @Autowired ChunkService chunks;

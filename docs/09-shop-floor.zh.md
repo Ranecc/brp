@@ -37,20 +37,22 @@ lang/tooltip 里。需要脚注才能看懂的名字没通过 code review。
 
 - **受管区块**：租户登记区块槽位（配额资源 `chunk_ticket`，V8 注释里
   早已预留）。登记按（租户，维度，区块）幂等。
-- **计量**：agent 按分钟桶上报每区块 `chunk.load.minutes`；后端累计
-  加载分钟数。
-- **计费**：小时任务把累计分钟按租户金库 → `SYSTEM_SINK` 结算，幂等键
-  模式 `chunk:{tenant}:{minute}`（对齐 docs/03 §9 的 `tax:tenant:minute`
-  模式）。区块加载单价由腐竹按货币配置；钱路不开玩笑。
+- **计量**：agent 按分钟桶上报每区块 `chunk.load.minutes`；后端即时燃烧
+  预付信用（行级锁；信用可为负——负债可见，绝不藏账）。
+- **计费（预付费）**：租户**购买**区块加载分钟（`purchase` 端点）：
+  `treasury` CREDIT → `chunk-sink`（SYSTEM_SINK）DEBIT，走账本同事务幂等；
+  V12 在同一事务单元里守护分钟数发放——钱只扣一次，分钟只发一次。信用
+  归零 → HALT + 一次通知。单价由腐竹配置（`brp.chunk.billing.cents-per-minute`，
+  默认 0 = 免费算力，即开发模式）。只收整数分；浮点数进钱路是开除级事故。
 - **管理者远程开关**：腐竹/官员可在控制台 DISABLE 受管区块；治理器必须
   在一个上报周期内停下该区块内 BRP 掌控的活动。移动、交互、渲染永远
   不碰——我们治理机器，不治理玩家。
 - **野加载**（未登记区块里的第三方区块加载器）：检测、按野加载费率计量、
   可归因则记到所属租户账上、通知管理员（沿用 NOTIFY 姿态）。BRP 不去拔
   别家模组的 ticket——那是人类的撬棍。
-- **起家宽限**：每个新租户经 FAUCET 领取起家补贴（和所有水龙头事件一样
-  入账，绝不在数学里藏折扣）：一份区块加载分钟包 + 首台机器许可。起家
-  不需要找高利贷。
+- **起家补贴**：每个租户**首个**登记槽位自带起家信用包（默认 1440 分钟，
+  `brp.chunk.governor.starter-minutes`）——起家发的是信用，不是货币：
+  账本永远不为入驻铸币。控制台可再充值。起家不需要找高利贷。
 
 ## 4. 治理器（决策表）
 
@@ -84,20 +86,20 @@ HALT 永远不等于「区块卸载」：原版模拟、移动与交互照常。
 |---|---|---|
 | P2-01 ✓ | 后端：V10 `managed_chunks` + 区块槽位 CRUD（登记/列表）+ 测试 | backend |
 | P2-02 ✓ | 后端：治理只读视图端点（agent 用：RUN/THROTTLE/HALT 输入量） | backend |
-| P2-03 | 后端：管理员远程启停 + 审计 + 门户区块控制台页 | backend+portal |
-| P2-04 | 后端：`chunk.load.minutes` 累计 + 小时结算到 SYSTEM_SINK（`chunk:{tenant}:{minute}` 幂等） | backend |
-| P2-05 | 后端：入驻起家补贴走 FAUCET（区块分钟 + 首台机器许可） | backend |
+| P2-03 ✓ | 后端：管理员远程启停 + 审计 + 门户区块控制台页 | backend+portal |
+| P2-04 ✓ | 后端：预付费计费——`purchase`（账本钱路，V12 幂等）+ `chunk.load.minutes` 燃烧 | backend |
+| P2-05 ✓ | 后端：首槽起家信用包（`starter-minutes`，发信用不发货币） | backend |
 | P2-06 ✓ | Mod：注册地基 + 终端三件套方块 + BE + 创造物品栏 | mod |
 | P2-07 ✓ | Mod：表单终端原生 menu/screen（选表单，原版控件） | mod |
 | P2-08 ✓ | Mod：ChunkGovernor 决策引擎（纯 Java）+ 单元测试 | mod |
-| P2-09 | Mod：BE 门控——BRP 机械服从治理判决 | mod |
-| P2-10 | Mod：调度终端工单收发（走 `BrpServerApi`） | mod |
-| P2-11 | Mod：产线控制器流水线程序 + 条件开机求值器 | mod |
-| P2-12 | Mod：区块 ticket agent + 加载分钟上报（`chunk.load.minutes`） | mod |
-| P2-13 | 门户：区块控制台（列表/开关/账单视图） | portal |
+| P2-09 ✓ | Mod：终端门控——HALT 时经 `GovernorFeed` 拒绝履职（拉取接线随 P2-12） | mod |
+| P2-10 | Mod：调度终端工单收发 + 表单终端实数据（走 `BrpServerApi`） | mod |
+| P2-11 ✓ | Mod：产线控制器流水线程序 + 条件开机求值器（`PipelineProgram`） | mod |
+| P2-12 | Mod：区块 ticket agent + 加载分钟上报 + 治理轮询（喂 `GovernorFeed`） | mod |
+| P2-13 ✓ | 门户：区块控制台（列表/开关/信用充值） | portal |
 | P2-14 | 适配器：AE2 + Create 计量钩子（ModList 守卫后） | mod |
-| P2-15 | APS：公平份额调度器 + 产线速率上限执行（依赖 P2-11） | backend+mod |
-| P2-16 | 契约同步：OpenAPI + events.md 覆盖以上全部 | contract |
+| P2-15 | APS：公平份额调度器 + 产线速率上限执行（依赖 P2-11 运行时接线） | backend+mod |
+| P2-16 ✓ | 契约同步：OpenAPI + events.md 随切片保持同步 | contract |
 
 任务板纪律：任务离开看板时，测试与文档必须同 commit（CONTRIBUTING
 规则 0 依旧执政）。

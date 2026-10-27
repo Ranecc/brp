@@ -18,6 +18,8 @@ public class CurrencyEntity {
     private String symbol;
     private int decimals;
     private String status = "ACTIVE";
+    /** NULL = pure ledger currency; the mint window dispenses non-null items (docs/03 section 9). */
+    private String bearerItemId;
     private Instant createdAt = Instant.now();
 
     protected CurrencyEntity() {}
@@ -34,4 +36,9 @@ public class CurrencyEntity {
     public String getSymbol() { return symbol; }
     public int getDecimals() { return decimals; }
     public String getStatus() { return status; }
+    public String getBearerItemId() { return bearerItemId; }
+
+    public void setName(String name) { this.name = name; }
+    public void setSymbol(String symbol) { this.symbol = symbol; }
+    public void setBearerItemId(String bearerItemId) { this.bearerItemId = bearerItemId; }
 }

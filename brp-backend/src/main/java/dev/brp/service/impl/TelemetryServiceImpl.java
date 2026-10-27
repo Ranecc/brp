@@ -26,14 +26,16 @@ public class TelemetryServiceImpl implements TelemetryService {
     private final TelemetryRepository events;
     private final AgentMonitorService monitor;
     private final QuotaService quotas;
+    private final dev.brp.service.ChunkService chunks;
     private final int maxBatchSize;
 
     public TelemetryServiceImpl(TelemetryRepository events, AgentMonitorService monitor,
-                                QuotaService quotas,
+                                QuotaService quotas, dev.brp.service.ChunkService chunks,
                                 @Value("${brp.telemetry.max-batch-size:1000}") int maxBatchSize) {
         this.events = events;
         this.monitor = monitor;
         this.quotas = quotas;
+        this.chunks = chunks;
         this.maxBatchSize = maxBatchSize;
     }
 
@@ -78,6 +80,12 @@ public class TelemetryServiceImpl implements TelemetryService {
                     if (e.tenantId() != null) {
                         quotas.recordChunkPerformance(e.tenantId(), str(p.get("dimension")),
                                 str(p.get("chunk")), num(p.get("costScore")));
+                    }
+                }
+                case BrpEventTypes.CHUNK_LOAD_MINUTES -> {
+                    if (e.tenantId() != null) {
+                        chunks.accrueMinutes(e.tenantId(), str(p.get("dimension")),
+                                str(p.get("chunkKey")), (long) num(p.get("minutes")));
                     }
                 }
                 default -> { /* plain telemetry, no fan-out */ }

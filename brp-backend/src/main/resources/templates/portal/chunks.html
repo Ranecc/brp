@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 区块')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('chunks')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('区块治理 Chunks')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>受管区块 / Managed chunks <span class="tag">RUN · THROTTLE · HALT</span></h2>
+    <p class="empty" style="margin-top:0">
+      HALT 只停 BRP 机械，不停玩家。机器罢工了，世界没有。
+    </p>
+    <table class="grid" th:if="${!rows.isEmpty()}">
+      <thead>
+      <tr><th>租户</th><th>维度</th><th>区块</th><th>状态</th><th>信用分钟</th><th>判决</th><th>理由</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+      <tr th:each="r : ${rows}">
+        <td class="pixel" th:text="${r.slot.tenantId}">-</td>
+        <td th:text="${r.slot.dimension}">-</td>
+        <td class="pixel" th:text="${r.slot.chunkKey}">-</td>
+        <td><span class="status" th:text="${r.slot.status}">ACTIVE</span></td>
+        <td class="num pixel" th:text="${r.slot.creditMinutes}">0</td>
+        <td><span class="status"
+                  th:classappend="${r.verdict}=='RUN' ? 'ok' : (${r.verdict}=='HALT' ? 'bad' : '')"
+                  th:text="${r.verdict}">RUN</span></td>
+        <td class="pixel" th:text="${r.reason}">OK</td>
+        <td>
+          <form class="verdict" style="display:inline-flex;gap:4px"
+                th:action="@{'/portal/chunks/' + ${r.slot.tenantId} + '/' + ${r.slot.dimension} + '/' + ${r.slot.chunkKey} + '/power'}"
+                method="post">
+            <input type="hidden" name="enabled" th:value="${r.slot.status} == 'DISABLED'"/>
+            <button type="submit" class="btn"
+                    th:text="${r.slot.status} == 'DISABLED' ? '通电 / ON' : '关停 / OFF'">OFF</button>
+          </form>
+          <form class="verdict" style="display:inline-flex;gap:4px"
+                th:action="@{'/portal/chunks/' + ${r.slot.tenantId} + '/' + ${r.slot.dimension} + '/' + ${r.slot.chunkKey} + '/grant'}"
+                method="post">
+            <input name="minutes" type="number" min="1" value="60" style="min-width:64px"/>
+            <button type="submit" class="btn approve">+分钟</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${rows.isEmpty()}">尚无受管区块。电表在等它的第一批客户。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

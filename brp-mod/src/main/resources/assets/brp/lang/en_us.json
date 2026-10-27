@@ -6,5 +6,6 @@
   "block.brp.dispatch_terminal.status.idle": "Orders in, signals out. The desk is watching.",
   "block.brp.line_controller.status.unprogrammed": "No program loaded. The line idles, blame-free.",
   "screen.brp.form_terminal": "Form Terminal",
-  "screen.brp.form_terminal.hint": "Click a form to select. Filing routes via the agent."
+  "screen.brp.form_terminal.hint": "Click a form to select. Filing routes via the agent.",
+  "block.brp.strike": "The machines are on strike; the world is not. (chunk governance: HALT)"
 }

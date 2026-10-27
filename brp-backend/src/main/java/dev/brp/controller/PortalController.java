@@ -2,12 +2,12 @@ package dev.brp.controller;
 
 import dev.brp.dto.ApprovalDtos.Decision;
 import dev.brp.dto.ApprovalDtos.WithdrawalRequestResponse;
+import dev.brp.dto.ChunkDtos.GrantMinutesRequest;
+import dev.brp.dto.ChunkDtos.PowerRequest;
 import dev.brp.dto.EconomyDtos.EconomyDailyResponse;
 import dev.brp.dto.TpsReportResponse;
-import dev.brp.dto.CurrencyDtos.CurrencyResponse;
-import dev.brp.dto.QuotaDtos.ChunkIncidentResponse;
-import dev.brp.dto.QuotaDtos.QuotaBucketResponse;
 import dev.brp.service.AgentMonitorService;
+import dev.brp.service.ChunkService;
 import dev.brp.service.CurrencyService;
 import dev.brp.service.QuotaService;
 import dev.brp.service.ApprovalService;
@@ -38,16 +38,19 @@ public class PortalController {
     private final ApprovalService approvals;
     private final CurrencyService currencies;
     private final QuotaService quotas;
+    private final ChunkService chunks;
 
     public PortalController(EconomyReportService economy, AgentMonitorService monitor,
                             TpsReportService tpsReports, ApprovalService approvals,
-                            CurrencyService currencies, QuotaService quotas) {
+                            CurrencyService currencies, QuotaService quotas,
+                            ChunkService chunks) {
         this.economy = economy;
         this.monitor = monitor;
         this.tpsReports = tpsReports;
         this.approvals = approvals;
         this.currencies = currencies;
         this.quotas = quotas;
+        this.chunks = chunks;
     }
 
     @GetMapping("/economy")
@@ -72,6 +75,27 @@ public class PortalController {
                            @RequestParam long limit) {
         quotas.setLimit(tenantId, resource, limit);
         return "redirect:/portal/quotas";
+    }
+
+    /** Chunk console (docs/09 section 3): every slot, its verdict, the switch. */
+    @GetMapping("/chunks")
+    public String chunksPage(Model model) {
+        model.addAttribute("rows", chunks.adminRows());
+        return "portal/chunks";
+    }
+
+    @PostMapping("/chunks/{tenantId}/{dimension}/{chunkKey}/power")
+    public String chunkPower(@PathVariable String tenantId, @PathVariable String dimension,
+                             @PathVariable String chunkKey, @RequestParam boolean enabled) {
+        chunks.setPower(tenantId, dimension, chunkKey, new PowerRequest(enabled));
+        return "redirect:/portal/chunks";
+    }
+
+    @PostMapping("/chunks/{tenantId}/{dimension}/{chunkKey}/grant")
+    public String chunkGrant(@PathVariable String tenantId, @PathVariable String dimension,
+                             @PathVariable String chunkKey, @RequestParam long minutes) {
+        chunks.grantMinutes(tenantId, dimension, chunkKey, new GrantMinutesRequest(minutes));
+        return "redirect:/portal/chunks";
     }
 
     @GetMapping

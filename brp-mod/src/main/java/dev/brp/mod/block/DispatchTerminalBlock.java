@@ -1,7 +1,7 @@
 package dev.brp.mod.block;
 
 import com.mojang.serialization.MapCodec;
-import dev.brp.mod.governor.ChunkGovernor;
+import dev.brp.mod.governor.ChunkGovernor;   // still used by the BE's gate() below
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -49,8 +49,14 @@ public class DispatchTerminalBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        // P2-09 gates this on the governor verdict; until then the terminal
-        // answers with its status so the skeleton is observable in-game.
+        // P2-09: the gate. HALT = the desk is on strike; the player walks on.
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (BrpBlocks.verdictAt(level, pos) == ChunkGovernor.Verdict.HALT) {
+            player.displayClientMessage(BrpBlocks.STRIKE_MSG, true);
+            return InteractionResult.SUCCESS;
+        }
         if (level.getBlockEntity(pos) instanceof DispatchTerminalBlockEntity be) {
             player.displayClientMessage(be.statusLine(), true);
         }

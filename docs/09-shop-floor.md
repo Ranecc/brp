@@ -44,11 +44,15 @@ Chunk loading is server compute; compute is metered and billed.
   `chunk_ticket`, already reserved in V8's comment). Registration is
   idempotent per (tenant, dimension, chunk).
 - **Metering**: the agent reports `chunk.load.minutes` per chunk per
-  minute-bucket; the backend accrues load-minutes.
-- **Billing**: hourly job bills accrued load-minutes against the tenant
-  treasury → `SYSTEM_SINK`, idempotency key pattern `chunk:{tenant}:{minute}`
-  (mirrors the `tax:tenant:minute` pattern from docs/03 §9). Chunkload
-  pricing is owner-configured per currency; no money math jokes.
+  minute-bucket; the backend burns prepaid credits as they arrive
+  (row-locked; credit may go negative — debt stays visible, never hidden).
+- **Billing (prepaid)**: tenants PURCHASE chunk-load minutes (`purchase`
+  endpoint): `treasury` CREDIT → `chunk-sink` (SYSTEM_SINK) DEBIT through
+  the ledger's same-transaction idempotency; V12 guards the minutes grant
+  in the same unit — money charged once, minutes granted once. Crossing
+  zero → HALT + one notification. Price is owner-configured
+  (`brp.chunk.billing.cents-per-minute`, default 0 = free compute, i.e.
+  dev mode). Integral cents only; float money is a firing offense.
 - **Admin remote switch**: owner/officer can DISABLE a managed chunk from
   the console; the governor must halt BRP-controlled activity in that
   chunk within one report cycle. Movement, interaction and rendering are
@@ -57,10 +61,10 @@ Chunk loading is server compute; compute is metered and billed.
   detected, metered at the rogue rate, billed to the owning tenant if
   attributable, notified to admins (existing NOTIFY posture). BRP does not
   rip out other mods' tickets — that is a human's crowbar.
-- **Grace / bootstrap**: every new tenant gets a starter grant via the
-  FAUCET (booked like every other faucet event, never a discount hiding in
-  the math): a chunkload-minute bundle + the first machine license. 起家
-  stays possible without a loan shark.
+- **Bootstrap**: the FIRST registered slot ships a starter credit bundle
+  (default 1440 minutes, `brp.chunk.governor.starter-minutes`) — starter
+  CREDITS, not currency: the ledger never mints onboarding. Console
+  top-ups grant more. 起家 stays possible without a loan shark.
 
 ## 4. The Governor (decision table)
 
@@ -100,20 +104,20 @@ when landed.
 |---|---|---|
 | P2-01 ✓ | Backend: V10 `managed_chunks` + chunk slot CRUD (register/list) + tests | backend |
 | P2-02 ✓ | Backend: governor read model endpoint (agent-facing status: RUN/THROTTLE/HALT inputs) | backend |
-| P2-03 | Backend: admin remote power on/off + audit + portal chunk console page | backend+portal |
-| P2-04 | Backend: `chunk.load.minutes` accrual + hourly billing to SYSTEM_SINK (`chunk:{tenant}:{minute}` idem) | backend |
-| P2-05 | Backend: onboarding grace grants via FAUCET (chunk minutes + first machine license) | backend |
+| P2-03 ✓ | Backend: admin remote power on/off + audit + portal chunk console page | backend+portal |
+| P2-04 ✓ | Backend: prepaid billing — `purchase` (ledger money path, V12 idem) + `chunk.load.minutes` accrual | backend |
+| P2-05 ✓ | Backend: first-slot starter credit bundle (`starter-minutes`, credits not currency) | backend |
 | P2-06 ✓ | Mod: registry foundation + three terminal blocks + BEs + creative tab | mod |
 | P2-07 ✓ | Mod: Form Terminal native menu/screen (form picker, vanilla widgets) | mod |
 | P2-08 ✓ | Mod: ChunkGovernor decision engine (pure Java) + unit tests | mod |
-| P2-09 | Mod: BE gating — BRP machinery obeys governor verdicts | mod |
-| P2-10 | Mod: Dispatch Terminal order inbox/outbox over `BrpServerApi` | mod |
-| P2-11 | Mod: Line Controller pipeline program + conditional boot evaluator | mod |
-| P2-12 | Mod: chunk ticket agent + load-minute reporter (`chunk.load.minutes`) | mod |
-| P2-13 | Portal: chunk console (list / power switch / billing view) | portal |
+| P2-09 ✓ | Mod: BE gating — terminals refuse duty on HALT via `GovernorFeed` (fetch wiring rides P2-12) | mod |
+| P2-10 | Mod: Dispatch Terminal order inbox/outbox + live form feed over `BrpServerApi` | mod |
+| P2-11 ✓ | Mod: Line Controller pipeline program + conditional boot evaluator (`PipelineProgram`) | mod |
+| P2-12 | Mod: chunk ticket agent + load-minute reporter + governor poll (feeds `GovernorFeed`) | mod |
+| P2-13 ✓ | Portal: chunk console (list / power switch / credit grants) | portal |
 | P2-14 | Adapters: AE2 + Create metering hooks behind ModList guards | mod |
-| P2-15 | APS: fair-share scheduler + line rate cap enforcement (needs P2-11) | backend+mod |
-| P2-16 | Contract sync: OpenAPI + events.md for everything above | contract |
+| P2-15 | APS: fair-share scheduler + line rate cap enforcement (needs P2-11 runtime wiring) | backend+mod |
+| P2-16 ✓ | Contract sync: OpenAPI + events.md for everything above (kept live per slice) | contract |
 
 Task board discipline: a task leaves the board only with its tests and its
 docs in the same commit (CONTRIBUTING rule 0 still rules).

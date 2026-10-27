@@ -12,6 +12,19 @@ Single authoritative ledger (double-entry, doc 06); balances are materialized
 `SUM(journal)` views. Multi-currency capable, one base currency at launch.
 Account types: PLAYER / TEAM / SYSTEM_SINK / SYSTEM_FAUCET / ESCROW.
 
+**Currency identity: one money, two names.** `code` (`BRC`) is the ledger's
+internal primary key — journal rows reference it, it never changes.
+`name`/`symbol` are the owner's display skin: portal, Create panels, chat and
+every player-facing string render those and nothing else. Players trade the
+displayed currency between themselves on the account rail — the primary means
+of circulation, fully player-to-player transferable. Nobody perceives a
+"layer underneath" because the underneath has no brand, exactly like nobody
+knows their bank's reserve account: the code is plumbing, the money is one
+thing. When a bearer form is registered (section 8) it is a ledger-signed
+token of the SAME unit, moved between account and item 1:1 via the mint
+window — deposit and withdrawal, not an exchange. No second currency, no
+peg between equals, no Gresham on the rails.
+
 ## 2. Money supply observability (full faucet/sink accounting)
 
 Every unit of currency is born and dies with a journal entry, or the system
@@ -19,7 +32,7 @@ is not observable:
 
 | Faucets | Sinks |
 |---|---|
-| quest/daily rewards, system shop sales, events | transaction tax, system shop purchases, teleport fees, auction commissions, fines, lottery |
+| quest/daily rewards, system shop sales, events, mint-window redemptions (section 9) | transaction tax, system shop purchases, teleport fees, auction commissions, fines, lottery, mint fee (section 10) |
 
 Daily metrics materialized into `economy_daily`:
 - **M** (money mass) = Σ balances
@@ -27,6 +40,9 @@ Daily metrics materialized into `economy_daily`:
 - **velocity V** = daily traded volume / M (Fisher's MV=PQ; collapsing V
   precedes either inflation or a confidence shock)
 - **Gini coefficient** (>0.8 means whale hoarding creates artificial deflation)
+- **banked share** = Σ account balances / (accounts + outstanding bearer
+  tokens issued by mint windows) — how much of the supply lives on rails we
+  can see; a bearer form exists only if registered (section 8)
 
 ## 3. CPI (server price index)
 
@@ -49,6 +65,7 @@ Daily metrics materialized into `economy_daily`:
 | daily faucet cap | issuance | hyperinflation |
 | distance×CPI teleport fees | elastic sink | gentle reclamation |
 | progressive large-balance levy (SYSTEM layer only) | hoarding cost | liquidity traps |
+| licensed mint fee + redemption margin (section 10) | commodity-leg issuance | villager-hall minting drift |
 | open-market operations (central-bank counter-orders) | supply/demand | acute crises, targeted |
 
 Discipline: one knob per change, greylist 10% of trades, observe CPI/V for a
@@ -96,6 +113,16 @@ exchange/futures (performance-art ceiling; options stay sealed forever, thanks).
 - The ledger accepts **registered currencies only** (V8; BRC pre-registered,
   ACTIVE/RETIRED status). Owners mint currencies from the web console —
   `POST /api/v1/currencies`. Finance cannot invent money; that's the faucet's job.
+- `PATCH /api/v1/currencies/{code}` edits the display skin only (`name`,
+  `symbol`, `bearer_item_id`) — `code` is immutable because journals reference it.
+  Renaming money's brand is branding, not monetary policy (section 1).
+- **Bearer form is optional**: `bearer_item_id` (V11; nullable — null = pure
+  account money). When set, mint windows dispense ledger-signed tokens of
+  that item (persistent-data tag + serial = the signature). A marked token
+  is money; a loose stack of the same material is a commodity — villager
+  halls mint commodities, never money (section 10). The owner picks the
+  placeholder: emeralds are the meme of record, gold nuggets work
+  identically, the registry decides.
 - Legacy currency plugins (Vault-style plugin servers, mod economies) integrate
   as **adapter-mirrored external currencies**: an exchange account per adapter
   currency, balances synced one-way into BRP as an exchange rate against a
@@ -147,7 +174,8 @@ SYSTEM_SINK and appear in net emission as negative (burned, not spent).
 
 **The Emerald-TPS bimetallic standard.** A single anchor is fragile: emerald
 farms inflate with villager-hall engineering; compute gets cheaper with
-hardware. BRC is pegged against BOTH:
+hardware. (The first half of that sentence has stopped being weather —
+section 10 licenses the hall.) BRC is pegged against BOTH:
 
 - **Emerald leg** — the MC-native commodity anchor. Central-bank vault (a
   physically guarded storage region) holds emerald reserves; the mint window
@@ -172,3 +200,89 @@ exists precisely for "books moved, goods didn't" compensation ordering.
 P3 deliverables: hysteresis-wired regime, shared weekly snapshot job,
 marginal levy engine (emerald-denominated, tenant-minute aggregation),
 BRP-09xx alert family, mint window saga, Gresham detector, re-peg playbook.
+
+## 10. The villager hall is a mint — license it, don't fight it
+
+Villager trading halls convert crops into emeralds at game-law rates. Left
+unobserved, the commodity leg inflates with whatever redstone engineering
+players invent — section 9 states this as a fragility. Prohibition is off the
+table: cancelling trades violates "never intervene silently", and it turns a
+monetary problem into a policing problem. The enterprise answer absorbs the
+hall instead — quantity-capped, money-taxed, fully metered.
+**"Villager confinement is a licensed activity"** (the machine-placement
+sentence, with the entity pointed at something that gets confined).
+
+**Metering — two new events (contract rows land with the agent mixin):**
+
+- `merchant.trade` (TELEMETRY) — one per completed villager trade. Hook:
+  mixin around `MerchantResultSlot#onTake` ◆ (the player taking the result
+  slot IS the trade; no dedicated NeoForge post-trade event exists ◆ —
+  verify against 1.21.1). Payload: villager entity id, profession, offer,
+  in/out item + count, chunk key. Same collection job the machine probe
+  does for AE2/Create (doc 02).
+- `villager.cured` (TELEMETRY) — `VillagerCureEvent` ◆. Cures reset trade
+  pairs, so cure rate is the mint's throughput governor; counting cures
+  counts the speedup.
+
+**Attribution.** Hall chunk → tenant via the chunk-ticket registry (doc 09
+§3). Trades in ticketed space bill the ticket holder. An unattributed minting
+villager is an incident, not a crime — the same human-choice page as machine
+overruns (section 8). Admins' own halls book to an explicit `SYSTEM_MINT`
+tenant, or section 2's net emission quietly goes crooked. Wandering traders
+are excluded at event source: they are an emerald drain, not a source.
+
+**The game already built the speed limiter; we only read it.** Per villager:
+2–4 trades per offer before trade lock, one rest to refresh, a cure to reset
+pairs. Mint velocity = trades × cures = exactly the two events above. The hall
+is the only faucet whose ceiling is written into vanilla mechanics — that is
+why metering it is cheap.
+
+**Two tools, never twisted into each other** (the section 9 constitution,
+applied):
+
+- quantity tool — quota resource `villager` in the existing buckets
+  (0 = unlimited licensing; `quota.exceeded` pages admins, humans decide);
+- money tool — **mint fee**: per-tenant daily aggregate over `merchant.trade`
+  output, ONE ledger event per tenant per DAY (idempotency key
+  `tax:tenant:mint:day`). Trade-by-trade is a sampling stream and sampling
+  streams never touch the ledger — the section 9 lesson, reused verbatim.
+  Emerald-denominated into SYSTEM_SINK like the compute levy: a real
+  contraction of commodity-leg liquidity.
+
+**Why this closes the economist's loop.** The emission equation was
+`dM/dt = I + m − burn` with m (private minting) the one term neither
+observable nor controllable. Licensing makes m a measured policy term:
+m = θ·O_hall, where O_hall is counted by the events and θ is the mint-window
+redemption margin. "Villager-hall engineering" stops being weather and becomes
+a tariff schedule with a meter. Wörgl (1932) got the demurrage half of this
+right with stamp scrip — it never got to meter the printer. We meter the
+printer.
+
+Deliverables: mixin + two event rows (P2 batch, same shipment as the WMS
+adapters), `villager` quota resource, `SYSTEM_MINT` tenant, mint-fee
+aggregation engine (P3, bolted next to the levy engine), redemption-margin θ
+knob in section 4.
+
+## 11. Research note: the circulation steady state
+
+The intended circuit: the server prints at the top (welfare, quest rewards,
+system-shop purchases), the auction burns at the bottom (mspt overage, compute
+levy, mint fee, teleport fees). Every unit either circulates or dies in the
+ledger. If burn rises monotonically with circulating M — the auction clears at
+higher bids when the street is flush — the system is a float valve: the
+equilibrium where faucet = sink is self-stabilizing.
+
+Open properties, tracked as research, not engineering (no thresholds here):
+
+- hoarding flattens the burn slope — the section 9 wealth levy is the
+  demurrage spring that pushes M back onto the rail, its V < 0.5 surcharge is
+  elasticity insurance;
+- speculators who time the auction floor produce oscillations around the
+  fixed point instead of convergence; oscillating non-equilibrium steady
+  states are still steady states. Canonical failure mode, verbatim:
+  "Bimetallism: ours collapses on schedule, with dashboards, and that is the
+  product."
+- whale-dominated floors damp elasticity; where the model is uncertain the
+  section 5 breakers stay alert-only.
+
+The portal econ page eventually carries the line chart and exactly one joke.

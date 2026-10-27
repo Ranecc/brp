@@ -2,6 +2,7 @@ package dev.brp.service;
 
 import dev.brp.dto.CurrencyDtos.CurrencyResponse;
 import dev.brp.dto.CurrencyDtos.RegisterCurrencyRequest;
+import dev.brp.dto.CurrencyDtos.UpdateCurrencyRequest;
 
 import java.util.List;
 
@@ -9,6 +10,9 @@ import java.util.List;
 public interface CurrencyService {
 
     CurrencyResponse register(RegisterCurrencyRequest req);
+
+    /** Display-level edit: name/symbol/bearerItemId only. code is immutable (docs/03 section 8). */
+    CurrencyResponse update(String code, UpdateCurrencyRequest req);
 
     List<CurrencyResponse> list();
 

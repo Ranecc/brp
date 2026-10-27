@@ -15,7 +15,7 @@
 
 > 为 Minecraft 交付原汁原味、企业级福报的 Spring Boot 体验 XD
 >
-> 非常荣幸向你介绍：SaaS 多租户玩家公会、公会 SCM 与 EHR、
+> 非常荣幸向你介绍：SaaS 多租户玩家公会、公会 SCM 与 EHR、order-to-cash 与协议托管、
 > 原版生电 / mod 产电 MES/APS、物资 WMS、全服金融市场与财务统筹、
 > 服务器 TPS 交易市场 (๑•̀ㅂ•́)و✧
 >
@@ -37,7 +37,7 @@ brp/
 ├── docs/          # 设计文档（英文主文档 + .zh.md 中文译本）
 ├── brp-contract/  # OpenAPI + 事件契约（前后端唯一真理）
 ├── brp-common/    # 零依赖共享件：@Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot 服务（可编译，42/42 测试全绿（另有 mod 侧 4 个治理单元），CI 把关）
+├── brp-backend/   # Spring Boot 服务（可编译，50/50 测试全绿（另有 mod 侧 10 个单元），CI 把关）
 └── brp-mod/       # 单 jar 通用模组：防腐层端口、sidecar 进程管理、
                    # 适配器 SPI、WAL 队列、SQLite/Caffeine 内嵌方案
 ```
@@ -57,13 +57,14 @@ brp/
 - [07-tenants](docs/07-tenants.md) — 公会租户模型、native + FTB 兼容
 - [08-bridge-api](docs/08-bridge-api.md) — 第三方桥接模组稳定接口
 - [09-shop-floor](docs/09-shop-floor.md) — P2：车间终端（调度/产线/表单）、区块治理、产能平衡、任务板 ⭐
+- [10-business-map](docs/10-business-map.md) — ERP 缺一半的那张地图：order-to-cash 骨架、协议、工程项目；什么以字段发布、什么被否决 ⭐
 
 ## 快速开始（后端）
 
 ```bash
 cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
 docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
-mvn -pl brp-backend -am test    # 42/42 全绿：账本幂等、Saga、审批、区块治理、门户……趁跑测试去摸摸草（方块或真草均可）
+mvn -pl brp-backend -am test    # 50/50 全绿：账本幂等、Saga、审批、区块计费、货币编辑、门户……趁跑测试去摸摸草（方块或真草均可）
 ```
 
 ## 路线图
@@ -72,9 +73,9 @@ mvn -pl brp-backend -am test    # 42/42 全绿：账本幂等、Saga、审批、
 |---|---|---|
 | P0 | 仓库 + 契约 + 账本核心（幂等/复式） + Agent 骨架 | ✅ 本仓库 |
 | P1 | 租户/公会、玩家同步、Saga 引擎、审批迷宫、TPS 报告（真实 mspt）、心跳、经济可观测（M/V）、货币登记制、机器槽位配额 + 区块事件、i18n 文案、outbox + Discord 接线、门户控制台（总览/审批/经济/配额四页 + 一键裁决）已铺；门户认证/RBAC、Agent 运行时接线待做 | 🚧 |
-| P2 | WMS 适配器（原版→AE2→Create）+ 仪表盘 + 告警 | ⬜ |
-| P3 | MRP（BOM 展开 + 工单） | ⬜ |
-| P4 | APS + 机器监控 + 信号中枢 | ⬜ |
+| P2 | WMS 适配器（原版→AE2→Create）+ 入库差异与调拨单 + 铸币计量事件（docs/03 §10）+ 仪表盘 + 告警 | ⬜ |
+| P3 | MRP（销售订单骨架 → BOM 展开 + 工单，完工成本）+ 协议托管 + 铸币费引擎 | ⬜ |
+| P4 | APS + 机器监控 + 宕机台账 + 信号中枢 + 工程项目与资产台账 | ⬜ |
 | P5 | 交易所/期货、k8s + helm chart（行为艺术收尾） | ⬜ |
 
 ## 许可证

@@ -11,7 +11,8 @@
 Agent-collected (with a player-visible data disclosure on join):
 - behavior stream: movement (chunk-granular sampling, never per-tick),
   click/interaction rates, dig/place rates with block types
-- economy stream: every trade/order/transfer (free with the ledger)
+- economy stream: every trade/order/transfer (free with the ledger); villager
+  trades enter via `merchant.trade` (docs/03 §10)
 - logistics stream: inventory deltas, flow meter readings (doc 04)
 
 Features materialize daily into `player_features_daily` (offline batch, never
@@ -45,13 +46,17 @@ large transfers on day-zero accounts. All rules parameterized + versioned
 
 ## 3. Ledger invariants (free with double-entry)
 
-The structure gives three reconciliation lines (implementation in doc 06 §5):
+The structure gives four reconciliation lines (implementation in doc 06 §5):
 1. **Σ balances ≡ 0** across the system's books — breakage = bug or money
    printed outside the ledger
 2. **item conservation**: Σ(sources − consumption − destruction) ≡ current
    stock — breakage = dupe; the residual localizes a time window + player
 3. **faucet/sink conservation**: every unit born has a faucet entry —
    breakage = direct DB tampering
+4. **mint conservation**: Σ emeralds paid out by metered villager trades ≤
+   theoretical max from metered farm feed (per-offer rate × trade-lock budget
+   — the ceiling is written into game mechanics, docs/03 §10) — breakage =
+   unregistered feeder (hopper bypass) or agent underreporting
 
 Daily reconciliation job; any breach pages the highest alert level —
 **harder evidence than any model output**.

@@ -1,6 +1,8 @@
 package dev.brp.mod.block;
 
 import dev.brp.mod.BrpMod;
+import dev.brp.mod.governor.ChunkGovernor;
+import dev.brp.mod.governor.GovernorFeed;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
@@ -69,6 +71,18 @@ public final class BrpBlocks {
                         output.accept(FORM_TERMINAL_ITEM.get());
                     })
                     .build());
+
+    /** What every BRP machine says when the governor rules HALT (docs/09 section 4). */
+    public static final net.minecraft.network.chat.Component STRIKE_MSG =
+            net.minecraft.network.chat.Component.translatable("block.brp.strike");
+
+    /** The one gate every terminal passes before duty: chunk key + governor verdict. */
+    public static ChunkGovernor.Verdict verdictAt(net.minecraft.world.level.Level level,
+                                                  net.minecraft.core.BlockPos pos) {
+        String dimension = level.dimension().location().toString();
+        String chunkKey = (pos.getX() >> 4) + "," + (pos.getZ() >> 4);
+        return ChunkGovernor.rule(GovernorFeed.stateFor(dimension, chunkKey));
+    }
 
     private BrpBlocks() {}
 

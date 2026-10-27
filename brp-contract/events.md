@@ -29,8 +29,18 @@ a major; breaking changes spawn a new event type and a two-version freeze.
 | signal.executed | TELEMETRY | `{channel, level, commandId}` |
 | economy.tx.requested | CRITICAL | mirrors PostJournalRequest + human intent |
 | quota.exceeded | TELEMETRY | `{tenant, resource, limit}` |
+| machine.placed | TELEMETRY | `{machineId}` (machine licensing, docs/03 §8 — already shipped by the backend fan-out) |
+| chunk.performance | TELEMETRY | `{dimension, chunk, costScore}` (chunk incidents, docs/03 §8 — already shipped) |
 | agent.heartbeat | TELEMETRY | `{tps, mspt, backlogSize}` (feeds TPS-commodity metrics, docs/03 §6) |
-| chunk.load.minutes | TELEMETRY | `{dimension, chunkKey, minutes}` (chunk governance metering, docs/09 §3; billed hourly via `chunk:{tenant}:{minute}` idem keys, P2-04) |
+| chunk.load.minutes | TELEMETRY | `{dimension, chunkKey, minutes}` (chunk governance metering, docs/09 §3; burns prepaid credits; purchases idempotent via caller idem keys + V12) |
+
+### v1 proposals (NOT yet in force — rows land in this table in the same
+commit as the agent-side mixin, per contract-before-code; design: docs/03 §10)
+
+| type | reliability | payload (sketch) |
+|---|---|---|
+| merchant.trade | TELEMETRY | `{villager, profession, offer, itemIdIn, itemIdOut, count, dimension, chunkKey}` (one per completed villager trade; the licensed-mint water gauge — mint fee aggregates `tax:tenant:mint:day`) |
+| villager.cured | TELEMETRY | `{villager, player}` (cure resets trade pairs = the mint's speed governor) |
 
 Rules:
 1. CRITICAL events are never dropped by the agent WAL, regardless of pressure.

@@ -30,6 +30,9 @@ farm = {
   needed to compute net output)
 - Carpet fake-player farms produce no player events, but flow meters sit on
   the path and count anyway → accounting decoupled from player presence ✔
+- villager halls meter themselves as mints: `merchant.trade` events are the
+  commodity leg's water gauge (docs/03 §10); conservation checks against
+  flow-meter feed run in doc 05
 
 ## 3. Control
 
@@ -57,5 +60,6 @@ farm = {
 ## 5. Phasing
 
 P2: flow meters + farm registry + throughput dailies + stall alerts
+    + merchant.trade / villager.cured collection (docs/03 §10)
 P3: stock-cap auto-cutoff (min/max)
 P4: staggered scheduling (TPS quota interlock) + capacity forecasts feeding MRP/APS
