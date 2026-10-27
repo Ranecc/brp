@@ -25,11 +25,18 @@
 
 | Component | Form | Stack | Responsibility |
 |---|---|---|---|
-| **brp-backend** | Standalone process, never inside the game JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | Ledger, tenants/RBAC, WMS/MRP/APS/EHR/SCM, monetary policy, anomaly detection, web API |
+| **brp-backend** | Standalone Java service — **not a mod**, never touches the game JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | Ledger, tenants/RBAC, WMS/MRP/APS/EHR/SCM, monetary policy, anomaly detection, web API |
 | **brp-mod** | ONE universal jar (NeoForge 1.21.1), installed on both sides | Java + Gson (feign-style declarative client over JDK HttpClient) | On the dedicated server: the **Agent** (collect/probe/execute/disk-queued). On the player client: the **UI runtime** (read-only, proxied writes) |
 
+> **New here?** Only `brp-mod` goes into your `mods/` folder. The backend is a
+> standalone Java service, not a Minecraft mod — dropping it in there summons
+> nothing but NeoForge's "not a valid mod" complaint.
+
+The backend runs as a managed sidecar of the game server, or seamlessly hosted
+on an independent server. Deployment is flexible; the bankruptcy risk is not.
+
 One mod file for everyone — server admins and players install the same jar;
-what runs depends on the distribution (docs/00-overview.md).
+what runs depends on where it runs (docs/00-overview.md).
 
 ## Repository layout
 
@@ -77,7 +84,7 @@ mvn -pl brp-backend -am test    # 56/56 green or no commit: ledger, saga, approv
 | P0 | repo + contracts + ledger core (idempotent, double-entry) + agent skeleton | ✅ this repo |
 | P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V), currency registry, machine-slot quotas + chunk incidents, i18n copy, outbox + Discord wiring, portal console (overview/approvals/economy/quotas pages + verdict actions) done; portal auth/RBAC + agent runtime wiring pending | 🚧 |
 | P2 | WMS adapters (vanilla → AE2 → Create) + inbound discrepancy & transfer orders + villager-mint metering events (docs/03 §10) + dashboards + alerts | ⬜ |
-| P3 | MRP (sales-order spine → BOM explosion + work orders, completion costing) + agreements/escrow + mint-fee engine | ⬜ |
+| P3 | MRP (sales-order spine → BOM explosion + work orders, completion costing) + agreements/escrow + mint-fee engine + villager EHR & ALICE census (docs/07 §7, docs/03 §2) | ⬜ |
 | P4 | APS + machine monitoring + downtime ledger + signal hub + projects & asset registry | ⬜ |
 | P5 | exchange/futures, k8s + helm chart (the performance-art finale) | ⬜ |
 

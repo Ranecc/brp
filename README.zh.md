@@ -25,10 +25,14 @@
 
 | 组件 | 形态 | 技术 | 职责 |
 |---|---|---|---|
-| **brp-backend** | 独立进程，不进游戏 JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | 账本、租户/RBAC、WMS/MRP/APS/EHR/SCM、经济政策、异常检测、Web API |
+| **brp-backend** | 独立 Java 服务——**不是 mod**，永不接触游戏 JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | 账本、租户/RBAC、WMS/MRP/APS/EHR/SCM、经济政策、异常检测、Web API |
 | **brp-mod** | **单个通用 jar**（NeoForge 1.21.1），客户端与服务器装同一个文件 | Java + Gson（feign 风格声明式客户端，JDK HttpClient 实现） | 装在**专用服务器**上 = **Agent**（采集/探针/执行/磁盘队列）；装在**玩家客户端**上 = **UI 运行时**（只读展示，写入经代理） |
 
-一个模组文件走天下——服主和玩家装同一个 jar，跑什么由运行环境（dist）决定（见 docs/00-overview.md）。
+> **新人看这里**：`mods/` 文件夹里只放 `brp-mod`。Backend 是独立的 Java 服务，不是 Minecraft 模组——把它丢进去什么也召唤不出来，只会收到 NeoForge 一句「这不是有效模组」。
+
+Backend 想跑哪跑哪：给游戏服务器当受管 sidecar，或者无缝搬去独立服务器。部署很灵活，破产风险不灵活。
+
+一个模组文件走天下——服主和玩家装同一个 jar，跑什么由它跑在哪决定（见 docs/00-overview.md）。
 
 ## 仓库结构
 
@@ -74,7 +78,7 @@ mvn -pl brp-backend -am test    # 56/56 全绿：账本幂等、Saga、审批、
 | P0 | 仓库 + 契约 + 账本核心（幂等/复式） + Agent 骨架 | ✅ 本仓库 |
 | P1 | 租户/公会、玩家同步、Saga 引擎、审批迷宫、TPS 报告（真实 mspt）、心跳、经济可观测（M/V）、货币登记制、机器槽位配额 + 区块事件、i18n 文案、outbox + Discord 接线、门户控制台（总览/审批/经济/配额四页 + 一键裁决）已铺；门户认证/RBAC、Agent 运行时接线待做 | 🚧 |
 | P2 | WMS 适配器（原版→AE2→Create）+ 入库差异与调拨单 + 铸币计量事件（docs/03 §10）+ 仪表盘 + 告警 | ⬜ |
-| P3 | MRP（销售订单骨架 → BOM 展开 + 工单，完工成本）+ 协议托管 + 铸币费引擎 | ⬜ |
+| P3 | MRP（销售订单骨架 → BOM 展开 + 工单，完工成本）+ 协议托管 + 铸币费引擎 + 村民 EHR 与 ALICE 普查（docs/07 §7、docs/03 §2） | ⬜ |
 | P4 | APS + 机器监控 + 宕机台账 + 信号中枢 + 工程项目与资产台账 | ⬜ |
 | P5 | 交易所/期货、k8s + helm chart（行为艺术收尾） | ⬜ |
 
