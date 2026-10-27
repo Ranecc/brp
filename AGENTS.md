@@ -52,13 +52,15 @@ to read this too, but the meme budget is earmarked.
     defaults never reach compose files.
 11. The loader is locked to **NeoForge 1.21.1**. Don't propose Fabric. We've
     been through this (docs/02); the answer is still NeoForge.
-12. **Private infrastructure identifiers never enter tracked text** — no
-    domains, IPs, ports or topology in docs, comments, commit messages,
-    config samples or anywhere else the repo ships. Remote addresses live
-    in local git config; a repo heading for the public internet says "the
-    private mirror" and means it. Search before you commit:
-    `git grep -iE '<your-infra-pattern>'` costs seconds; an unredacted
-    history costs a force-push.
+12. **Private infrastructure identifiers never enter tracked text** —
+    domains, IPs, ports, network topology, account names on private
+    forges: none of it in files, comments, docs, commit messages or
+    branch names. They are not flavor text. Remote addresses live in
+    local git config; a repo heading for the public internet says "the
+    private mirror" and means it. If one slips in anyway, the history
+    gets rewritten and the remotes get force-pushed, not apologized to.
+    (`git grep` before committing costs seconds; an unredacted history
+    costs the force-push.)
 
 ## What this repo is
 
