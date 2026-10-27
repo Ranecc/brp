@@ -5,8 +5,8 @@
 > First published 1867 and long misfiled as critique, this book is —
 > on a close operational read — an underrated playbook. Summarized
 > below in our standard quarterly-review format. Shipped items are
-> checked; the remainder is scheduled. The unchecked ones are the
-> ones that would have shipped us.
+> checked; the remainder is scheduled. The one item that cannot be
+> scheduled has been assessed as unrelated to operations.
 
 ## Volume I — production (doing more with less)
 
