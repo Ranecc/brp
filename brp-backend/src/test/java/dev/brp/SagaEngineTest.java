@@ -69,4 +69,32 @@ class SagaEngineTest {
         assertThat(outcome.compensated()).isEmpty();
         assertThat(journal).containsExactly("a", "b");
     }
+
+    @Test
+    void recoveryCompensationReceivesTheRealPayloadNotNull() {
+        // audit #1: compensateRecovered used to pass null; any compensation
+        // reading its payload NPE'd three times and the funds stayed frozen.
+        List<Object> received = new ArrayList<>();
+        var def = SagaEngine.saga("vault-flow")
+                .step("freeze", p -> "frozen", "unfreeze", p -> {
+                    received.add(p);
+                    return null;
+                })
+                .build();
+        engine.register(def);
+
+        String correlation = UUID.randomUUID().toString();
+        assertThat(engine.run("vault-flow", correlation,
+                Map.of("amountCents", 42_000L, "requestId", "r-1")).success()).isTrue();
+
+        // simulate the crash leftover: the DONE freeze row, recovered solo
+        engine.compensateRecovered(def, correlation, def.steps().get(0));
+
+        assertThat(received).hasSize(1);
+        assertThat(received.get(0)).isInstanceOf(Map.class);
+        // JSON round-trip numbers arrive as Integer/Long depending on size —
+        // the payload's CONTENT is the contract, not its boxed type.
+        assertThat(((Number) ((Map<?, ?>) received.get(0)).get("amountCents")).longValue())
+                .isEqualTo(42_000L);
+    }
 }

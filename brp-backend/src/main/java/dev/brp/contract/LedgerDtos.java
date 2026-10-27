@@ -2,6 +2,7 @@ package dev.brp.contract;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -28,7 +29,7 @@ public final class LedgerDtos {
             String memo) {}
 
     public record PostJournalRequest(
-            @NotBlank String idempotencyKey,
+            @NotBlank @Size(max = 64) String idempotencyKey,   // V9 column width
             @NotBlank String currency,
             @NotEmpty @Valid List<JournalLine> lines) {}
 

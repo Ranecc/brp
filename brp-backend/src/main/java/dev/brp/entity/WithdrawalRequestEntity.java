@@ -40,7 +40,18 @@ public class WithdrawalRequestEntity {
     public String getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }
 
-    public void transitionTo(String status) {
-        this.status = status;
+    private static final java.util.Map<String, java.util.Set<String>> ALLOWED =
+            java.util.Map.of(
+                    "PENDING", java.util.Set.of("AWAITING_UPPER_MANAGEMENT", "REJECTED",
+                            "EXECUTED", "FAILED"),
+                    "AWAITING_UPPER_MANAGEMENT", java.util.Set.of("EXECUTED", "FAILED", "REJECTED"));
+
+    /** State machine, not a setter (audit D-2): terminal states are terminal. */
+    public void transitionTo(String next) {
+        if (!ALLOWED.getOrDefault(status, java.util.Set.of()).contains(next)) {
+            throw new IllegalStateException(
+                    "illegal approval transition: " + status + " -> " + next);
+        }
+        this.status = next;
     }
 }

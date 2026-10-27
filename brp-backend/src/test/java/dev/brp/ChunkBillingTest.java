@@ -4,6 +4,7 @@ import dev.brp.contract.LedgerDtos.CreateAccountRequest;
 import dev.brp.contract.LedgerDtos.JournalLine;
 import dev.brp.contract.LedgerDtos.PostJournalRequest;
 import dev.brp.dto.ChunkDtos.ChunkSlotResponse;
+import dev.brp.dto.ChunkDtos.GrantMinutesRequest;
 import dev.brp.dto.ChunkDtos.PurchaseCreditsRequest;
 import dev.brp.dto.ChunkDtos.RegisterChunkRequest;
 import dev.brp.dto.TeamDtos.CreateTeamRequest;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
@@ -109,5 +111,17 @@ class ChunkBillingTest {
     void theMeterIgnoresChunksItDoesNotKnow() {
         assertThatCode(() -> chunks.accrueMinutes("ghost-tenant",
                 "minecraft:overworld", "9,9", 60)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void overflowGrantsAreRefusedNotSignFlipped() {
+        Guild g = guild();
+        chunks.register(g.teamId(), new RegisterChunkRequest("minecraft:overworld", "3,3", "u"));
+        chunks.grantMinutes(g.teamId(), "minecraft:overworld", "3,3",
+                new GrantMinutesRequest(Long.MAX_VALUE / 2));
+        assertThatThrownBy(() -> chunks.grantMinutes(g.teamId(), "minecraft:overworld", "3,3",
+                new GrantMinutesRequest(Long.MAX_VALUE)))
+                .isInstanceOf(dev.brp.common.BadRequestException.class);
+        assertThat(chunks.slots(g.teamId()).get(0).creditMinutes()).isGreaterThan(0);
     }
 }

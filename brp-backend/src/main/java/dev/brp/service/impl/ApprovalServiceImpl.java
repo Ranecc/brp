@@ -146,6 +146,12 @@ public class ApprovalServiceImpl implements ApprovalService {
     public WithdrawalRequestResponse reject(String requestId, Decision decision) {
         var entity = requests.findById(requestId)
                 .orElseThrow(() -> BadRequestException.of("approval.unknown"));
+        // Same guard approve already had (audit #5): settled requests stay
+        // settled — an EXECUTED withdrawal cannot be un-executed by a verdict.
+        if (!"PENDING".equals(entity.getStatus())
+                && !"AWAITING_UPPER_MANAGEMENT".equals(entity.getStatus())) {
+            throw ConflictException.of("approval.request.closed", entity.getStatus());
+        }
         requireRole(entity.getTeamId(), decision.approverUuid(), "OFFICER",
                 "approval.officer.required");
         entity.transitionTo("REJECTED");

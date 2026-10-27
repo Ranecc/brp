@@ -154,6 +154,19 @@ public class SagaEngine {
         return recorder.record(row);
     }
 
+    /** Recovery payload: the row's JSON, or null — loudly, never guessed. */
+    private Object deserializePayload(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return mapper.readValue(json, Map.class);
+        } catch (JsonProcessingException e) {
+            log.warn("recovery payload undecodable: {}", e.getMessage());
+            return null;
+        }
+    }
+
     private String safeJson(Object payload) {
         try {
             return mapper.writeValueAsString(payload);
@@ -162,11 +175,22 @@ public class SagaEngine {
         }
     }
 
-    /** Single-step compensation entrypoint for SagaRecovery. */
+    /**
+     * Single-step compensation entrypoint for SagaRecovery. The forward row
+     * kept the payload JSON all along — recovery deserializes it and feeds
+     * the closure the SAME payload it ran with (audit #1: null payload NPE'd
+     * every compensation and froze the funds permanently).
+     */
     public void compensateRecovered(Definition def, String correlation, StepSpec step) {
+        String json = rows.findBySagaAndCorrelationAndStepAndState(
+                        def.name(), correlation, step.name(), "DONE").stream()
+                .findFirst()
+                .map(SagaInstanceRow::getPayload)
+                .orElse(null);
+        Object payload = deserializePayload(json);
         SagaInstanceRow row = record(def.name(), "comp:" + step.name() + ":recovery",
-                correlation, null, null);
-        dispatchWithRetry(step, null, row);
+                correlation, null, payload);
+        dispatchWithRetry(step, payload, row);
         rows.findBySagaAndCorrelationAndStepAndState(
                 def.name(), correlation, step.name(), "DONE").forEach(r -> {
             r.compensated();

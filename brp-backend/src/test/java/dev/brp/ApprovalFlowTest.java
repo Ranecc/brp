@@ -60,6 +60,21 @@ class ApprovalFlowTest {
     }
 
     @Test
+    void settledRequestsCannotBeRelitigated() {
+        Guild g = guild();
+        var executed = approvals.submitWithdrawalRequest(new SubmitWithdrawalRequest(
+                UUID.randomUUID().toString(), g.teamId(), g.member(), 500L, "petty cash"));
+        assertThat(executed.status()).isEqualTo("EXECUTED");   // rubber stamp at submit
+
+        // EXECUTED -> REJECTED is not a verdict, it is vandalism (audit #5)
+        assertThatThrownBy(() -> approvals.reject(executed.id(), new Decision(g.owner(), "undo")))
+                .isInstanceOf(ConflictException.class);
+        // and double-approve keeps its guard too
+        assertThatThrownBy(() -> approvals.approve(executed.id(), new Decision(g.owner(), "again")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
     void pocketChangeGetsTheRubberStampAndExecutesThroughTheSaga() {
         Guild g = guild();
         var resp = approvals.submitWithdrawalRequest(new SubmitWithdrawalRequest(

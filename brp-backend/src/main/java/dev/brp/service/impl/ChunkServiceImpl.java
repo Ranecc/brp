@@ -95,7 +95,11 @@ public class ChunkServiceImpl implements ChunkService {
         if (req.minutes() <= 0) {
             throw new BadRequestException("chunk.grant.invalid");
         }
-        slot.setCreditMinutes(slot.getCreditMinutes() + req.minutes());
+        try {
+            slot.setCreditMinutes(Math.addExact(slot.getCreditMinutes(), req.minutes()));
+        } catch (ArithmeticException overflow) {
+            throw new BadRequestException("chunk.grant.invalid");   // overflow -> HALT is not a business model
+        }
         return mapper.toDto(chunks.save(slot));
     }
 
@@ -135,7 +139,7 @@ public class ChunkServiceImpl implements ChunkService {
                             new JournalLine("chunk-sink", "DEBIT", amountCents, null),
                             new JournalLine("treasury", "CREDIT", amountCents, null))));
                 }
-                slot.setCreditMinutes(slot.getCreditMinutes() + req.minutes());
+                slot.setCreditMinutes(Math.addExact(slot.getCreditMinutes(), req.minutes()));
                 return mapper.toDto(chunks.save(slot));
             });
         } catch (DataIntegrityViolationException e) {
@@ -155,12 +159,16 @@ public class ChunkServiceImpl implements ChunkService {
         if (minutes <= 0) {
             return;
         }
+        // One event reports at most a week of load-minutes; anything larger
+        // is a malformed feed, not a debt (audit #9: overflow -> negative
+        // credit -> surprise HALT).
+        long burn = Math.min(minutes, 10_080L);
         chunks.findForUpdate(tenantId, dimension, chunkKey)
                 .ifPresent(slot -> {
                     long before = slot.getCreditMinutes();
-                    slot.setCreditMinutes(before - minutes);
+                    slot.setCreditMinutes(before - burn);
                     chunks.save(slot);
-                    if (before > 0 && before - minutes <= 0) {
+                    if (before > 0 && before - burn <= 0) {
                         notifications.enqueue("chunk.credit.exhausted", "chunk.credit.exhausted",
                                 chunkKey, dimension, tenantId);
                     }

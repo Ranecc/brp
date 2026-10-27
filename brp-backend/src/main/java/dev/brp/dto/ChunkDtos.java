@@ -2,6 +2,7 @@ package dev.brp.dto;
 
 import dev.brp.dto.ChunkDtos.ChunkSlotResponse;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -24,7 +25,7 @@ public final class ChunkDtos {
      */
     public record PurchaseCreditsRequest(
             @NotNull @Positive Long minutes,
-            @NotBlank String idemKey) {}
+            @NotBlank @Size(max = 128) String idemKey) {}   // V12 column width
 
     public record PowerRequest(boolean enabled) {}
 
