@@ -88,7 +88,10 @@ public final class AgentRuntime {
     /** Stage 1: sample fleet telemetry through the ACL (no game-thread IO). */
     private void sampleHeartbeat() {
         try {
+            // "type" travels INSIDE the payload: the envelope stays schema-less
+            // and drainWal cannot lose it (audit #3).
             wal.enqueue(UUID.randomUUID().toString(), gsonlessJson(Map.of(
+                            "type", "agent.heartbeat",
                             "mspt", world.mspt(),
                             "tps", world.tps(),
                             "backlog", wal.backlogSize())),
@@ -105,8 +108,16 @@ public final class AgentRuntime {
             return;
         }
         List<EventDto> events = batch.stream()
-                .map(e -> new EventDto(e.seq() + ":" + e.eventId(), "agent.heartbeat", 1,
-                        cfg.agentId(), cfg.tenantId(), e.reliability(), Map.of()))
+                .map(e -> {
+                    // audit #3: the WAL's REAL payload rides the wire now —
+                    // no more empty Map.of() over a full warehouse of samples.
+                    Map<String, Object> payload = payloadOf(e.json());
+                    Object declared = payload.remove("type");
+                    String type = declared instanceof String str && !str.isBlank()
+                            ? str : "agent.heartbeat";
+                    return new EventDto(e.seq() + ":" + e.eventId(), type, 1,
+                            cfg.agentId(), cfg.tenantId(), e.reliability(), payload);
+                })
                 .toList();
         api.postTelemetry(events).thenAccept(ack -> {
             try {
@@ -149,14 +160,42 @@ public final class AgentRuntime {
         }, millis, millis, TimeUnit.MILLISECONDS);
     }
 
-    private static String gsonlessJson(Map<Object, Object> m) {
+    static String gsonlessJson(Map<Object, Object> m) {   // package-private: units verify the wire format
         StringBuilder sb = new StringBuilder("{");
         boolean first = true;
         for (var e : m.entrySet()) {
             if (!first) sb.append(',');
             first = false;
-            sb.append('"').append(e.getKey()).append("\":").append(e.getValue());
+            Object v = e.getValue();
+            sb.append('"').append(e.getKey()).append("\":");
+            // numbers/booleans stay bare — a quoted "12.5" is a string, and
+            // the backend's num() rightly refuses to read strings as numbers
+            sb.append(v instanceof Number || v instanceof Boolean ? v : '"' + String.valueOf(v) + '"');
         }
         return sb.append('}').toString();
+    }
+
+    /** Envelope payload -> map; malformed lines yield what parsed, never an exception. */
+    static Map<String, Object> payloadOf(String json) {
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        if (json == null || json.isBlank()) {
+            return out;
+        }
+        try {
+            var obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+            for (var entry : obj.entrySet()) {
+                var v = entry.getValue();
+                if (v.isJsonPrimitive() && v.getAsJsonPrimitive().isNumber()) {
+                    out.put(entry.getKey(), v.getAsDouble());
+                } else if (v.isJsonPrimitive() && v.getAsJsonPrimitive().isBoolean()) {
+                    out.put(entry.getKey(), v.getAsBoolean());
+                } else {
+                    out.put(entry.getKey(), v.getAsString());
+                }
+            }
+        } catch (RuntimeException malformed) {
+            // a garbage line ships as {} — the pipeline never dies of one bad row
+        }
+        return out;
     }
 }

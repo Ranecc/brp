@@ -65,12 +65,10 @@ public final class BackendSupervisor {
             .connectTimeout(Duration.ofSeconds(2)).build();
     private final AtomicBoolean running = new AtomicBoolean();
     private final AtomicInteger restarts = new AtomicInteger();
-    private final ScheduledExecutorService watchdog =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "brp-supervisor");
-                t.setDaemon(true);
-                return t;
-            });
+    // Recreated by start() (audit #4): shutdown() kills it, the next start()
+    // builds a fresh one — stop->start used to die on RejectedExecutionException
+    // while a comment claimed otherwise. The comment finally tells the truth.
+    private volatile ScheduledExecutorService watchdog;
     private volatile Process child;
 
     public BackendSupervisor(Config cfg) {
@@ -81,6 +79,9 @@ public final class BackendSupervisor {
     public synchronized void start() throws IOException, InterruptedException {
         if (running.get()) {
             return;
+        }
+        if (watchdog == null || watchdog.isShutdown()) {
+            watchdog = newWatchdog();
         }
         if (cfg.embeddedResource() != null) {
             extractEmbedded(cfg.embeddedResource(), cfg.backendJar());
@@ -164,10 +165,27 @@ public final class BackendSupervisor {
         }
     }
 
+    private static ScheduledExecutorService newWatchdog() {
+        return Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "brp-supervisor");
+            t.setDaemon(true);
+            return t;
+        });
+    }
+
+    /** Test/ops visibility: the watchdog exists exactly between start() and shutdown(). */
+    boolean watchdogAlive() {
+        ScheduledExecutorService w = watchdog;
+        return w != null && !w.isShutdown();
+    }
+
     /** Stop the child gracefully (SIGTERM then force after grace). */
     public synchronized void shutdown() {
         running.set(false);
-        watchdog.shutdownNow();   // start() recreates it; shutdown is not terminal
+        ScheduledExecutorService w = watchdog;
+        if (w != null) {
+            w.shutdownNow();   // the next start() builds a fresh one — verified, not promised
+        }
         Process p = child;
         if (p != null && p.isAlive()) {
             p.destroy();

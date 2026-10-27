@@ -35,6 +35,9 @@ dependencies {
     // no Minecraft bootstrap, no client, no excuses.
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // gson ships inside NeoForge for MAIN; the plain test runtime needs it
+    // spelled out (payloadOf parses WAL lines in units)
+    testImplementation("com.google.code.gson:gson:2.11.0")
 }
 
 tasks.withType<Test>().configureEach {
