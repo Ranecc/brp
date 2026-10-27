@@ -37,18 +37,22 @@ public class EconomyReportServiceImpl implements EconomyReportService {
     private final JournalEntryRepository journal;
     private final EconomyDailyRepository daily;
 
+    private final java.time.ZoneId zone;
+
     public EconomyReportServiceImpl(AccountRepository accounts,
                                     JournalEntryRepository journal,
-                                    EconomyDailyRepository daily) {
+                                    EconomyDailyRepository daily,
+                                    @org.springframework.beans.factory.annotation.Value("${brp.reports.zone:UTC}") String zoneId) {
         this.accounts = accounts;
         this.journal = journal;
         this.daily = daily;
+        this.zone = java.time.ZoneId.of(zoneId);
     }
 
     @Override
     @Atomic
     public EconomyDailyResponse materializeToday(String currency) {
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = LocalDate.now(zone);   // audit #7: one configured boundary, not two
         List<AccountEntity> books = accounts.findAll().stream()
                 .filter(a -> currency.equals(a.getCurrency())).toList();
         long moneyMass = books.stream()

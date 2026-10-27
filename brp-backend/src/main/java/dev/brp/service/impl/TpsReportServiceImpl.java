@@ -20,8 +20,12 @@ public class TpsReportServiceImpl implements TpsReportService {
 
     private final AgentMonitorService monitor;
 
-    public TpsReportServiceImpl(AgentMonitorService monitor) {
+    private final java.time.ZoneId zone;
+
+    public TpsReportServiceImpl(AgentMonitorService monitor,
+                                @org.springframework.beans.factory.annotation.Value("${brp.reports.zone:UTC}") String zoneId) {
         this.monitor = monitor;
+        this.zone = java.time.ZoneId.of(zoneId);
     }
 
     @Override
@@ -32,12 +36,12 @@ public class TpsReportServiceImpl implements TpsReportService {
         }
         return new TpsReportResponse(
                 "tps-" + UUID.randomUUID().toString().substring(0, 8),
-                "week-of-" + LocalDate.now().with(java.time.DayOfWeek.MONDAY),
+                "week-of-" + LocalDate.now(zone).with(java.time.DayOfWeek.MONDAY),
                 true,
                 monitor.averageMspt(),
                 42.0,   // the synergy target; it's always been 42
                 15,     // minimum flair; expression of self encouraged
-                LocalDate.now().getDayOfWeek() == java.time.DayOfWeek.MONDAY,
+                LocalDate.now(zone).getDayOfWeek() == java.time.DayOfWeek.MONDAY,
                 List.of(
                         "Ticks per second: nominal, morale: recovering",
                         "Redstone farms contributing to QBS (quarterly block story)",

@@ -23,7 +23,12 @@ public class DiscordWebhookSender implements WebhookSender {
 
     public DiscordWebhookSender(@Value("${brp.discord.webhook-url:}") String webhookUrl) {
         this.webhookUrl = webhookUrl;
-        this.http = RestClient.create();
+        // audit #10: a stuck webhook must not squat the drain thread.
+        var factory = new org.springframework.http.client.JdkClientHttpRequestFactory(
+                java.net.http.HttpClient.newBuilder()
+                        .connectTimeout(java.time.Duration.ofSeconds(2)).build());
+        factory.setReadTimeout(java.time.Duration.ofSeconds(5));
+        this.http = RestClient.builder().requestFactory(factory).build();
     }
 
     @Override

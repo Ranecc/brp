@@ -13,6 +13,7 @@ import dev.brp.mapper.InventoryMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 /** WMS read model: staleness allowed and labeled via capturedAt (docs/01 section 4). */
@@ -35,6 +36,16 @@ public class InventoryServiceImpl implements InventoryService {
             throw new BadRequestException("batchMode must be SNAPSHOT or DELTA");
         }
         for (InventoryLine line : batch.lines()) {
+            // audit #8: DELTA may be signed (stuff leaves chests); SNAPSHOT
+            // may not invent negative shelves, and timestamps must parse.
+            if (!delta && line.amount() < 0) {
+                throw new BadRequestException("inventory.snapshot.negative");
+            }
+            try {
+                Instant.parse(line.capturedAt());
+            } catch (DateTimeParseException badTimestamp) {
+                throw new BadRequestException("inventory.timestamp.invalid");
+            }
             var row = snapshots.findByTenantIdAndContainerIdAndItemId(
                     tenantId, line.containerId(), line.itemId()).orElse(null);
             long value = delta

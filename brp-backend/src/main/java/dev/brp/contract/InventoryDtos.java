@@ -1,6 +1,7 @@
 package dev.brp.contract;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,7 +20,7 @@ public final class InventoryDtos {
     /** batchMode: DELTA (amounts are increments) or SNAPSHOT (amounts are absolute levels). */
     public record InventoryBatch(
             @NotBlank String batchMode,
-            @NotEmpty List<InventoryLine> lines) {}
+            @NotEmpty @Size(max = 1000) List<InventoryLine> lines) {}   // telemetry caps at 1000; so do we
 
     public record InventoryAck(int upserted) {}
 }

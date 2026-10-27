@@ -304,6 +304,47 @@ paths:
       responses:
         "200": {description: the slot, with fresh credit}
 
+  /api/v1/teams:
+    post:
+      summary: Create a team (provisions the treasury account; docs/07)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, name, tag, ownerUuid]
+              properties:
+                correlationId: {type: string}
+                id: {type: string}
+                name: {type: string}
+                tag: {type: string}
+                ownerUuid: {type: string}
+      responses:
+        "200": {description: team created, treasury provisioned}
+    get:
+      summary: List teams (optionally by source NATIVE | FTBTEAMS)
+      parameters: [{name: source, in: query, schema: {type: string}}]
+      responses:
+        "200": {description: team rows}
+  /api/v1/teams/sync:
+    post:
+      summary: Compat sync — mirror an external provider's roster into BRP membership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [batchId, source, teams]
+              properties:
+                batchId: {type: string}
+                source: {type: string, description: FTBTEAMS or provider id}
+                teams:
+                  type: array
+                  items: {type: object}
+      responses:
+        "200": {description: sync applied (idempotent per batchId)}
   /api/v1/players/batch:
     post:
       summary: Bulk upsert player identity (agent-pulled uuid/name, rename history kept)
