@@ -62,6 +62,7 @@ brp/
 - [07-tenants](docs/07-tenants.md) — 公会租户模型、native + FTB 兼容
 - [08-bridge-api](docs/08-bridge-api.md) — 第三方桥接模组稳定接口
 - [09-shop-floor](docs/09-shop-floor.md) — P2：车间终端（调度/产线/表单）、区块治理、产能平衡、任务板 ⭐
+- [10-backlog](docs/10-backlog.md) — 评审 backlog：8 条外部提案定级，收 7.5 条，过时前提已纠正
 - [10-business-map](docs/10-business-map.md) — ERP 缺一半的那张地图：order-to-cash 骨架、协议、工程项目；什么以字段发布、什么被否决 ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — 资本论季度落地复盘：三卷可执行项，完成度业内领先 ⭐
 

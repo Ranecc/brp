@@ -71,6 +71,7 @@ server) or fully standalone via docker-compose — same jar either way
 - [07-tenants](docs/07-tenants.md) — guild-specialized tenants, native + FTB Teams compat
 - [08-bridge-api](docs/08-bridge-api.md) — stable surface for third-party bridge mods
 - [09-shop-floor](docs/09-shop-floor.md) — P2: shop-floor terminals (dispatch/line/form), chunk governance, APS balancing, task board ⭐
+- [10-backlog](docs/10-backlog.md) — reviewed backlog: 8 outside proposals graded, 7.5 accepted, stale premises corrected
 - [10-business-map](docs/10-business-map.md) — the missing half of the ERP: order-to-cash spine, agreements, projects; what ships as a field, what is vetoed ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — Das Kapital, reviewed quarterly: execution coverage across all three volumes ⭐
 

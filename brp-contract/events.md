@@ -32,6 +32,7 @@ a major; breaking changes spawn a new event type and a two-version freeze.
 | machine.placed | TELEMETRY | `{machineId}` (machine licensing, docs/03 §8 — already shipped by the backend fan-out) |
 | chunk.performance | TELEMETRY | `{dimension, chunk, costScore}` (chunk incidents, docs/03 §8 — already shipped) |
 | agent.heartbeat | TELEMETRY | `{tps, mspt, backlogSize}` (feeds TPS-commodity metrics, docs/03 §6) |
+| market.price.observed | TELEMETRY | `{item, price, currency, qty, venue}` (CPI feed, docs/03 §3; seeded by docs/10 R-6) |
 | chunk.load.minutes | TELEMETRY | `{dimension, chunkKey, minutes}` (chunk governance metering, docs/09 §3; burns prepaid credits; purchases idempotent via caller idem keys + V12) |
 
 ### v1 proposals (NOT yet in force — rows land in this table in the same

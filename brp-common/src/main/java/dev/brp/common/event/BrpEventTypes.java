@@ -20,6 +20,7 @@ public final class BrpEventTypes {
     public static final String CHUNK_PERFORMANCE = "chunk.performance";
     public static final String QUOTA_EXCEEDED = "quota.exceeded";
     public static final String CHUNK_LOAD_MINUTES = "chunk.load.minutes";
+    public static final String MARKET_PRICE_OBSERVED = "market.price.observed";   // R-6: CPI feed (docs/10)
 
     private BrpEventTypes() {}
 }
