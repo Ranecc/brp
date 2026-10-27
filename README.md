@@ -28,15 +28,18 @@
 | **brp-backend** | Standalone Java service — **not a mod**, never touches the game JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | Ledger, tenants/RBAC, WMS/MRP/APS/EHR/SCM, monetary policy, anomaly detection, web API |
 | **brp-mod** | ONE universal jar (NeoForge 1.21.1), installed on both sides | Java + Gson (feign-style declarative client over JDK HttpClient) | On the dedicated server: the **Agent** (collect/probe/execute/disk-queued). On the player client: the **UI runtime** (read-only, proxied writes) |
 
-> **New here?** Only `brp-mod` goes into your `mods/` folder. The backend is a
-> standalone Java service, not a Minecraft mod — dropping it in there summons
-> nothing but NeoForge's "not a valid mod" complaint.
+> **DEPLOYMENT ADVISORY (for new tenants):** `brp-mod` is the only artifact
+> cleared for the `mods/` directory. `brp-backend` is a standalone Java
+> service, not a Minecraft mod; placing it in `mods/` will provision nothing
+> except a "not a valid mod" finding from NeoForge. No refunds.
 
-The backend runs as a managed sidecar of the game server, or seamlessly hosted
-on an independent server. Deployment is flexible; the bankruptcy risk is not.
+The backend deploys as a managed sidecar of the game server, or on an
+independent server without modification. Deployment is flexible; the
+bankruptcy risk is not.
 
-One mod file for everyone — server admins and players install the same jar;
-what runs depends on where it runs (docs/00-overview.md).
+One jar to rule them all — server operators and players install the identical
+artifact; runtime behavior is resolved by the deployment environment
+(docs/00-overview.md).
 
 ## Repository layout
 

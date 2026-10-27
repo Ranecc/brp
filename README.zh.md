@@ -28,11 +28,11 @@
 | **brp-backend** | 独立 Java 服务——**不是 mod**，永不接触游戏 JVM | Spring Boot 3.5 / Java 21 / PostgreSQL | 账本、租户/RBAC、WMS/MRP/APS/EHR/SCM、经济政策、异常检测、Web API |
 | **brp-mod** | **单个通用 jar**（NeoForge 1.21.1），客户端与服务器装同一个文件 | Java + Gson（feign 风格声明式客户端，JDK HttpClient 实现） | 装在**专用服务器**上 = **Agent**（采集/探针/执行/磁盘队列）；装在**玩家客户端**上 = **UI 运行时**（只读展示，写入经代理） |
 
-> **新人看这里**：`mods/` 文件夹里只放 `brp-mod`。Backend 是独立的 Java 服务，不是 Minecraft 模组——把它丢进去什么也召唤不出来，只会收到 NeoForge 一句「这不是有效模组」。
+> **部署通告（致新租户）**：`mods/` 目录仅放行 `brp-mod`。`brp-backend` 为独立 Java 服务，并非 Minecraft 模组；将其投入 `mods/` 不会开通任何服务，只会收到 NeoForge 出具的「这不是有效模组」认定。概不退款。
 
-Backend 想跑哪跑哪：给游戏服务器当受管 sidecar，或者无缝搬去独立服务器。部署很灵活，破产风险不灵活。
+Backend 可作为游戏服务器的受管 sidecar 运行，亦可无缝托管于独立服务器。部署很灵活，破产风险不灵活。
 
-一个模组文件走天下——服主和玩家装同一个 jar，跑什么由它跑在哪决定（见 docs/00-overview.md）。
+一个 jar 统领两端——服主与玩家安装同一制品；运行时行为由部署环境裁定（见 docs/00-overview.md）。
 
 ## 仓库结构
 
