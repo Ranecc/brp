@@ -72,6 +72,7 @@ server) or fully standalone via docker-compose — same jar either way
 - [08-bridge-api](docs/08-bridge-api.md) — stable surface for third-party bridge mods
 - [09-shop-floor](docs/09-shop-floor.md) — P2: shop-floor terminals (dispatch/line/form), chunk governance, APS balancing, task board ⭐
 - [10-business-map](docs/10-business-map.md) — the missing half of the ERP: order-to-cash spine, agreements, projects; what ships as a field, what is vetoed ⭐
+- [11-kapital-checklist](docs/11-kapital-checklist.md) — Das Kapital, reviewed quarterly: execution coverage across all three volumes ⭐
 
 ## Quick start (backend)
 
@@ -88,9 +89,10 @@ mvn -pl brp-backend -am test    # 56/56 green or no commit: ledger, saga, approv
 | P0 | repo + contracts + ledger core (idempotent, double-entry) + agent skeleton | ✅ this repo |
 | P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V), currency registry, machine-slot quotas + chunk incidents, i18n copy, outbox + Discord wiring, portal console (overview/approvals/economy/quotas pages + verdict actions) done; portal auth/RBAC + agent runtime wiring pending | 🚧 |
 | P2 | WMS adapters (vanilla → AE2 → Create) + inbound discrepancy & transfer orders + villager-mint metering events (docs/03 §10) + dashboards + alerts | ⬜ |
-| P3 | MRP (sales-order spine → BOM explosion + work orders, completion costing) + agreements/escrow + mint-fee engine + villager EHR & ALICE census (docs/07 §7, docs/03 §2) | ⬜ |
-| P4 | APS + machine monitoring + downtime ledger + signal hub + projects & asset registry | ⬜ |
-| P5 | exchange/futures, k8s + helm chart (the performance-art finale) | ⬜ |
+| P3 | MRP (sales-order spine → BOM explosion + work orders, completion costing) + agreements/escrow + mint-fee engine + villager EHR & ALICE census (docs/07 §7, docs/03 §2) + work-order turnaround report (docs/11 Vol. II) | ⬜ |
+| P4 | APS + machine monitoring + downtime ledger + signal hub + projects & asset registry + Dept I/II balance alerts (the realization condition, engineered, docs/11 Vol. II) | ⬜ |
+| P5 | exchange/futures, k8s + helm chart (the performance-art finale) + cross-dimension market entry (Nether/End, zero acquisition cost) + counter-cyclical consolidation playbooks (docs/11 Vol. III) | ⬜ |
+| ∞ | the expropriators are expropriated (long-tail risk — external, uncontrollable, no budget allocated) | 🔮 unschedulable (docs/11) |
 
 ## Licensing
 
@@ -103,8 +105,16 @@ Committed to building you a clean, *"enterprise-grade"* environment:
 | `brp-backend` | Apache-2.0 | the *enterprise* ritual: explicit patent grant, NOTICE file, the full ceremony |
 | `brp-contract` | Apache-2.0 | Please find the Legal Department's stamp |
 
-None of our licenses override or interfere with the Mojang EULA; these licenses apply strictly to *our* original code.
-Minecraft itself remains the proprietary property of Mojang. We claim no ownership over its codebase, nor do we have the right to license it.
+### Legal pecking order
+
+1. **The Mojang EULA** — supreme law of this world, non-negotiable,
+   self-illuminating. Our licenses neither override nor interfere with it;
+   frankly, we are not convinced it knows this repository exists.
+2. Your server's rules — local ordinances, vary by jurisdiction (i.e. server).
+3. **Our MIT / Apache-2.0** — a desk lamp. Governs *our* original code and
+   nothing else. Minecraft itself remains the proprietary property of Mojang;
+   we claim no ownership over its codebase, nor any right to license it
+   (see item 1, the sun).
 
 Maybe the backend is a good ERP?
 
