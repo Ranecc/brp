@@ -1,5 +1,6 @@
 package dev.brp.service.impl;
 
+import dev.brp.common.BadRequestException;
 import dev.brp.common.annotation.Atomic;
 import dev.brp.dto.QuotaDtos.ChunkIncidentResponse;
 import dev.brp.dto.QuotaDtos.PlacementVerdict;
@@ -45,6 +46,12 @@ public class QuotaServiceImpl implements QuotaService {
     @Override
     @Atomic
     public QuotaBucketResponse setLimit(String tenantId, String resource, long limit) {
+        // audit #6: the API DTO has @PositiveOrZero, but the portal form
+        // posts a raw long — a negative limit meant UNLIMITED. Refuse here
+        // so every door is closed, not just the polite one.
+        if (limit < 0) {
+            throw new BadRequestException("quota.limit.negative");
+        }
         var bucket = buckets.findById(new QuotaBucketEntity.Pk(tenantId, resource))
                 .orElseGet(() -> new QuotaBucketEntity(tenantId, resource, limit));
         bucket.setLimitAmount(limit);
@@ -64,7 +71,9 @@ public class QuotaServiceImpl implements QuotaService {
     @Override
     @Atomic
     public PlacementVerdict recordMachinePlaced(String tenantId, String machineId) {
-        var bucket = buckets.findById(new QuotaBucketEntity.Pk(tenantId, QuotaService.RESOURCE_MACHINE_SLOT))
+        // audit #6: read-check-write raced under concurrency; the row lock
+        // serializes placement verdicts the same way the chunk meter does.
+        var bucket = buckets.findForUpdate(tenantId, QuotaService.RESOURCE_MACHINE_SLOT)
                 .orElseGet(() -> new QuotaBucketEntity(tenantId, QuotaService.RESOURCE_MACHINE_SLOT, 0));
         if (!bucket.tryConsumeOne()) {
             // Over-licensed placement: page management, do not punish. The

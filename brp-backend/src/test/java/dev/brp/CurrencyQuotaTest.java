@@ -74,4 +74,27 @@ class CurrencyQuotaTest {
         assertThat(outbox.findAll().stream()
                 .anyMatch(m -> "quota.chunk.incident".equals(m.getEventType()))).isTrue();
     }
+
+    @Test
+    void negativeLimitsAreRefusedAtEveryDoor() {
+        // audit #6: the portal form posts a raw long; a negative limit used
+        // to mean UNLIMITED (tryConsumeOne only checks limit > 0)
+        assertThatThrownBy(() -> quotas.setLimit("audit-tenant", "machine_slot", -1))
+                .isInstanceOf(dev.brp.common.BadRequestException.class);
+    }
+
+    @Test
+    void concurrentPlacementsRespectTheLicense() throws Exception {
+        String tenant = "race-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        quotas.setLimit(tenant, "machine_slot", 1);
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var a = pool.submit(() -> quotas.recordMachinePlaced(tenant, "m-a").licensed());
+            var b = pool.submit(() -> quotas.recordMachinePlaced(tenant, "m-b").licensed());
+            // exactly ONE machine gets the license; the row lock serialized them
+            assertThat(a.get() ^ b.get()).isTrue();
+        } finally {
+            pool.shutdownNow();
+        }
+    }
 }
