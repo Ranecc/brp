@@ -24,6 +24,7 @@ public class OutboxMessageEntity {
     private int attempts;
     private Instant createdAt = Instant.now();
     private Instant deliveredAt;
+    private Instant updatedAt = Instant.now();
 
     protected OutboxMessageEntity() {}
 
@@ -44,10 +45,14 @@ public class OutboxMessageEntity {
         this.status = "DELIVERED";
         this.attempts++;
         this.deliveredAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
     public void failed() {
         this.status = "FAILED";
         this.attempts++;
+        this.updatedAt = Instant.now();
     }
+
+    public Instant getUpdatedAt() { return updatedAt; }
 }
