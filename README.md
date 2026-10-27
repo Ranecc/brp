@@ -49,7 +49,7 @@ brp/
 ├── docs/          # design docs (canonical English, .zh.md translations)
 ├── brp-contract/  # OpenAPI + event contract (single truth for both sides)
 ├── brp-common/    # zero-dependency shared kit: @Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot service (compiles; 60/60 tests green (+17 mod-side units), CI-enforced)
+├── brp-backend/   # Spring Boot service (compiles; 63/63 tests green (+23 mod-side units), CI-enforced)
 └── brp-mod/       # universal single-jar mod: ACL ports, sidecar supervisor,
                    # adapter SPI, WAL queue, SQLite/Caffeine local store plan
 ```
@@ -80,7 +80,7 @@ server) or fully standalone via docker-compose — same jar either way
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # 60/60 green or no commit: ledger, saga, approvals, quotas, billing, currency, outbox, anomaly desk, portal — go touch grass while it runs
+mvn -pl brp-backend -am test    # 63/63 green or no commit: ledger, saga, approvals, quotas, billing, currency, outbox, desks, APS, portal — go touch grass while it runs
 ```
 
 ## Roadmap

@@ -44,6 +44,21 @@ public class LineControllerBlock extends BaseEntityBlock {
         return BrpBlocks.LINE_CONTROLLER_BE.get().create(pos, state);
     }
 
+    /** P2-15 runtime wiring: the gate runs on the server tick, cheaply. */
+    @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+            Level level, BlockState state,
+            net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        if (type != BrpBlocks.LINE_CONTROLLER_BE.get()) {
+            return null;
+        }
+        return (lvl, pos, st, be) -> {
+            if (be instanceof LineControllerBlockEntity controller) {
+                controller.serverTick(lvl, pos);
+            }
+        };
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
@@ -60,15 +75,41 @@ public class LineControllerBlock extends BaseEntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    /** Program slot + gate. P2-11 fills the program; P2-09 wires the verdict. */
+    /**
+     * Program slot + gate (P2-11 model, P2-09 verdict, P2-15 rate): the BE
+     * samples the governor verdict and the APS factor once a second and
+     * names what it is doing. Program execution rides PipelineProgram when
+     * the richer feeds (energy/price windows) arrive with P3.
+     */
     public static class LineControllerBlockEntity extends BlockEntity {
+
+        private long window;
+        private String mode = "IDLE";
+        private ChunkGovernor.Verdict verdict = ChunkGovernor.Verdict.RUN;
 
         public LineControllerBlockEntity(BlockPos pos, BlockState state) {
             super(BrpBlocks.LINE_CONTROLLER_BE.get(), pos, state);
         }
 
+        void serverTick(Level level, BlockPos pos) {
+            if (level.isClientSide || level.getGameTime() % 20 != 0) {
+                return;   // once a second: the gate is cheap, not free
+            }
+            window++;
+            verdict = BrpBlocks.verdictAt(level, pos);
+            mode = dev.brp.mod.line.LineGate.decide(verdict,
+                    dev.brp.mod.line.ApsFeed.factor(), window).name();
+        }
+
         public Component statusLine() {
-            return Component.translatable("block.brp.line_controller.status.unprogrammed");
+            return switch (mode) {
+                case "RUNNING" -> Component.literal("line: RUNNING (rate "
+                        + Math.round(dev.brp.mod.line.LineGate.effectiveRate(
+                                verdict, dev.brp.mod.line.ApsFeed.factor()) * 100) + "%)");
+                case "THROTTLED" -> Component.literal("line: THROTTLED (fair-share window skipped)");
+                case "ON_STRIKE" -> BrpBlocks.STRIKE_MSG;
+                default -> Component.translatable("block.brp.line_controller.status.unprogrammed");
+            };
         }
 
         public ChunkGovernor.Verdict gate(ChunkGovernor.ChunkState chunk) {

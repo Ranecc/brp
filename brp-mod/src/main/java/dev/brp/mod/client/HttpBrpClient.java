@@ -107,6 +107,12 @@ public final class HttpBrpClient implements BrpServerApi {
     }
 
     @Override
+    public CompletableFuture<ApsAllocation> getApsAllocation(String tenantId) {
+        return send("GET", "/api/v1/aps/allocations/" + tenantId, null)
+                .thenApply(body -> gson.fromJson(body, ApsAllocation.class));
+    }
+
+    @Override
     public CompletableFuture<SignalPoll> pollSignals(String tenantId) {
         return send("GET", "/api/v1/tenants/" + tenantId + "/signals/poll", null)
                 .thenApply(body -> gson.fromJson(body, SignalPoll.class));

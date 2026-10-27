@@ -68,6 +68,34 @@ public final class BrpAgent {
             runtime = new AgentRuntime(AgentRuntime.Config.defaults(agentId, prop("brp.tenant", "server")),
                     api, wal, acl, acl, acl, msg -> LOG.info("{}", msg));
             runtime.start();
+
+            // P2-14: the machine census — namespace counts over registered
+            // chunks, ModList-guarded, one machine.stats event per mod
+            final dev.brp.mod.adapters.NamespacePolicy policy = new dev.brp.mod.adapters.NamespacePolicy();
+            io.scheduleWithFixedDelay(() -> {
+                try {
+                    var keys = runtime.registeredChunksView();
+                    if (keys.isEmpty()) {
+                        return;
+                    }
+                    for (var entry : dev.brp.mod.adapters.ChunkCensus
+                            .byNamespace(server, keys, policy).entrySet()) {
+                        if (!dev.brp.mod.adapters.ChunkCensus.modLoaded(entry.getKey())) {
+                            continue;   // census counts ghosts otherwise
+                        }
+                        wal.enqueue(UUID.randomUUID().toString(),
+                                AgentRuntime.gsonlessJson(java.util.Map.of(
+                                        "type", dev.brp.common.event.BrpEventTypes.MACHINE_STATS,
+                                        "machineId", "census:" + entry.getKey(),
+                                        "kind", "census",
+                                        "count", entry.getValue())),
+                                "TELEMETRY").eventId();
+                    }
+                } catch (Exception ex) {
+                    LOG.warn("[BRP] census failed: {}", ex.getMessage());
+                }
+            }, 60, 60, java.util.concurrent.TimeUnit.SECONDS);
+
             LOG.info("[BRP] agent booted: agent={} tenant={}", agentId, prop("brp.tenant", "server"));
         } catch (IOException | RuntimeException fatal) {
             LOG.error("[BRP] agent boot failed; mod inert for this session", fatal);

@@ -55,6 +55,11 @@ public interface BrpServerApi {
 
     CompletableFuture<List<FormRow>> getForms(String tenantId);
 
+    /** P2-15: this tenant's fair-share factor in (0,1]; 1.0 = full speed. */
+    record ApsAllocation(double factor) {}
+
+    CompletableFuture<ApsAllocation> getApsAllocation(String tenantId);
+
     // --- command plane (idempotent writes) ---
 
     record JournalLine(String accountNo, String direction, long amountCents, String memo) {}

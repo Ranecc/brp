@@ -4,9 +4,10 @@ package dev.brp.mod.adapters;
  * Soft-dependency integration notes (researched, docs/02-integrations.md).
  *
  * All classes in this package load ONLY behind ModList.isLoaded() guards.
- * Until the compileOnly dependencies are wired in P2, this file documents
- * the entry points so the adapter work is a transcription exercise, not a
- * research project. None of this compiles yet by design.
+ * P2-14 SHIPPED the census metering (NamespacePolicy + ChunkCensus: block
+ * namespace counts over registered chunks, ModList-gated, zero external
+ * maven). The API-deep probes below remain a transcription exercise for
+ * the compileOnly wiring — kept here so that exercise needs no research.
  *
  * ── AE2 (target: NeoForge 1.21.1) ─────────────────────────────────────────
  * ME Bridge block:

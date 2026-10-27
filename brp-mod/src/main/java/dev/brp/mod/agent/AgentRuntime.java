@@ -12,6 +12,7 @@ import dev.brp.mod.desk.FormDesk;
 import dev.brp.mod.desk.SignalDesk;
 import dev.brp.mod.governor.ChunkGovernor;
 import dev.brp.mod.governor.GovernorFeed;
+import dev.brp.mod.line.ApsFeed;
 import dev.brp.mod.queue.DiskBackedEventQueue;
 import java.util.Set;
 
@@ -173,6 +174,12 @@ public final class AgentRuntime {
             log.accept("[BRP] governor poll failed: " + t.getMessage());
             return null;
         });
+        api.getApsAllocation(cfg.tenantId()).thenAccept(alloc ->
+                        ApsFeed.publish(alloc.factor()))
+                .exceptionally(t -> {
+                    log.accept("[BRP] aps poll failed: " + t.getMessage());
+                    return null;
+                });
         api.getChunks(cfg.tenantId()).thenAccept(slots -> {
             Set<String> registered = new java.util.HashSet<>();
             for (var slot : slots) {
@@ -248,6 +255,11 @@ public final class AgentRuntime {
     }
 
     private volatile Set<String> registeredChunks = Set.of();
+
+    /** The census adapter (P2-14) reads the registered set from here. */
+    public Set<String> registeredChunksView() {
+        return registeredChunks;
+    }
 
     private void schedule(Runnable task, Duration every) {
         long millis = every.toMillis();

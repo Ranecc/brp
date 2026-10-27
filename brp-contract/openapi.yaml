@@ -304,6 +304,18 @@ paths:
       responses:
         "200": {description: the slot, with fresh credit}
 
+  /api/v1/aps/allocations:
+    get:
+      summary: Fair-share throttle factors per tenant (uniform haircut over global capacity)
+      responses:
+        "200": {description: tenant -> factor in (0,1]}
+  /api/v1/aps/allocations/{tenantId}:
+    get:
+      summary: This tenant's factor (1.0 = full speed; the line gate turns it into skipped windows)
+      parameters: [{name: tenantId, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: "{factor}"}
+
   /api/v1/anomaly/rules:
     get:
       summary: L1 hot rules (rules are data, not code)
