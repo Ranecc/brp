@@ -113,6 +113,29 @@ public interface SignalPort {            // 信号置位执行
 原则：**SPI 不 import 任何 MC/mod 类**（纯 Java + 自定义类型），MC/mod 交互全部压在各 adapter 子模块里。
 好处：单测不用起 MC、26.x 移植时 SPI 与业务逻辑零改动。
 
+## 8. 村民改良类 mod（Easy Villagers 一族）
+
+henkelmax 的 Easy Villagers（CurseForge 6900 万下载，NeoForge 1.21 在编 ✅）是
+目录案例：村民物品化，外加 Trader / Auto Trader / Breeder / Converter /
+Incinerator 方块。对 docs/03 §10 的威胁模型：**方块内执行的交易完全绕过原版
+商人菜单**——`MerchantResultSlot` 挂点永远不会触发，持牌铸币厂的水表恰好在
+自动化最密集处失明。适配器规则（ModList 守卫、软依赖、§7 同款纪律）：
+
+- **Auto Trader 产出**用容器增量计量（对方块槽位做 `inventory.snapshot`），
+  绝不挂 GUI 钩子；适配器从进出物品流反推等价交易数
+- **Converter 方块**是工业级 `villager.cured` 发射器——05 稿的折扣取证必须
+  归因它们，否则普查会在治愈途中"丢人"
+- **Breeder 方块**是受许可机器（`machine_slot`）：经设备的人头增长与自然
+  繁殖同样路由进 `villager` 配额，无豁免
+- **村民物品化**会把实体移出世界——携带期间区块归属与普查双双失明 ◆；
+  适配器把物品态村民计入携带租户的人头
+- **Incinerator**：第三方处决块存在；BRP 计量人口差并逐笔记为**未批准的
+  资产减记**（docs/07 §7）。BRP 自己的表单永不路由到那里——村民是稀缺
+  人头，不是库存。
+
+SPI 增补（仅加法）：`TradeSource extends BrpAdapter`，按容器上报物品等价的
+交易增量——§7 的纯 Java 规则原样适用。
+
 ## 来源
 
 - Create 6.0.0 Changelog（物流网络引入）: https://wiki.createmod.net/users/changelogs/6.0.0
@@ -120,3 +143,4 @@ public interface SignalPort {            // 信号置位执行
 - Stock Link / Stock Ticker: https://create.fandom.com/wiki/Stock_Link · https://create.fandom.com/wiki/Stock_Ticker
 - CC Total Logistics（第三方 CC:T↔Create 物流 API 的存在性证据）: https://xeli-cloud.gitlab.io/website/2025/05/11/cc-logistics-api-0.2.0.html
 - AE2 下载页（NeoForge 1.21.1 官方支持）: https://appliedenergistics.org/download
+- Easy Villagers（henkelmax；Trader/Auto Trader/Breeder/Converter/Incinerator）: https://www.curseforge.com/minecraft/mc-mods/easy-villagers

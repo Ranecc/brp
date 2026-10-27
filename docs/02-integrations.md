@@ -131,6 +131,35 @@ Rule: **the SPI imports no Minecraft or mod classes** (pure Java). MC/mod
 interaction lives only in adapter modules. Result: unit tests without MC,
 zero-diff SPI and business logic on a 26.x port.
 
+## 8. Villager-improvement mods (Easy Villagers class)
+
+henkelmax's Easy Villagers (69M+ downloads, NeoForge 1.21 ✅) is the catalog
+case: villagers as items, plus Trader / Auto Trader / Breeder / Converter /
+Incinerator blocks. Threat model for docs/03 §10: **block-executed trades
+bypass the vanilla merchant menu entirely** — a `MerchantResultSlot` hook
+never fires, so the licensed-mint water gauge goes blind exactly where
+automation is densest. Adapter rules (ModList-guarded, soft-dep, same
+discipline as §7):
+
+- **Auto Trader output** is metered by container deltas (`inventory.snapshot`
+  on the block slots), never by GUI hooks; the adapter re-derives
+  trade-equivalent counts from in/out item flows
+- **Converter blocks** are industrial-scale `villager.cured` emitters —
+  discount forensics (doc 05) must attribute them or the census "loses"
+  villagers mid-cure
+- **Breeder blocks** are licensed machines (`machine_slot`): headcount growth
+  through a device routes into the `villager` quota like organic births, no
+  exceptions
+- **villager-as-item** takes the entity out of the world — chunk attribution
+  and census both go blind while carried ◆; the adapter counts item-form
+  villagers against the carrying tenant's headcount
+- **Incinerator**: third-party culling exists; BRP meters the population
+  delta and files it as an unapproved write-off (docs/07 §7). BRP's own
+  forms never route there — villagers are scarce headcount, not inventory.
+
+SPI addition (additive only): `TradeSource extends BrpAdapter`, reporting
+item-equivalent trade deltas per container — §7's pure-Java rule unchanged.
+
 ## Sources
 
 - Create 6.0.0 changelog (logistics network): https://wiki.createmod.net/users/changelogs/6.0.0
@@ -138,3 +167,4 @@ zero-diff SPI and business logic on a 26.x port.
 - Stock Link / Stock Ticker: https://create.fandom.com/wiki/Stock_Link · https://create.fandom.com/wiki/Stock_Ticker
 - CC Total Logistics (existence proof of CC:T↔Create logistics APIs): https://xeli-cloud.gitlab.io/website/2025/05/11/cc-logistics-api-0.2.0.html
 - AE2 downloads (official 1.21.1 NeoForge): https://appliedenergistics.org/download
+- Easy Villagers (henkelmax; Trader/Auto Trader/Breeder/Converter/Incinerator): https://www.curseforge.com/minecraft/mc-mods/easy-villagers

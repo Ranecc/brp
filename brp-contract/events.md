@@ -40,7 +40,7 @@ commit as the agent-side mixin, per contract-before-code; design: docs/03 §10)
 | type | reliability | payload (sketch) |
 |---|---|---|
 | merchant.trade | TELEMETRY | `{villager, profession, offer, itemIdIn, itemIdOut, count, dimension, chunkKey}` (one per completed villager trade; the licensed-mint water gauge — mint fee aggregates `tax:tenant:mint:day`) |
-| villager.cured | TELEMETRY | `{villager, player}` (cure resets trade pairs = the mint's speed governor) |
+| villager.cured | TELEMETRY | `{villager, player}` (hook: NeoForge `LivingConversionEvent.Post`, ZombieVillager→Villager — no dedicated cure event exists ✅; cures preserve trades and offers, changing only the gossip discount) |
 
 Rules:
 1. CRITICAL events are never dropped by the agent WAL, regardless of pressure.

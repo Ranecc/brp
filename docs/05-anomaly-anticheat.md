@@ -32,6 +32,9 @@ large transfers on day-zero accounts. All rules parameterized + versioned
 - EWMA drift: variance-collapse + 24/7 activity patterns (bot signature)
 - cohort comparison: cross-sectional percentiles within cohorts
   (playtime/tenant), top 0.1% flagged
+- non-player employees count too: per-villager baselines from
+  `merchant.trade` feed the rank-and-yank inputs, including the p95/p5
+  honesty check (docs/07 §7)
 
 ### L3 models (weekly batch, offline)
 - unsupervised: Isolation Forest / LOF (Smile on JVM or a Python sidecar,

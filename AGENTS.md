@@ -103,6 +103,24 @@ literal — use these terms exactly when writing code, contracts or docs:
 3. Code → tests → one logical commit. Verify before committing.
 4. Uncertain about a third-party API? Mark it `◆` + TODO. Never guess silently.
 
+## Satire-doc doctrine (learned the hard way on docs/11, v1→v6)
+
+Satire docs go through full rewrites, each absorbing an external review.
+The rules that survived every round:
+
+- **the mask never comes off.** One voice, end to end. Corrections land
+  in-voice, never as audit notes, version history or authorial "we"
+  (the diff is the changelog). If the frame breaks, absorb the critique
+  as content, not commentary.
+- **density discipline.** Most items read like boring corporate filler;
+  three or four load-bearing jokes stay loud. A punchline per line is
+  wisecrack inflation.
+- **cite the source concept the way the company would cite a vendor** —
+  naming the manual's term upgrades euphemism into verdict, in-register.
+- **parallel editors are live.** Re-read any file before editing it;
+  someone (human or another agent) has probably touched it since your
+  last read.
+
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1

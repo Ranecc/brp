@@ -43,6 +43,19 @@ Daily metrics materialized into `economy_daily`:
 - **banked share** = Σ account balances / (accounts + outstanding bearer
   tokens issued by mint windows) — how much of the supply lives on rails we
   can see; a bearer form exists only if registered (section 8)
+- **self-sufficiency line (ALICE)** — reference household Alice: cheapest
+  basket of food, bed rent (chunk ticket amortized), transport (distance ×
+  teleport fee), minimum `machine_slot` license, basic tool upkeep; cost
+  materialized per dimension, chained monthly. Per-player classification on
+  the section 9 shared weekly snapshot: self-sufficient / ALICE / struggling,
+  where income = labor inflows net of FAUCET entries — subsidies never count
+  as income, or the targeting poisons its own metric. The Gini watches the
+  upper tail; Alice watches the floor: whale noise dominates Gini, ALICE share
+  is robust there by construction
+- **villager census** — three vanilla states per tenant, docs/07 §7:
+  employed / reserve (unemployed & nitwit breeding wing) / cold storage
+  (zombie villagers). Headcount accounting, not welfare accounting —
+  villagers are a scarce, slowly-renewable resource
 
 ## 3. CPI (server price index)
 
@@ -77,7 +90,8 @@ rollback** (peak enterprise).
 | Crisis | Signal | Default response (alert-only) |
 |---|---|---|
 | hyperinflation | CPI > +2%/day for 7 days, faucet-heavy | alert + faucet cap recommendation |
-| deflationary spiral | CPI < −0.5%/day for 14 days, V falling, sink > faucet | alert + spread narrowing / voucher recommendation |
+| deflationary spiral | CPI < −0.5%/day for 14 days, V falling, sink > faucet | alert + spread narrowing / voucher recommendation (means-tested against Alice, §2) |
+| demand fragility | ALICE share rising week-over-week while employed headcount flat | alert + voucher targeting review — the floor thins before the price index notices (§2) |
 | bank run | ESCROW withdrawal rate > 3× historical P99 | circuit-break: throttle + human review queue |
 | liquidity crunch | order book depth below floor, spreads widening | alert |
 | wash trading / manipulation | doc 05 graph detection (self-dealing cycles, spoofing) | flag + freeze for review |
@@ -220,22 +234,30 @@ sentence, with the entity pointed at something that gets confined).
   verify against 1.21.1). Payload: villager entity id, profession, offer,
   in/out item + count, chunk key. Same collection job the machine probe
   does for AE2/Create (doc 02).
-- `villager.cured` (TELEMETRY) — `VillagerCureEvent` ◆. Cures reset trade
-  pairs, so cure rate is the mint's throughput governor; counting cures
-  counts the speedup.
+- `villager.cured` (TELEMETRY) — NeoForge has NO dedicated cure event; hook
+  `LivingConversionEvent.Post` (ZombieVillager → Villager) ✅. Cures preserve
+  profession AND offers — they change only the gossip discount: permanent,
+  deepest on the FIRST cure (1.20.2 stopped the stack ◆). Cured librarians
+  are an arbitrage asset; cured intake clerks are unchanged. Wire this event
+  for doc 05's discount forensics, not for throughput.
 
 **Attribution.** Hall chunk → tenant via the chunk-ticket registry (doc 09
 §3). Trades in ticketed space bill the ticket holder. An unattributed minting
 villager is an incident, not a crime — the same human-choice page as machine
 overruns (section 8). Admins' own halls book to an explicit `SYSTEM_MINT`
 tenant, or section 2's net emission quietly goes crooked. Wandering traders
-are excluded at event source: they are an emerald drain, not a source.
+carry up to two purchasing trades (hay bale / baked potato class) alongside
+their sell stock ✅ — not a pure drain: route their rare mints to
+`SYSTEM_MINT` too.
 
-**The game already built the speed limiter; we only read it.** Per villager:
-2–4 trades per offer before trade lock, one rest to refresh, a cure to reset
-pairs. Mint velocity = trades × cures = exactly the two events above. The hall
-is the only faucet whose ceiling is written into vanilla mechanics — that is
-why metering it is cheap.
+**The game already built the speed limiter; we only read it.** Per offer: a
+stock of uses per restock (≈16 on buy trades), restock up to twice a day at
+the workstation ✅ — mint velocity = uses × restocks, and `merchant.trade`
+counts it. Offers are rolled ONCE: re-roll works only before a villager's
+first trade, after which offers lock permanently ✅. And the hall buys raw
+inputs only — finished goods are not a purchasable category anywhere in the
+trade tables ✅, so daily mint output is bounded by game data, not by player
+cleverness.
 
 **Two tools, never twisted into each other** (the section 9 constitution,
 applied):
@@ -257,6 +279,13 @@ redemption margin. "Villager-hall engineering" stops being weather and becomes
 a tariff schedule with a meter. Wörgl (1932) got the demurrage half of this
 right with stamp scrip — it never got to meter the printer. We meter the
 printer.
+
+**The mint's workforce is on the books too.** `merchant.trade` carries the
+villager id; employment states, trade-table job descriptions, culling codes
+and the census live in doc 07 §7. Accounting correction: villagers draw no
+wage — the emeralds players pay them for goods are destroyed on receipt ✅.
+The hall is a two-way desk: intake trades MINT, output trades BURN, and the
+"employee income" line in any report is a sink, not a payroll.
 
 Deliverables: mixin + two event rows (P2 batch, same shipment as the WMS
 adapters), `villager` quota resource, `SYSTEM_MINT` tenant, mint-fee
