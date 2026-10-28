@@ -42,7 +42,7 @@ brp/
 ├── docs/          # 设计文档（英文主文档 + .zh.md 中文译本）
 ├── brp-contract/  # OpenAPI + 事件契约（前后端唯一真理）
 ├── brp-common/    # 零依赖共享件：@Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot 服务（可编译，63/63 测试全绿（另有 mod 侧 23 个单元），CI 把关）
+├── brp-backend/   # Spring Boot 服务（可编译，70/70 测试全绿（另有 mod 侧 23 个单元），CI 把关）
 └── brp-mod/       # 单 jar 通用模组：防腐层端口、sidecar 进程管理、
                    # 适配器 SPI、WAL 队列、SQLite/Caffeine 内嵌方案
 ```

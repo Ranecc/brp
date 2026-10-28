@@ -211,10 +211,10 @@ acks with the movement id. Everything else in P3 is backend + portal.
 
 | # | task | slice |
 |---|---|---|
-| P3-01 | V15 + weekly snapshot job (Gini/V/top-share, idempotent) | backend |
-| P3-02 | hysteresis regime + BRP-0901/0902 + regime endpoint | backend |
-| P3-03 | wealth levy engine (brackets, V surcharge, regime gate) | backend |
-| P3-04 | compute levy: minute assessment (share proxy = load-minutes) + marginal bands + materializer | backend |
+| P3-01 ✓ | V15 + weekly snapshot job (Gini/V/top-share, idempotent per week) | backend |
+| P3-02 ✓ | hysteresis regime + BRP-0901/0902/0950 + regime endpoint | backend |
+| P3-03 ✓ | wealth levy engine (step brackets, V surcharge, regime gate, insert-only idem) | backend |
+| P3-04 ✓ | compute levy: minute rows (row-locked accumulate) + marginal bands (no cliffs) + materializer, idem tax:{tenant}:{minute} | backend |
 | P3-05 | BRP-09xx wiring (0950 sustained-share, 0906 streak) + copy | backend |
 | P3-06 | V16 + mint-window saga + vault registration/movements + drift (0904) | backend |
 | P3-07 | peg state + band + auto-filed re-peg votes + execution | backend |

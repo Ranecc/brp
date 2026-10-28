@@ -49,7 +49,7 @@ brp/
 ├── docs/          # design docs (canonical English, .zh.md translations)
 ├── brp-contract/  # OpenAPI + event contract (single truth for both sides)
 ├── brp-common/    # zero-dependency shared kit: @Idempotent/@Cached/@Atomic/@Compensable
-├── brp-backend/   # Spring Boot service (compiles; 63/63 tests green (+23 mod-side units), CI-enforced)
+├── brp-backend/   # Spring Boot service (compiles; 70/70 tests green (+23 mod-side units), CI-enforced)
 └── brp-mod/       # universal single-jar mod: ACL ports, sidecar supervisor,
                    # adapter SPI, WAL queue, SQLite/Caffeine local store plan
 ```

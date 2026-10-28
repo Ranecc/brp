@@ -28,17 +28,20 @@ public class TelemetryServiceImpl implements TelemetryService {
     private final QuotaService quotas;
     private final dev.brp.service.ChunkService chunks;
     private final dev.brp.service.HotRuleService hotRules;
+    private final dev.brp.service.ComputeLevyService computeLevy;
     private final int maxBatchSize;
 
     public TelemetryServiceImpl(TelemetryRepository events, AgentMonitorService monitor,
                                 QuotaService quotas, dev.brp.service.ChunkService chunks,
                                 dev.brp.service.HotRuleService hotRules,
+                                dev.brp.service.ComputeLevyService computeLevy,
                                 @Value("${brp.telemetry.max-batch-size:1000}") int maxBatchSize) {
         this.events = events;
         this.monitor = monitor;
         this.quotas = quotas;
         this.chunks = chunks;
         this.hotRules = hotRules;
+        this.computeLevy = computeLevy;
         this.maxBatchSize = maxBatchSize;
     }
 
@@ -90,8 +93,11 @@ public class TelemetryServiceImpl implements TelemetryService {
                 }
                 case BrpEventTypes.CHUNK_LOAD_MINUTES -> {
                     if (e.tenantId() != null) {
+                        long minutes = (long) num(p.get("minutes"));
                         chunks.accrueMinutes(e.tenantId(), str(p.get("dimension")),
-                                str(p.get("chunkKey")), (long) num(p.get("minutes")));
+                                str(p.get("chunkKey")), minutes);
+                        computeLevy.recordUsage(e.tenantId(), minutes,
+                                java.time.LocalDateTime.now());   // docs/12 §5: the same minutes feed the levy
                     }
                 }
                 default -> { /* plain telemetry, no fan-out */ }

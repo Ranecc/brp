@@ -28,6 +28,24 @@ class OutboxFlowTest {
 
     @MockitoBean WebhookSender sender;
 
+    /** Shared testdb discipline: our row is the newest of its kind — scope by id. */
+    private long ourNudgedRow() {
+        return outbox.findAll().stream()
+                .filter(m -> "approval.nudged".equals(m.getEventType()))
+                .mapToLong(OutboxMessageEntity::getId).max().orElseThrow();
+    }
+
+    /** Other contexts park rows ahead of ours; drain until OUR row settles. */
+    private void drainUntilSettled(long rowId) {
+        for (int i = 0; i < 60; i++) {
+            dispatcher.drainOnce();
+            var state = outbox.findById(rowId).map(OutboxMessageEntity::getStatus).orElse("GONE");
+            if (!"PENDING".equals(state) && !"SENDING".equals(state)) {
+                return;
+            }
+        }
+    }
+
     @Test
     void notificationsDrainToTheWebhookExactlyOncePerEvent() {
         List<String> delivered = new ArrayList<>();
@@ -38,21 +56,24 @@ class OutboxFlowTest {
                 });
 
         notifications.enqueue("approval.nudged", "approval.nudge.ok");
-        int drained = dispatcher.drainOnce();
+        long ours = ourNudgedRow();
+        drainUntilSettled(ours);
 
-        assertThat(drained).isGreaterThanOrEqualTo(1);
-        assertThat(delivered).hasSize(1);
-        assertThat(outbox.findTop20ByStatusOrderByIdAsc("DELIVERED"))
-                .anyMatch(m -> m.getEventType().equals("approval.nudged"));
+        var row = outbox.findById(ours).orElseThrow();
+        assertThat(row.getStatus()).isEqualTo("DELIVERED");
+        assertThat(row.getAttempts()).isEqualTo(1);   // exactly once per event
+        assertThat(delivered).isNotEmpty();
     }
 
     @Test
     void failedDeliveryMarksFailedForTheFutureSweeper() {
         when(sender.send(anyString(), anyString())).thenReturn(false);
         notifications.enqueue("approval.nudged", "approval.nudge.ok");
-        dispatcher.drainOnce();
-        assertThat(outbox.findTop20ByStatusOrderByIdAsc("FAILED"))
-                .anyMatch(m -> m.getAttempts() == 1);
+        long ours = ourNudgedRow();
+        drainUntilSettled(ours);
+        var row = outbox.findById(ours).orElseThrow();
+        assertThat(row.getStatus()).isEqualTo("FAILED");
+        assertThat(row.getAttempts()).isEqualTo(1);
     }
 
     @Test
@@ -64,7 +85,7 @@ class OutboxFlowTest {
         var failedRows = outbox.findTop20ByStatusOrderByIdAsc("FAILED");
         assertThat(failedRows).isNotEmpty();
 
-        long rowId = outbox.findTop20ByStatusOrderByIdAsc("FAILED").get(0).getId();
+        long rowId = ourNudgedRow();   // ours, not some other context's stale corpse
 
         // second life: sender healthy; rows newer than the backoff stay FAILED
         when(sender.send(anyString(), anyString())).thenReturn(true);
