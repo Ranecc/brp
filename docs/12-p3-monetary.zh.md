@@ -132,11 +132,23 @@ Gresham 的轨道标记**无需建表**：ESCROW 分录携带 memo 前缀
   `peg_history`（带审批 id）。无第三条治理通道；RFC P3 在此同样没有
   豁免权。
 
-## 10. Gresham 检测器（P3-08）
+## 10. Gresham 检测器（P3-08，据腐竹评审重定基线）
 
-对 ESCROW 分录按 `rail:*` memo 前缀做 7 天滑窗聚合；单腿占比 > 95% →
-BRP-0903 + 注入 docs/03 §5 危机规则表（规则即数据——它就是一条带计算
-字段的 L1 热规则）。处方留给人：重定锚，或弱腿临时浮动。
+绝对占比阈值（>95%）是错的，已退役：绿宝石轨道是**消费货币**（下界合金
+货币），配额轨道是玩家囤着刷绿宝石的**工业货币**——消费腿一边倒是星期二
+不是危机。检测器改为行为性的、各腿对自己的移动基线：
+
+- 分桶：journal 的 `rail:*` memo 按周一校准的周桶聚合，1 个当前周 +
+  `brp.gresham.baseline-weeks`（4）个基线周；
+- 警报：`quota_current <= quota_baseline × brp.gresham.drop-ratio`（0.5）
+  **且** `emerald_current >= emerald_baseline × brp.gresham.consumer-floor`
+  （1.0）——工业吞吐腰斩而消费支出持稳：花劣币、囤良币；
+- 连续两次警报（内存 streak；重启只是重新积累证据）→ BRP-0903，
+  observed = 跌落比率；
+- 冷启动：基线为空的腿保持沉默——没有历史，就没有指控。
+
+纯求值器 `evaluate` 用合成周桶做单元测试；DB 扫描只分桶再委托。配置键
+见 §15。
 
 ## 11. 洗钱环路（P3-09，docs/10 R-4）
 
@@ -182,6 +194,9 @@ Tarjan SCC；发现 = 尺寸 ≥ 2 且环长 ≤ 4 的 SCC，按整额度（金�
 | brp.peg.band | 0.05 | ±带宽 |
 | brp.mint.approval-threshold | 100000 | 分 |
 | brp.cpi.basket | {} | 物品→权重 |
+| brp.gresham.drop-ratio | 0.5 | 工业腿相对自身基线的崩塌线 |
+| brp.gresham.consumer-floor | 1.0 | 工业腿跌落时消费腿须守住的比率 |
+| brp.gresham.baseline-weeks | 4 | 移动平均窗口；历史不足则沉默 |
 
 ## 16. 任务板（验收 = 测试与文档同 commit）
 
@@ -194,7 +209,7 @@ Tarjan SCC；发现 = 尺寸 ≥ 2 且环长 ≤ 4 的 SCC，按整额度（金�
 | P3-05 | BRP-09xx 接线——0901/0902/0950/0903 已活；0904（漂移）、0905（补偿耗尽）、0906（连败）待做 | backend |
 | P3-06 ✓ | V16 + 铸币窗口 saga（逆序补偿，账目分毫不差）+ 金库登记/流水——漂移核验（0904）随库存探针下一切片 | backend |
 | P3-07 ✓ | 锚价状态 + 带宽 + 自动重定锚投票（连续两次带外 → 一票）+ 带历史的原子执行 | backend |
-| P3-08 ✓ | Gresham 轨道聚合（rail:* memo，7 天）+ 超 95% 触发 0903 | backend |
+| P3-08 ✓ | Gresham 轨道聚合（rail:* memo，7 天）+ 0903——已重定基线：各腿移动基线偏离，绝对占比退役 | backend |
 | P3-09 | V17 + 洗钱环路 SCC + 扫描端点 | backend |
 | P3-10 | 价格观测摄入 + CPI 日更 | backend |
 | P3-11 | 门户 Monetary 页（徽章/表格/轨道/CPI/锚价/投票） | portal |

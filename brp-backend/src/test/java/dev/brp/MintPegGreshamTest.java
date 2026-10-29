@@ -113,11 +113,14 @@ class MintPegGreshamTest {
     }
 
     @Test
-    void oneLegMonopolizingPaymentsIsACrisis() {
+    void consumerDominanceFilesNothingColdStartIsSilent() {
+        // the owner's exact scenario, against the live DB: consumer rail at
+        // ~99.5% of volume. Under the retired absolute rule this was a
+        // weekly false alarm; rebaselined, it is Tuesday — and with no
+        // baseline history the detector keeps silent regardless.
         String tenant = guild(1_000_000L);
         String counterparty = "cp-" + UUID.randomUUID().toString().substring(0, 8);
         ledger.createAccount(tenant, new CreateAccountRequest(counterparty, "PLAYER", "BRC"));
-        // rails ride the DEBIT legs (paid-in volume); every journal still balances
         ledger.post(tenant, new PostJournalRequest(UUID.randomUUID().toString(), "BRC", List.of(
                 new JournalLine("treasury", "DEBIT", 20_000L, "rail:emerald:trade"),
                 new JournalLine(counterparty, "CREDIT", 20_000L, "rail:emerald:trade"))));
@@ -126,7 +129,8 @@ class MintPegGreshamTest {
                 new JournalLine(counterparty, "CREDIT", 100L, "rail:quota:trade"))));
 
         Map<String, Double> shares = gresham.scan();
-        assertThat(shares.get("emerald")).isGreaterThan(0.95);
-        assertThat(hits.findTop50ByOrderByIdDesc().get(0).getRuleId()).isEqualTo(903L);
+        assertThat(shares.get("emerald")).isGreaterThan(0.95);   // dominance, happily reported
+        assertThat(hits.findTop50ByOrderByIdDesc().stream()
+                .noneMatch(h -> h.getRuleId() == 903L)).isTrue();   // and NOT a crisis
     }
 }

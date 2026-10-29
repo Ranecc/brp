@@ -149,12 +149,27 @@ death sentence.
   atomically with the approval id. No third governance channel; RFC P3
   grants no exemptions here either.
 
-## 10. Gresham detector (P3-08)
+## 10. Gresham detector (P3-08, REBASELINED per owner review)
 
-7-day sliding window over escrow journals grouped by `rail:*` memo
-prefix; single-leg share > 95% -> BRP-0903 + crisis signal into the
-docs/03 §5 rule table (rules as data — it IS an L1 hot rule with a
-computed field). Prescription stays human: re-peg or float the weak leg.
+The absolute-share threshold (>95%) was wrong and is retired: the emerald
+rail is the CONSUMER currency (netherite money), the quota rail is the
+INDUSTRIAL currency players hoard to mint emeralds with — consumer rail
+dominance is Tuesday, not a crisis. The detector is behavioral, per-rail
+vs its own moving baseline:
+
+- buckets: journal `rail:*` memos aggregated into Monday-aligned week
+  buckets, 1 current + `brp.gresham.baseline-weeks` (4) baseline weeks;
+- alarm: `quota_current <= quota_baseline * brp.gresham.drop-ratio` (0.5)
+  WHILE `emerald_current >= emerald_baseline * brp.gresham.consumer-floor`
+  (1.0) — industrial throughput halves while consumer spending holds:
+  spend the bad coin, hoard the good one;
+- two consecutive alarms (in-memory streak, reset-safe: a restart just
+  re-accumulates evidence) -> BRP-0903, observed = the drop ratio;
+- cold start: a leg with an empty baseline stays silent — no history, no
+  accusation.
+
+The pure evaluator (`evaluate`) is unit-tested with synthetic week
+buckets; the DB scan only buckets and delegates. Config keys in §15.
 
 ## 11. Wash cycles (P3-09, docs/10 R-4)
 
@@ -206,6 +221,9 @@ acks with the movement id. Everything else in P3 is backend + portal.
 | brp.peg.band | 0.05 | ±band |
 | brp.mint.approval-threshold | 100000 | cents |
 | brp.cpi.basket | {} | item->weight |
+| brp.gresham.drop-ratio | 0.5 | industrial-rail collapse vs own baseline |
+| brp.gresham.consumer-floor | 1.0 | consumer rail must hold this ratio while industrial drops |
+| brp.gresham.baseline-weeks | 4 | moving-average window; less history = silent |
 
 ## 16. Task board (acceptance = tests + docs in the same commit)
 
@@ -218,7 +236,7 @@ acks with the movement id. Everything else in P3 is backend + portal.
 | P3-05 | BRP-09xx wiring — 0901/0902/0950/0903 live; 0904 (drift), 0905 (compensation exhausted), 0906 (streak) remain | backend |
 | P3-06 ✓ | V16 + mint-window saga (compensating in reverse, books verified to the cent) + vault registration/movements — drift check (0904) rides the inventory probe, next slice | backend |
 | P3-07 ✓ | peg state + band + auto-filed re-peg votes (2 consecutive misses → 1 vote) + atomic execution with history | backend |
-| P3-08 ✓ | Gresham rail aggregation (rail:* memos, 7d) + 0903 on >95% | backend |
+| P3-08 ✓ | Gresham rail aggregation (rail:* memos, 7d) + 0903 — REBASELINED: per-rail moving-baseline divergence, absolute share retired | backend |
 | P3-09 | V17 + wash-cycle SCC + scan endpoint | backend |
 | P3-10 | price observations ingest + CPI daily | backend |
 | P3-11 | portal Monetary page (badge, tables, rails, CPI, peg, votes) | portal |

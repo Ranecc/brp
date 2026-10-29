@@ -202,10 +202,21 @@ VOTE that rides the EXISTING approval workflow — no third governance
 channel for money matters, RFC P3 grants no exemptions here.
 
 **Gresham detector.** Legs are defined by PAYMENT RAIL (emerald-priced vs
-quota-priced redemption flows through ESCROW), never by item movement — a
-7-day sliding-window aggregation over escrow flows. Single-leg share > 95%
-is a first-class crisis signal (section 5); prescriptions: re-peg, or float
-the weak leg temporarily.
+quota-priced redemption flows through ESCROW), never by item movement — and
+the two rails have different NATURES: the emerald rail is the CONSUMER
+currency (the something-to-spend-it-on leg: netherite, blocks, whatever the
+economy actually buys), while the quota rail is the INDUSTRIAL currency
+(means of production — which players mostly hold to mint emeralds with).
+One rail dominating the volume split is therefore NOT a crisis; it is
+Tuesday. The signal is BEHAVIORAL, measured against each rail's own moving
+baseline: current 7-day flow per leg vs its 4-week moving average. The
+alarm fires when the industrial rail's throughput collapses against ITS
+OWN baseline while the consumer rail holds or grows — spend the bad coin,
+hoard the good one, the actual Gresham mechanism. Absolute share thresholds
+were tried and retired here: they fired every week, because of course they
+did. Cold start: fewer than the baseline weeks of history, the detector
+keeps silent. Prescription unchanged: re-peg, or float the weak leg
+temporarily.
 
 **Mint ordering (vault cannot drift from ledger).** Every mint is FAUCET
 ledger event FIRST, item dispense SECOND — the @Compensable saga pattern
