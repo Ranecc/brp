@@ -162,7 +162,8 @@ public class QuotaMarketServiceImpl implements QuotaMarketService {
     }
 
     @Override
-    @Scheduled(fixedDelayString = "${brp.market.expire-ms:3600000}")
+    @Scheduled(fixedDelayString = "${brp.market.expire-ms:3600000}",
+            initialDelayString = "${brp.market.expire-ms:3600000}")
     public void expireStale() {
         List<MarketOrderEntity> stale = orders.findByExpiresAtBeforeAndStatusIn(
                 OffsetDateTime.now(clock), List.of(MarketOrderEntity.NEW, MarketOrderEntity.PARTIAL));

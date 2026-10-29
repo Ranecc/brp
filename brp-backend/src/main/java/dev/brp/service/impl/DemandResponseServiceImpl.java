@@ -150,7 +150,8 @@ public class DemandResponseServiceImpl implements DemandResponseService {
     }
 
     @Override
-    @Scheduled(fixedDelayString = "${brp.dr.award-ms:60000}")
+    @Scheduled(fixedDelayString = "${brp.dr.award-ms:60000}",
+            initialDelayString = "${brp.dr.award-ms:60000}")
     public void awardDueJobs() {
         LocalDateTime now = LocalDateTime.now(clock);
         expirePastDeadline(now);
@@ -171,7 +172,8 @@ public class DemandResponseServiceImpl implements DemandResponseService {
     }
 
     @Override
-    @Scheduled(fixedDelayString = "${brp.dr.award-ms:60000}")
+    @Scheduled(fixedDelayString = "${brp.dr.award-ms:60000}",
+            initialDelayString = "${brp.dr.award-ms:60000}")
     public void dispatchDueSignals() {
         LocalDateTime now = LocalDateTime.now(clock);
         for (DeferredJobEntity job : jobs.findByStatusOrderByCreatedAtAsc(DeferredJobEntity.AWARDED)) {
@@ -191,7 +193,8 @@ public class DemandResponseServiceImpl implements DemandResponseService {
         }
     }
 
-    @Scheduled(fixedDelayString = "${brp.dr.shed-ms:30000}")
+    @Scheduled(fixedDelayString = "${brp.dr.shed-ms:30000}",
+            initialDelayString = "${brp.dr.shed-ms:30000}")
     public void shedCheck() {
         shedIfOverloaded(loadSamples.liveMspt());
     }

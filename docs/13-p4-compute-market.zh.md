@@ -303,7 +303,7 @@ docs/10-business-map 给 P4 立下的承诺，收小、贴数据：
 | P4-13 | 门户负载页：预测 SVG、电价表、DR 窗口、信贷、债券、订单簿 | H | ✓ |
 | P4-14 | OpenAPI 同步：load/credit/bonds/market/oee/cc 路径 | H | ✓ |
 | P4-15 | 计数同步（AGENTS.md + 各 README）、docs/12 交接注记 | H | ✓ |
-| P4-16 | 完成审计：后端全量 + mod 构建 + CI 双远端绿 | H | ☐ |
+| P4-16 | 完成审计：后端全量 + mod 构建 + CI 双远端绿 | H | ✓ |
 
 ## 13. 测试计划
 

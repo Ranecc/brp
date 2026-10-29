@@ -338,7 +338,7 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 | P4-13 | Portal load page: forecast SVG, tariff table, DR windows, credit, bonds, book | H | ✓ |
 | P4-14 | OpenAPI sync: load/credit/bonds/market/oee/cc paths | H | ✓ |
 | P4-15 | Counts synced (AGENTS.md + READMEs), docs/12 handoff note | H | ✓ |
-| P4-16 | Completion audit: full backend suite + mod build + CI green both remotes | H | ☐ |
+| P4-16 | Completion audit: full backend suite + mod build + CI green both remotes | H | ✓ |
 
 ## 13. Test plan
 
