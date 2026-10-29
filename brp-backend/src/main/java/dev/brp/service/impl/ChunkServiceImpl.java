@@ -49,6 +49,7 @@ public class ChunkServiceImpl implements ChunkService {
     private final long starterMinutes;
     private final long centsPerMinute;
     private final TariffService tariff;
+    private final dev.brp.repository.CreditLineRepository creditLines;
 
     public ChunkServiceImpl(ManagedChunkRepository chunks,
                             ChunkPurchaseKeyRepository purchaseKeys,
@@ -59,7 +60,8 @@ public class ChunkServiceImpl implements ChunkService {
                             @Value("${brp.chunk.governor.grace-minutes:60}") long graceMinutes,
                             @Value("${brp.chunk.governor.starter-minutes:1440}") long starterMinutes,
                             @Value("${brp.chunk.billing.cents-per-minute:0}") long centsPerMinute,
-                            TariffService tariff) {
+                            TariffService tariff,
+                            dev.brp.repository.CreditLineRepository creditLines) {
         this.chunks = chunks;
         this.purchaseKeys = purchaseKeys;
         this.notifications = notifications;
@@ -70,6 +72,7 @@ public class ChunkServiceImpl implements ChunkService {
         this.starterMinutes = starterMinutes;
         this.centsPerMinute = centsPerMinute;
         this.tariff = tariff;
+        this.creditLines = creditLines;
     }
 
     @Override
@@ -116,6 +119,15 @@ public class ChunkServiceImpl implements ChunkService {
     @Override
     public ChunkSlotResponse purchaseCredits(String tenantId, String dimension,
                                              String chunkKey, PurchaseCreditsRequest req) {
+        // docs/13 section 6: RESTRICTED credit refuses new commitments — the
+        // repo is read directly, keeping Chunk -> repo (never Chunk -> CreditService)
+        creditLines.findById(tenantId).ifPresent(line -> {
+            String st = line.getStatus();
+            if (dev.brp.entity.CreditLineEntity.RESTRICTED.equals(st)
+                    || dev.brp.entity.CreditLineEntity.DEFAULTED.equals(st)) {
+                throw new BadRequestException("credit.restricted");
+            }
+        });
         long amountCents;
         try {
             // docs/13 §4: one price of time — the versioned tariff table, not
@@ -196,6 +208,22 @@ public class ChunkServiceImpl implements ChunkService {
                     chunkKey, dimension, tenantId);
         }
         return mapper.toDto(slot);
+    }
+
+    @Override
+    @Atomic
+    public int closeAllForCredit(String tenantId) {
+        int closed = 0;
+        for (ManagedChunkEntity slot : chunks.findByTenantId(tenantId)) {
+            if (ChunkStatus.ACTIVE.equals(slot.getStatus())) {
+                slot.setStatus(ChunkStatus.DISABLED);
+                chunks.save(slot);
+                notifications.enqueue("chunk.credit.cutoff", "chunk.credit.cutoff",
+                        slot.getChunkKey(), slot.getDimension(), tenantId);
+                closed++;
+            }
+        }
+        return closed;
     }
 
     @Override

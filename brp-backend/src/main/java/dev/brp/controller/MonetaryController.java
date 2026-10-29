@@ -38,6 +38,7 @@ public class MonetaryController {
     private final dev.brp.service.LoadSampleService loadSamples;
     private final dev.brp.service.TariffService tariff;
     private final dev.brp.service.DemandResponseService demandResponse;
+    private final dev.brp.service.CreditService credit;
 
     public MonetaryController(RegimeService regime, SnapshotService snapshots,
                               WealthLevyService wealthLevy, PegService peg,
@@ -48,7 +49,8 @@ public class MonetaryController {
                               dev.brp.service.impl.VaultDriftServiceImpl vaultDrift,
                               dev.brp.service.LoadSampleService loadSamples,
                               dev.brp.service.TariffService tariff,
-                              dev.brp.service.DemandResponseService demandResponse) {
+                              dev.brp.service.DemandResponseService demandResponse,
+                              dev.brp.service.CreditService credit) {
         this.regime = regime;
         this.snapshots = snapshots;
         this.wealthLevy = wealthLevy;
@@ -62,6 +64,7 @@ public class MonetaryController {
         this.loadSamples = loadSamples;
         this.tariff = tariff;
         this.demandResponse = demandResponse;
+        this.credit = credit;
     }
 
     @GetMapping("/regime")
@@ -235,5 +238,44 @@ public class MonetaryController {
         double live = loadSamples.liveMspt();
         demandResponse.shedIfOverloaded(live);
         return java.util.Map.of("liveMspt", live);
+    }
+
+    // --- P4 credit desk (docs/13 §6) ---
+
+    @org.springframework.web.bind.annotation.GetMapping("/credit/{tenantId}")
+    public dev.brp.dto.LoadDtos.CreditStatusResponse creditStatus(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId) {
+        return credit.status(tenantId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/credit/{tenantId}/limit")
+    public dev.brp.dto.LoadDtos.CreditStatusResponse setCreditLimit(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.SetLimitRequest req) {
+        return credit.setLimit(tenantId, req.limitCents());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/credit/{tenantId}/repay")
+    public dev.brp.dto.LoadDtos.CreditStatusResponse repayCredit(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.RepayRequest req) {
+        return credit.repay(tenantId, req.amountCents());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/credit/{tenantId}/reinstate")
+    public dev.brp.dto.LoadDtos.CreditStatusResponse reinstateCredit(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId) {
+        return credit.reinstate(tenantId);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/credit/{tenantId}/events")
+    public java.util.List<dev.brp.entity.CreditEventEntity> creditEvents(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId) {
+        return credit.events(tenantId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/credit/desk/run")
+    public java.util.Map<String, Boolean> creditDeskRun() {
+        return java.util.Map.of("ran", credit.runDailyDesk());
     }
 }

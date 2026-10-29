@@ -294,7 +294,7 @@ docs/10-business-map 给 P4 立下的承诺，收小、贴数据：
 | P4-04 | TariffService + chunk 计费迁到表上（PeakPricingTest 保持绿） | B | ✓ |
 | P4-05 | DemandResponseService：申报/授予/切除/过期 + 计费 | B | ✓ |
 | P4-06 | mod：`dr.window` 信号 → governor feed 压线 | B | ✓ |
-| P4-07 | CreditService：提款/还款/计息/状态机 + 熔断动作 | C | ☐ |
+| P4-07 | CreditService：提款/还款/计息/状态机 + 熔断动作 | C | ✓ |
 | P4-08 | BondService：发行/认购/计提/到期（performanceFactor） | D | ☐ |
 | P4-09 | QuotaMarketService：订单、撮合、结算、费用、自成交禁令 | E | ☐ |
 | P4-10 | 停机台账 + OEE（A×P，Q 披露）+ APS 页列 | F | ☐ |

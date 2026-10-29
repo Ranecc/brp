@@ -179,7 +179,8 @@ credit_events(id PK, tenant, kind, amount_cents, memo, created_at)
   → RESTRICTED at 100% → DEFAULTED if RESTRICTED for `grace-days` (7) with no
   net repayment. Recovery: drawn below threshold demotes one step (RESTRICTED
   → WATCH → GOOD); DEFAULTED requires admin `REINSTATE` — debt forgiveness is
-  a board decision even here.
+  a board decision even here. REINSTATE clears the default; the machine then
+  re-runs from utilization — still maxed means RESTRICTED again, honestly.
 - **Cutoff** (RESTRICTED+): the P2 promise holds — *movement and play stay
   free*. What stops: (a) all managed chunks auto-close via the admin
   remote-off path (the chunks are the collateral, literally), (b) DR filing
@@ -328,7 +329,7 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 | P4-04 | TariffService + chunk billing refactor onto the table (PeakPricingTest green) | B | ✓ |
 | P4-05 | DemandResponseService: file/award/shed/expire + billing | B | ✓ |
 | P4-06 | Mod: `dr.window` signals → governor feed gating | B | ✓ |
-| P4-07 | CreditService: draw/repay/interest/status machine + cutoff actions | C | ☐ |
+| P4-07 | CreditService: draw/repay/interest/status machine + cutoff actions | C | ✓ |
 | P4-08 | BondService: issue/subscribe/accrue/mature with performanceFactor | D | ☐ |
 | P4-09 | QuotaMarketService: orders, matching, settlement, fees, self-trade ban | E | ☐ |
 | P4-10 | Downtime ledger + OEE (A×P, Q disclosed) + APS page columns | F | ☐ |

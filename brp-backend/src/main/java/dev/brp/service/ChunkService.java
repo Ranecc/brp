@@ -47,6 +47,13 @@ public interface ChunkService {
     ChunkSlotResponse setPower(String tenantId, String dimension,
                                String chunkKey, PowerRequest req);
 
+    /**
+     * Credit cutoff (docs/13 §6): the chunks ARE the collateral — RESTRICTED
+     * credit closes every ACTIVE slot, remotely, and notes each one.
+     * @return how many slots were closed
+     */
+    int closeAllForCredit(String tenantId);
+
     List<ChunkSlotResponse> slots(String tenantId);
 
     /** Portal admin view across all tenants: slot + verdict, one row. */

@@ -12,4 +12,8 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntryEntity
 
     List<JournalEntryEntity> findByTenantIdAndCreatedAtGreaterThanEqual(
             String tenantId, Instant since);
+
+    /** Trailing income for the credit desk's auto-limit (docs/13 §6). */
+    List<JournalEntryEntity> findByTenantIdAndAccountIdAndDirectionAndCurrencyAndCreatedAtGreaterThanEqual(
+            String tenantId, Long accountId, String direction, String currency, Instant since);
 }

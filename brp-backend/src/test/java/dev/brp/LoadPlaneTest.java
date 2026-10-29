@@ -115,7 +115,7 @@ class LoadPlaneTest {
         heartbeat(33.0, 3, 300, 30, 3);
         int minuteOfDay = currentMinute().getHour() * 60 + currentMinute().getMinute();
 
-        profileRuns.deleteByRefreshDate(LocalDate.now(clock()));   // own the guard for today's run
+        profileRuns.deleteGuard(LocalDate.now(clock()));   // own the guard for today's run
         boolean first = loadSamples.refreshProfile();
         boolean second = loadSamples.refreshProfile();
         assertThat(first).isTrue();
@@ -131,7 +131,7 @@ class LoadPlaneTest {
     @Test
     void forecastReportsShapeAndTariffClassification() {
         heartbeat(35.0, 5, 500, 50, 5);
-        profileRuns.deleteByRefreshDate(LocalDate.now(clock()));
+        profileRuns.deleteGuard(LocalDate.now(clock()));
         loadSamples.refreshProfile();
 
         ForecastResponse fc = loadSamples.forecast(24);

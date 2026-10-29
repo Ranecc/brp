@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     Optional<AccountEntity> findByTenantIdAndAccountNo(String tenantId, String accountNo);
     List<AccountEntity> findByTenantIdOrderById(String tenantId);
+
+    List<AccountEntity> findByAccountNoAndBalanceCentsLessThan(String accountNo, long balanceCents);
 }

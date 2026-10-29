@@ -31,4 +31,13 @@ public final class LoadDtos {
                                       long estMinutes, String earliest, String deadline,
                                       String status, String awardedStart, long awardedMinutes,
                                       int windowSeq, int shedCount) {}
+
+    public record CreditStatusResponse(String tenantId, long limitCents, long drawnCents,
+                                       long availableCents, double utilizationPct,
+                                       String status, String statusSince,
+                                       int annualRatePct, boolean limitPinned) {}
+
+    public record RepayRequest(long amountCents) {}
+
+    public record SetLimitRequest(long limitCents) {}
 }

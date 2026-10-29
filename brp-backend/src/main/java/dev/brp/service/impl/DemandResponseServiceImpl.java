@@ -45,6 +45,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
     private static final Duration SHED_EXTENSION = Duration.ofHours(1);
 
     private final DeferredJobRepository jobs;
+    private final dev.brp.repository.CreditLineRepository creditLines;
     private final LoadSampleService loadSamples;
     private final TariffService tariff;
     private final LedgerService ledger;
@@ -58,6 +59,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
     private final Map<String, Long> filedKeys = new ConcurrentHashMap<>();
 
     public DemandResponseServiceImpl(DeferredJobRepository jobs,
+                                     dev.brp.repository.CreditLineRepository creditLines,
                                      LoadSampleService loadSamples,
                                      TariffService tariff,
                                      LedgerService ledger,
@@ -67,6 +69,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
                                      @Value("${brp.dr.mspt-budget:40}") int msptBudget,
                                      @Value("${brp.dr.max-sheds:2}") int maxSheds) {
         this.jobs = jobs;
+        this.creditLines = creditLines;
         this.loadSamples = loadSamples;
         this.tariff = tariff;
         this.ledger = ledger;
@@ -79,6 +82,15 @@ public class DemandResponseServiceImpl implements DemandResponseService {
 
     @Override
     public DeferredJobResponse file(String tenantId, FileDeferredJobRequest req) {
+        // docs/13 section 6: the credit desk blocks new flexible commitments
+        // (repo read directly — DemandResponse -> repo, CreditService -> DemandResponse stays one-way)
+        creditLines.findById(tenantId).ifPresent(line -> {
+            String st = line.getStatus();
+            if (dev.brp.entity.CreditLineEntity.RESTRICTED.equals(st)
+                    || dev.brp.entity.CreditLineEntity.DEFAULTED.equals(st)) {
+                throw new BadRequestException("credit.restricted");
+            }
+        });
         if (req.idemKey() == null || req.idemKey().isBlank()) {
             throw new BadRequestException("dr.idem.required");
         }
@@ -193,6 +205,27 @@ public class DemandResponseServiceImpl implements DemandResponseService {
             } else {
                 job.shed(SHED_EXTENSION);
             }
+            jobs.save(job);
+        }
+    }
+
+    @Override
+    public void suspendTenant(String tenantId) {
+        for (DeferredJobEntity job : jobs.findByStatusOrderByCreatedAtAsc(DeferredJobEntity.RUNNING)) {
+            if (!job.getTenantId().equals(tenantId)) {
+                continue;
+            }
+            enqueue(job, LEVEL_CLOSE);
+            refund(job);
+            job.shed(SHED_EXTENSION);
+            jobs.save(job);
+        }
+        for (DeferredJobEntity job : jobs.findByStatusOrderByCreatedAtAsc(DeferredJobEntity.AWARDED)) {
+            if (!job.getTenantId().equals(tenantId) || job.getAwardedStart() != null) {
+                continue;
+            }
+            refund(job);
+            job.close(DeferredJobEntity.EXPIRED);
             jobs.save(job);
         }
     }

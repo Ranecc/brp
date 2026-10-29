@@ -28,4 +28,11 @@ public interface DemandResponseService {
 
     /** Overload shedding: live reading passed in so tests can hold the grid still. */
     void shedIfOverloaded(double liveMspt);
+
+    /**
+     * Credit cutoff (docs/13 §6): running windows shed (CLOSE + refund),
+     * un-started ones expire with refund. Filing stays blocked while the
+     * credit desk holds the tenant.
+     */
+    void suspendTenant(String tenantId);
 }
