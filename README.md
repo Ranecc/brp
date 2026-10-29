@@ -73,6 +73,8 @@ server) or fully standalone via docker-compose — same jar either way
 - [09-shop-floor](docs/09-shop-floor.md) — P2: shop-floor terminals (dispatch/line/form), chunk governance, APS balancing, task board ⭐
 - [10-backlog](docs/10-backlog.md) — reviewed backlog: 8 outside proposals graded, 7.5 accepted, stale premises corrected
 - [12-p3-monetary](docs/12-p3-monetary.md) — P3 detailed design: snapshot, hysteresis, levies, mint/peg/Gresham, wash, CPI ⭐
+- [13-p4-compute-market](docs/13-p4-compute-market.md) — P4 detailed design: load plane, forecast, tariffs, demand response, credit, TPS bonds, quota market, shop floor ⭐
+- [14-p5-bourse](docs/14-p5-bourse.md) — P5 detailed design: batch-auction exchange, listed mint, bimetallic closure, listing presets ⭐
 - [10-business-map](docs/10-business-map.md) — the missing half of the ERP: order-to-cash spine, agreements, projects; what ships as a field, what is vetoed ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — Das Kapital, reviewed quarterly: execution coverage across all three volumes ⭐
 
@@ -81,7 +83,7 @@ server) or fully standalone via docker-compose — same jar either way
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # 63/63 green or no commit: ledger, saga, approvals, quotas, billing, currency, outbox, desks, APS, portal — go touch grass while it runs
+mvn -pl brp-backend -am test    # 172/172 green or no commit: ledger, saga, approvals, quotas, billing, currency, desks, load plane, credit, bonds, quota market, shop floor — go touch grass while it runs
 ```
 
 ## Roadmap
@@ -90,10 +92,10 @@ mvn -pl brp-backend -am test    # 63/63 green or no commit: ledger, saga, approv
 |---|---|---|
 | P0 | repo + contracts + ledger core (idempotent, double-entry) + agent skeleton | ✅ this repo |
 | P1 | teams, player sync, saga engine, approval labyrinth, TPS reports (real mspt), heartbeats, economy observability (M/V), currency registry, machine-slot quotas + chunk incidents, i18n copy, outbox + Discord wiring, portal console (overview/approvals/economy/quotas pages + verdict actions) done; portal auth/RBAC + agent runtime wiring pending | 🚧 |
-| P2 | WMS adapters (vanilla → AE2 → Create) + inbound discrepancy & transfer orders + villager-mint metering events (docs/03 §10) + dashboards + alerts | ⬜ |
-| P3 | MRP (sales-order spine → BOM explosion + work orders, completion costing) + agreements/escrow + mint-fee engine + villager EHR & ALICE census (docs/07 §7, docs/03 §2) + work-order turnaround report (docs/11 Vol. II) | ⬜ |
-| P4 | APS + machine monitoring + downtime ledger + signal hub + projects & asset registry + Dept I/II balance alerts (the realization condition, engineered, docs/11 Vol. II) | ⬜ |
-| P5 | exchange/futures, k8s + helm chart (the performance-art finale) + cross-dimension market entry (Nether/End, zero acquisition cost) + counter-cyclical consolidation playbooks (docs/11 Vol. III) | ⬜ |
+| P2 | WMS adapters (vanilla → AE2 → Create) + inbound discrepancy & transfer orders + villager-mint metering events (docs/03 §10) + dashboards + alerts | ✅ |
+| P3 | monetary machinery: weekly snapshot, progressive levies, regime hysteresis, mint window, peg + Gresham, wash detection, CPI (docs/12) | ✅ |
+| P4 | the load desk: load telemetry + forecast, time-of-use tariffs, demand response, credit desk (debt), TPS bonds, quota market, shop-floor OEE, CC:T state (docs/13) | ✅ |
+| P5 | the bourse: batch-auction exchange, listed mint, bimetallic closure, listing presets, mod item catalog & warehouse (docs/14). Still queued after: k8s + helm chart finale, cross-dimension market entry, consolidation playbooks (docs/11 Vol. III) | 🚧 |
 | ∞ | the expropriators are expropriated (long-tail risk — external, uncontrollable, no budget allocated) | 🔮 unschedulable (docs/11) |
 
 ## Licensing

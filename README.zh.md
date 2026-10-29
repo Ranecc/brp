@@ -64,6 +64,8 @@ brp/
 - [09-shop-floor](docs/09-shop-floor.md) — P2：车间终端（调度/产线/表单）、区块治理、产能平衡、任务板 ⭐
 - [10-backlog](docs/10-backlog.md) — 评审 backlog：8 条外部提案定级，收 7.5 条，过时前提已纠正
 - [12-p3-monetary](docs/12-p3-monetary.zh.md) — P3 详细设计：快照、滞回、两税、铸币/锚价/Gresham、洗钱、CPI ⭐
+- [13-p4-compute-market](docs/13-p4-compute-market.zh.md) — P4 详细设计：负载平面、预测、分时电价、需求响应、信贷、TPS 债券、配额市场、车间台 ⭐
+- [14-p5-bourse](docs/14-p5-bourse.zh.md) — P5 详细设计：批量拍卖交易所、挂牌铸币厂、复本位闭环、挂牌预设 ⭐
 - [10-business-map](docs/10-business-map.md) — ERP 缺一半的那张地图：order-to-cash 骨架、协议、工程项目；什么以字段发布、什么被否决 ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — 资本论季度落地复盘：三卷可执行项，完成度业内领先 ⭐
 
@@ -72,7 +74,7 @@ brp/
 ```bash
 cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
 docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
-mvn -pl brp-backend -am test    # 63/63 全绿：账本幂等、Saga、审批、配额、计费、货币、outbox、对账科、APS、门户……趁跑测试去摸摸草（方块或真草均可）
+mvn -pl brp-backend -am test    # 172/172 全绿：账本幂等、Saga、审批、配额、计费、货币、对账科、负载平面、信贷、债券、配额市场、车间台……趁跑测试去摸摸草（方块或真草均可）
 ```
 
 ## 路线图
@@ -81,10 +83,10 @@ mvn -pl brp-backend -am test    # 63/63 全绿：账本幂等、Saga、审批、
 |---|---|---|
 | P0 | 仓库 + 契约 + 账本核心（幂等/复式） + Agent 骨架 | ✅ 本仓库 |
 | P1 | 租户/公会、玩家同步、Saga 引擎、审批迷宫、TPS 报告（真实 mspt）、心跳、经济可观测（M/V）、货币登记制、机器槽位配额 + 区块事件、i18n 文案、outbox + Discord 接线、门户控制台（总览/审批/经济/配额四页 + 一键裁决）已铺；门户认证/RBAC、Agent 运行时接线待做 | 🚧 |
-| P2 | WMS 适配器（原版→AE2→Create）+ 入库差异与调拨单 + 铸币计量事件（docs/03 §10）+ 仪表盘 + 告警 | ⬜ |
-| P3 | MRP（销售订单骨架 → BOM 展开 + 工单，完工成本）+ 协议托管 + 铸币费引擎 + 村民 EHR 与 ALICE 普查（docs/07 §7、docs/03 §2）+ 工单周转报告（docs/11 卷二） | ⬜ |
-| P4 | APS + 机器监控 + 宕机台账 + 信号中枢 + 工程项目与资产台账 + 第 I/II 部类平衡告警（被工程化的实现条件，docs/11 卷二） | ⬜ |
-| P5 | 交易所/期货、k8s + helm chart（行为艺术收尾）+ 跨维度市场准入（下界/末地，零收购成本）+ 逆周期合并操作手册（docs/11 卷三） | ⬜ |
+| P2 | WMS 适配器（原版→AE2→Create）+ 入库差异与调拨单 + 铸币计量事件（docs/03 §10）+ 仪表盘 + 告警 | ✅ |
+| P3 | 货币机器：每周快照、累进两税、体制滞回、铸币窗口、锚价 + Gresham、洗钱检测、CPI（docs/12） | ✅ |
+| P4 | 负载台：负载遥测 + 预测、分时电价、需求响应、信贷台（债务）、TPS 债券、配额市场、车间 OEE、CC:T 状态（docs/13） | ✅ |
+| P5 | 交易所：批量拍卖、挂牌铸币厂、复本位闭环、挂牌预设、模组物品目录与仓库（docs/14）。其后仍排队：k8s + helm 收尾、跨维度市场准入、逆周期合并操作手册（docs/11 卷三） | 🚧 |
 | ∞ | 剥夺者就要被剥夺了（长尾风险——外部、不可控、未批预算） | 🔮 无法排期（docs/11） |
 
 ## 许可证
