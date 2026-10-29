@@ -215,10 +215,10 @@ acks with the movement id. Everything else in P3 is backend + portal.
 | P3-02 ✓ | hysteresis regime + BRP-0901/0902/0950 + regime endpoint | backend |
 | P3-03 ✓ | wealth levy engine (step brackets, V surcharge, regime gate, insert-only idem) | backend |
 | P3-04 ✓ | compute levy: minute rows (row-locked accumulate) + marginal bands (no cliffs) + materializer, idem tax:{tenant}:{minute} | backend |
-| P3-05 | BRP-09xx wiring (0950 sustained-share, 0906 streak) + copy | backend |
-| P3-06 | V16 + mint-window saga + vault registration/movements + drift (0904) | backend |
-| P3-07 | peg state + band + auto-filed re-peg votes + execution | backend |
-| P3-08 | Gresham rail aggregation + 0903 | backend |
+| P3-05 | BRP-09xx wiring — 0901/0902/0950/0903 live; 0904 (drift), 0905 (compensation exhausted), 0906 (streak) remain | backend |
+| P3-06 ✓ | V16 + mint-window saga (compensating in reverse, books verified to the cent) + vault registration/movements — drift check (0904) rides the inventory probe, next slice | backend |
+| P3-07 ✓ | peg state + band + auto-filed re-peg votes (2 consecutive misses → 1 vote) + atomic execution with history | backend |
+| P3-08 ✓ | Gresham rail aggregation (rail:* memos, 7d) + 0903 on >95% | backend |
 | P3-09 | V17 + wash-cycle SCC + scan endpoint | backend |
 | P3-10 | price observations ingest + CPI daily | backend |
 | P3-11 | portal Monetary page (badge, tables, rails, CPI, peg, votes) | portal |
