@@ -131,7 +131,7 @@ exchange_items(item_id PK, display_name, listed_state DEFAULT|LISTED|BLOCKED,
 warehouse(tenant_id, item_id, qty_free, qty_held, PK(tenant_id, item_id))
 exchange_movements(id PK, tenant_id, item_id, delta_free, delta_held,
                    kind DEPOSIT|WITHDRAW_OUT|WITHDRAW_RETURN|HOLD|RELEASE|
-                        FILL_OUT|FILL_IN|SEIGNIORAGE_NA,
+                        FILL_OUT|FILL_IN,
                    ref_id, idem_key UNIQUE, created_at)
 exchange_orders(id PK, tenant_id, item_id, side ASK|BID, qty, qty_remaining,
                 price_cents, status NEW|PARTIAL|FILLED|CANCELLED|EXPIRED,
@@ -210,9 +210,10 @@ No third governance channel was created in the making of this section.
   world before the books move, the P3 mint-ordering rule pointed the other
   way and for the same reason. **Withdraw**: file claim → backend debits
   free qty and returns the claim → agent dispenses → confirm; stale claims
-  re-credit (SagaRecovery sweep). Conservation identity over movements:
-  `Σ(delta_free + delta_held) ≡ 0` per item — the reconciliation desk (R-1)
-  inherits the bourse check for free.
+  re-credit (SagaRecovery sweep). **Conservation**: every warehouse
+  mutation writes an append-only movement row (`idem_key` unique) — the
+  reconciliation desk (R-1) gets two identities for free: per item and
+  tenant, `warehouse ≡ Σ movements`, and Σ `qty_held` ≡ resting ASK volume.
 
 ## 9. Task board
 

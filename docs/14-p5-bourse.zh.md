@@ -181,9 +181,10 @@ ${brp.exchange.clear-ms:300000})`——P4 开机伏击的教训，代代相传�
   **入仓**：代理扫描、把行暂存进 LocalStore、申报入仓、收到 ack 再取走
   实物——货物先离开世界、账本后移动；P3 铸币定序规则方向相反、理由
   相同。**出仓**：申报 claim → 后端扣 free 返回 claim → 代理发放实物
-  → 确认；过期 claim 回冲（SagaRecovery 清扫）。移动账守恒式：
-  每件物品 `Σ(delta_free + delta_held) ≡ 0`——对账科（R-1）白捡一条
-  交易所对账。
+  → 确认；过期 claim 回冲（SagaRecovery 清扫）。**守恒**：仓库的每一次
+  变动都写一条 append-only 移动行（`idem_key` 唯一）——对账科（R-1）白捡
+  两条恒等式：按物品与租户，`warehouse ≡ Σ movements`，且
+  Σ `qty_held` ≡ 在场 ASK 余量。
 
 ## 9. 任务板
 
