@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 货币')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('monetary')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('货币 Monetary')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>机制档 / Antitrust regime
+      <span class="tag" th:text="${regime.state}">INACTIVE</span></h2>
+    <p class="empty" style="margin-top:0">
+      滞回带：Gini ≥ <span class="pixel" th:text="${giniOn}">0.8</span> 上膛、
+      &lt; <span class="pixel" th:text="${giniOff}">0.7</span> 解除，带间纹丝不动。
+      最近读数：<span class="pixel" th:text="${#numbers.formatDecimal(regime.lastReading,1,3)}">0</span>。
+    </p>
+    <p class="empty" th:if="${snapshot != null}">
+      周快照 <span class="pixel" th:text="${snapshot.weekOf}">-</span>：
+      Gini <span class="pixel" th:text="${#numbers.formatDecimal(snapshot.gini,1,3)}">0</span> ·
+      首富份额 <span class="pixel" th:text="${#numbers.formatDecimal(snapshot.topShare*100,1,1)}">0</span>%
+      （红线 50%）
+    </p>
+    <p class="empty" th:if="${snapshot == null}">尚无周快照。星期一早晨会有的。</p>
+  </section>
+
+  <section class="panel">
+    <h2>锚价 / Peg legs <span class="tag">±5% band</span></h2>
+    <table class="grid" th:if="${!legs.isEmpty()}">
+      <thead><tr><th>腿</th><th>锚价（BRC）</th><th>带下</th><th>带上</th><th>带外连击</th></tr></thead>
+      <tbody>
+      <tr th:each="l : ${legs}">
+        <td class="pixel" th:text="${l.leg}">emerald</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(l.rate,1,2)}">64</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(l.bandLow,1,2)}">60.8</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(l.bandHigh,1,2)}">67.2</td>
+        <td class="num pixel" th:text="${l.outOfBandStreak}">0</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>支付轨道 / Payment rails <span class="tag">Gresham · 行为性</span></h2>
+    <table class="grid" th:if="${!rails.isEmpty()}">
+      <thead><tr><th>轨道</th><th>本周占比</th></tr></thead>
+      <tbody>
+      <tr th:each="r : ${rails}">
+        <td class="pixel" th:text="${r.key}">emerald</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(r.value*100,1,1)} + '%'">-</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${rails.isEmpty()}">本周无轨道流量。消费腿一边倒是星期二，不是危机。</p>
+  </section>
+
+  <section class="panel">
+    <h2>CPI <span class="tag">基周 = 100</span>
+      <form th:action="@{/portal/monetary/cpi/run}" method="post" style="display:inline">
+        <button type="submit" class="btn approve">出今日值</button>
+      </form>
+    </h2>
+    <p class="empty" style="margin-top:0">
+      今日指数：<span class="pixel" th:text="${cpiToday}">—</span>
+    </p>
+    <svg th:if="${!#strings.isEmpty(cpiPoints)}" width="220" height="90"
+         style="background:#101014;display:block">
+      <polyline th:attr="points=${cpiPoints}" fill="none" stroke="#3fb950" stroke-width="2"/>
+    </svg>
+    <table class="grid" th:if="${!cpiHistory.isEmpty()}">
+      <thead><tr><th>日期</th><th>指数</th></tr></thead>
+      <tbody>
+      <tr th:each="c : ${cpiHistory}">
+        <td class="pixel" th:text="${c.day}">-</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(c.indexValue,1,2)}">100</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${cpiHistory.isEmpty()}">尚无 CPI 印数。等第一个价格动起来。</p>
+  </section>
+
+  <section class="panel">
+    <h2>政策请求 / Policy requests</h2>
+    <table class="grid" th:if="${!requests.isEmpty()}">
+      <thead><tr><th>#</th><th>类型</th><th>载荷</th><th>裁决</th></tr></thead>
+      <tbody>
+      <tr th:each="r : ${requests}">
+        <td class="pixel" th:text="${r.id}">-</td>
+        <td class="pixel" th:text="${r.kind}">repeg-vote</td>
+        <td class="pixel" style="max-width:320px;word-break:break-all" th:text="${r.payloadJson}">{}</td>
+        <td>
+          <form th:action="@{'/portal/monetary/policy/' + ${r.id} + '/decide'}" method="post" style="display:inline">
+            <input type="hidden" name="approved" value="true"/>
+            <button type="submit" class="btn approve">批准</button>
+          </form>
+          <form th:action="@{'/portal/monetary/policy/' + ${r.id} + '/decide'}" method="post" style="display:inline">
+            <input type="hidden" name="approved" value="false"/>
+            <button type="submit" class="btn">驳回</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${requests.isEmpty()}">队列为空。锚带吸收一切漂移，暂时。</p>
+  </section>
+
+  <section class="panel">
+    <h2>洗钱疑点 / Wash findings <span class="tag">分数扛指控</span></h2>
+    <table class="grid" th:if="${!washFindings.isEmpty()}">
+      <thead><tr><th>#</th><th>租户</th><th>账户</th><th>环长</th><th>分数</th></tr></thead>
+      <tbody>
+      <tr th:each="f : ${washFindings}">
+        <td class="pixel" th:text="${f.id}">-</td>
+        <td class="pixel" th:text="${f.tenantId}">-</td>
+        <td class="pixel" style="max-width:260px;word-break:break-all" th:text="${f.accountsCsv}">-</td>
+        <td class="num pixel" th:text="${f.cycleLen}">-</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(f.score,1,2)}">0</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${washFindings.isEmpty()}">没有洗钱疑点。环路是合法商业，直到分数说不。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

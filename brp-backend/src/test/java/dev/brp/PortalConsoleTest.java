@@ -69,4 +69,13 @@ class PortalConsoleTest {
                 .andExpect(content().string(containsString("HALT")))
                 .andExpect(content().string(containsString("DISABLED_BY_ADMIN")));
     }
+
+    @Test
+    void monetaryPageRendersRegimeSnapshotAndChrome() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/portal/monetary"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Antitrust regime")))
+                .andExpect(content().string(containsString("Payment rails")))
+                .andExpect(content().string(containsString("Policy requests")));
+    }
 }

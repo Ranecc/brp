@@ -32,11 +32,17 @@ public class MonetaryController {
     private final MintService mint;
     private final GreshamService gresham;
     private final dev.brp.repository.PolicyRequestRepository policyRequests;
+    private final dev.brp.service.WashService wash;
+    private final dev.brp.service.MarketPriceService marketPrices;
+    private final dev.brp.service.impl.VaultDriftServiceImpl vaultDrift;
 
     public MonetaryController(RegimeService regime, SnapshotService snapshots,
                               WealthLevyService wealthLevy, PegService peg,
                               MintService mint, GreshamService gresham,
-                              dev.brp.repository.PolicyRequestRepository policyRequests) {
+                              dev.brp.repository.PolicyRequestRepository policyRequests,
+                              dev.brp.service.WashService wash,
+                              dev.brp.service.MarketPriceService marketPrices,
+                              dev.brp.service.impl.VaultDriftServiceImpl vaultDrift) {
         this.regime = regime;
         this.snapshots = snapshots;
         this.wealthLevy = wealthLevy;
@@ -44,6 +50,9 @@ public class MonetaryController {
         this.mint = mint;
         this.gresham = gresham;
         this.policyRequests = policyRequests;
+        this.wash = wash;
+        this.marketPrices = marketPrices;
+        this.vaultDrift = vaultDrift;
     }
 
     @GetMapping("/regime")
@@ -115,5 +124,41 @@ public class MonetaryController {
     @org.springframework.web.bind.annotation.PostMapping("/gresham/scan")
     public java.util.Map<String, Double> gresham() {
         return gresham.scan();
+    }
+
+    // --- docs/12 sections 11-12: wash cycles, prices, CPI, vault drift ---
+
+    public record PriceRequest(String item, long priceCents, String currency,
+                               long qty, String venue) {}
+
+    @org.springframework.web.bind.annotation.PostMapping("/wash/scan")
+    public dev.brp.service.WashService.ScanReport washScan() {
+        return wash.scan();
+    }
+
+    @GetMapping("/wash/findings")
+    public java.util.List<dev.brp.dto.MonetaryDtos.WashFindingResponse> washFindings() {
+        return wash.findings();
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/prices")
+    public void recordPrice(@org.springframework.web.bind.annotation.RequestBody PriceRequest req) {
+        marketPrices.record(req.item(), req.priceCents(), req.currency(),
+                req.qty(), req.venue(), "manual");
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/cpi/run")
+    public java.util.Map<String, Double> cpiRun() {
+        return java.util.Map.of("index", marketPrices.materializeToday());
+    }
+
+    @GetMapping("/cpi")
+    public java.util.List<dev.brp.entity.CpiDailyEntity> cpi() {
+        return marketPrices.history();
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/vault/drift-check")
+    public java.util.List<String> driftCheck() {
+        return vaultDrift.driftCheck();
     }
 }

@@ -130,7 +130,7 @@ public class PegServiceImpl implements PegService {
     }
 
     /** Shared by drift-type alerts (vault 0904 etc.). */
-    void file(long code, double observed) {
+    public void file(long code, double observed) {   // shared BRP-09xx filing desk
         var rule = rules.findById(code).orElse(null);
         hits.save(new AnomalyHitEntity(code, rule != null ? rule.getName() : "BRP-" + code,
                 "policy", observed, rule != null ? rule.getSeverity() : "CRIT"));

@@ -3,6 +3,7 @@ package dev.brp.mod.agent;
 import dev.brp.mod.BrpMod;
 import dev.brp.mod.client.HttpBrpClient;
 import dev.brp.mod.platform.neoforge.NeoForgeAcl;
+import dev.brp.mod.platform.neoforge.NeoForgeVault;
 import dev.brp.mod.queue.DiskBackedEventQueue;
 import dev.brp.mod.supervisor.BackendSupervisor;
 import net.minecraft.server.MinecraftServer;
@@ -65,8 +66,15 @@ public final class BrpAgent {
                         sidecarUnavailable.getMessage());
             }
 
+            // P3-12: the vault dispense port, wired only when a vault
+            // container is configured (brp.vault.container = dim|x,y,z)
+            String vaultRef = prop("brp.vault.container", "");
+            java.util.function.BiFunction<String, Integer, Boolean> executor =
+                    vaultRef.isBlank() ? null
+                            : (channel, level) -> "vault.dispense".equals(channel)
+                                    && new NeoForgeVault(server, vaultRef).dispense(level);
             runtime = new AgentRuntime(AgentRuntime.Config.defaults(agentId, prop("brp.tenant", "server")),
-                    api, wal, acl, acl, acl, msg -> LOG.info("{}", msg));
+                    api, wal, acl, acl, acl, msg -> LOG.info("{}", msg), executor);
             runtime.start();
 
             // P2-14: the machine census — namespace counts over registered

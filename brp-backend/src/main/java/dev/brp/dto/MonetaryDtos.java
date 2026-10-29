@@ -14,6 +14,10 @@ public final class MonetaryDtos {
     public record SnapshotResponse(String weekOf, double gini, double topShare,
                                     String regimeAfter, List<SnapshotTenantRow> tenants) {}
 
+    /** Wash finding, in its own honest shape (docs/12 §11). */
+    public record WashFindingResponse(long id, String tenantId, String accountsCsv,
+                                      int cycleLen, double score, String createdAt) {}
+
     public record WealthAssessmentRow(String weekOf, String tenantId, long bracketCents,
                                       boolean surcharge, long amountCents, boolean posted) {}
 }

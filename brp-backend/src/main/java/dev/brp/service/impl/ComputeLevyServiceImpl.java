@@ -37,6 +37,9 @@ public class ComputeLevyServiceImpl implements ComputeLevyService {
     private final RegimeService regime;
     private final LedgerService ledger;
     private final TransactionTemplate tx;
+    private final PegServiceImpl peg;
+    private final java.util.concurrent.atomic.AtomicInteger failureStreak =
+            new java.util.concurrent.atomic.AtomicInteger();
     private final double baseEmeraldsPerMinute;
     private final double brcPerEmerald;
 
@@ -45,6 +48,7 @@ public class ComputeLevyServiceImpl implements ComputeLevyService {
                                   RegimeService regime,
                                   LedgerService ledger,
                                   TransactionTemplate tx,
+                                  PegServiceImpl peg,
                                   @Value("${brp.levy.compute.base-emeralds-per-minute:0}") double baseEmeraldsPerMinute,
                                   @Value("${brp.peg.emerald.brc-per-emerald:1.0}") double brcPerEmerald) {
         this.minutes = minutes;
@@ -52,6 +56,7 @@ public class ComputeLevyServiceImpl implements ComputeLevyService {
         this.regime = regime;
         this.ledger = ledger;
         this.tx = tx;
+        this.peg = peg;
         this.baseEmeraldsPerMinute = baseEmeraldsPerMinute;
         this.brcPerEmerald = brcPerEmerald;
     }
@@ -97,9 +102,19 @@ public class ComputeLevyServiceImpl implements ComputeLevyService {
             }
             double share = total > 0 ? row.getUnits() / total : 0;
             long amount = armed ? amount(row.getUnits(), share) : 0;
-            if (amount > 0) {
-                post(row.getTenantId(), bucket, amount);
+            try {
+                if (amount > 0) {
+                    post(row.getTenantId(), bucket, amount);
+                }
+            } catch (RuntimeException postFailed) {
+                // the row stays unposted (next pass retries); a five-streak
+                // means the desk itself is broken — BRP-0906, warn a human
+                if (failureStreak.incrementAndGet() >= 5) {
+                    peg.file(906L, failureStreak.get());
+                }
+                continue;
             }
+            failureStreak.set(0);
             row.assess(share, amount);
             minutes.save(row);
             posted++;

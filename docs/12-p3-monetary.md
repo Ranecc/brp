@@ -18,7 +18,8 @@ R-6 CPI feed).
 NOTIFY stays human; no real money; no third governance channel — policy
 votes ride the existing approval ladder.
 
-## 2. Data model (V15–V17, one migration per task slice)
+## 2. Data model (V15–V18, one migration per task slice; V17 was
+consumed by the Gresham rebaseline)
 
 ```sql
 -- V15: the shared snapshot + the regime + the two levy ledgers
@@ -233,13 +234,13 @@ acks with the movement id. Everything else in P3 is backend + portal.
 | P3-02 ✓ | hysteresis regime + BRP-0901/0902/0950 + regime endpoint | backend |
 | P3-03 ✓ | wealth levy engine (step brackets, V surcharge, regime gate, insert-only idem) | backend |
 | P3-04 ✓ | compute levy: minute rows (row-locked accumulate) + marginal bands (no cliffs) + materializer, idem tax:{tenant}:{minute} | backend |
-| P3-05 | BRP-09xx wiring — 0901/0902/0950/0903 live; 0904 (drift), 0905 (compensation exhausted), 0906 (streak) remain | backend |
+| P3-05 ✓ | BRP-09xx wiring — all seven live: 0901/0902 (regime), 0903 (gresham), 0904 (vault drift vs inventory snapshots), 0905 (compensation exhausted in recovery), 0906 (materializer 5-streak), 0950 (red line) | backend |
 | P3-06 ✓ | V16 + mint-window saga (compensating in reverse, books verified to the cent) + vault registration/movements — drift check (0904) rides the inventory probe, next slice | backend |
 | P3-07 ✓ | peg state + band + auto-filed re-peg votes (2 consecutive misses → 1 vote) + atomic execution with history | backend |
 | P3-08 ✓ | Gresham rail aggregation (rail:* memos, 7d) + 0903 — REBASELINED: per-rail moving-baseline divergence, absolute share retired | backend |
-| P3-09 | V17 + wash-cycle SCC + scan endpoint | backend |
-| P3-10 | price observations ingest + CPI daily | backend |
-| P3-11 | portal Monetary page (badge, tables, rails, CPI, peg, votes) | portal |
-| P3-12 | mod: vault.dispense signal executor | mod |
-| P3-13 | contract sync (openapi /monetary/*) | contract |
-| P3-14 | docs resync + counts (03/09/12 cross-links) | docs |
+| P3-09 ✓ | V18 + Kosaraju SCC + bounded short-cycle count + scoring (roundness/tightness/volume) + dedup + scan endpoints | backend |
+| P3-10 ✓ | price observations (manual + telemetry fanOut) + CPI geometric mean, one print per day | backend |
+| P3-11 ✓ | portal Monetary page (regime badge, snapshot, peg cards, rail shares, CPI SVG, vote queue, wash findings) | portal |
+| P3-12 ✓ | mod: VaultPort + NeoForgeVault (real Container withdrawal, whole stacks, shortfall fails honestly) + agent execute-and-ack flow | mod |
+| P3-13 ✓ | contract sync (openapi /monetary/* complete) | contract |
+| P3-14 ✓ | docs resync + counts (03/09/12 cross-links; this row checked by doing it) | docs |

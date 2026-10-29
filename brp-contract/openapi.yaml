@@ -304,6 +304,102 @@ paths:
       responses:
         "200": {description: the slot, with fresh credit}
 
+  /api/v1/monetary/regime:
+    get:
+      summary: The antitrust regime with hysteresis state (docs/12 §4)
+      responses:
+        "200": {description: "{name, state, lastReading, since}"}
+  /api/v1/monetary/snapshot/run:
+    post:
+      summary: Capture the shared weekly snapshot (one truth per week)
+      responses:
+        "200": {description: "{weekOf, gini, topShare, regimeAfter, tenants[]}"}
+        "409": {description: this week's snapshot already exists}
+  /api/v1/monetary/snapshot/latest:
+    get:
+      summary: Latest weekly snapshot
+      responses:
+        "200": {description: snapshot rows or null before the first Monday}
+  /api/v1/monetary/wealth/{weekOf}/assess:
+    post:
+      summary: Run the wealth levy for a week (regime-gated; replay-safe)
+      parameters: [{name: weekOf, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: assessment rows}
+  /api/v1/monetary/wealth/{weekOf}:
+    get:
+      summary: Wealth levy assessments for a week
+      parameters: [{name: weekOf, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: assessment rows}
+  /api/v1/monetary/vault:
+    post:
+      summary: Register a vault container (tenant, containerRef, bearer item)
+      responses:
+        "200": {description: registered}
+  /api/v1/monetary/mint:
+    post:
+      summary: Mint window — FAUCET journal FIRST, dispense SECOND; compensations reverse
+      responses:
+        "200": {description: saga outcome (success may be false; compensations run)}
+  /api/v1/monetary/vault/drift-check:
+    post:
+      summary: Books vs inventory snapshots per registered vault (BRP-0904 on drift)
+      responses:
+        "200": {description: one line per drifted container; empty = agreement}
+  /api/v1/monetary/peg:
+    get:
+      summary: The two anchor legs with bands
+      responses:
+        "200": {description: peg rows}
+  /api/v1/monetary/peg/{leg}/observe:
+    post:
+      summary: Feed a market reading; 2 consecutive misses file ONE repeg vote
+      parameters: [{name: leg, in: path, required: true, schema: {type: string}}]
+      responses:
+        "200": {description: accepted}
+  /api/v1/monetary/policy-requests:
+    get:
+      summary: Pending policy requests (repeg votes live here; no third channel)
+      responses:
+        "200": {description: pending rows}
+  /api/v1/monetary/policy-requests/{id}/decide:
+    post:
+      summary: Approve or reject; approved repeg votes execute atomically with history
+      parameters: [{name: id, in: path, required: true, schema: {type: integer}}]
+      responses:
+        "200": {description: decided}
+  /api/v1/monetary/gresham/scan:
+    post:
+      summary: Rail scan (behavioral, per-rail moving baseline; cold start = silent)
+      responses:
+        "200": {description: leg -> current-week share}
+  /api/v1/monetary/wash/scan:
+    post:
+      summary: Wash-cycle SCC scan (cycles are legal commerce; scores carry accusations)
+      responses:
+        "200": {description: "{tenantsScanned, findingsFiled}"}
+  /api/v1/monetary/wash/findings:
+    get:
+      summary: Suspected cycles, highest score first
+      responses:
+        "200": {description: finding rows}
+  /api/v1/monetary/prices:
+    post:
+      summary: Record a market price observation (CPI's food chain)
+      responses:
+        "200": {description: recorded}
+  /api/v1/monetary/cpi/run:
+    post:
+      summary: Compute today's CPI (geometric mean of item relatives; one print per day)
+      responses:
+        "200": {description: "{index}"}
+  /api/v1/monetary/cpi:
+    get:
+      summary: CPI history, newest first
+      responses:
+        "200": {description: daily prints}
+
   /api/v1/aps/allocations:
     get:
       summary: Fair-share throttle factors per tenant (uniform haircut over global capacity)

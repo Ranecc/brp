@@ -37,6 +37,7 @@ class ComputeLevyTest {
     @Autowired LedgerService ledger;
     @Autowired TeamService teams;
     @Autowired TeamMemberRepository memberRepo;
+    @Autowired dev.brp.repository.AnomalyHitRepository hits;
 
     private String fund(String prefix, long cents) {
         String tenant = prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
@@ -99,5 +100,18 @@ class ComputeLevyTest {
         var row = minutes.findById(new dev.brp.entity.LevyMinuteEntity.Pk(minute, quiet)).orElseThrow();
         assertThat(row.getAmountCents()).isZero();
         assertThat(row.isPosted()).isTrue();
+    }
+
+    @Test
+    void aFiveStreakOfPostingFailuresPagesTheHumans() {
+        regime.afterSnapshot(0.95, 0.2);   // armed; base emeralds = 10 in this context
+        String ghost = "ghost-" + UUID.randomUUID().toString().substring(0, 8);
+        // no treasury account exists for the ghost: every post is refused
+        LocalDateTime minute = LocalDateTime.now().minusMinutes(5).withSecond(0).withNano(0);
+        levy.recordUsage(ghost, 5, minute);
+        for (int i = 0; i < 5; i++) {
+            levy.materialize(minute);
+        }
+        assertThat(hits.findTop50ByOrderByIdDesc().get(0).getRuleId()).isEqualTo(906L);
     }
 }

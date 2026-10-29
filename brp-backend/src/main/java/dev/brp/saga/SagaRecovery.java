@@ -2,6 +2,7 @@ package dev.brp.saga;
 
 import dev.brp.entity.SagaInstanceRow;
 import dev.brp.repository.SagaInstanceRepository;
+import dev.brp.service.impl.PegServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -26,10 +27,12 @@ public class SagaRecovery implements ApplicationRunner {
 
     private final SagaInstanceRepository rows;
     private final SagaEngine engine;
+    private final PegServiceImpl peg;
 
-    public SagaRecovery(SagaInstanceRepository rows, SagaEngine engine) {
+    public SagaRecovery(SagaInstanceRepository rows, SagaEngine engine, PegServiceImpl peg) {
         this.rows = rows;
         this.engine = engine;
+        this.peg = peg;
     }
 
     @Override
@@ -60,6 +63,15 @@ public class SagaRecovery implements ApplicationRunner {
             boolean wasDone = done.stream().anyMatch(d -> step.name().equals(d.getStep()));
             if (wasDone) {
                 engine.compensateRecovered(def, stuck.getCorrelation(), step);
+                // BRP-0905: a compensation that exhausted its retries leaves
+                // its recovery row FAILED — funds stay frozen until a human
+                // reads this. The alert IS the escalation path.
+                boolean exhausted = !rows.findBySagaAndCorrelationAndStepAndState(
+                        stuck.getSaga(), stuck.getCorrelation(),
+                        "comp:" + step.name() + ":recovery", "FAILED").isEmpty();
+                if (exhausted) {
+                    peg.file(905L, 1);
+                }
             }
         }
         stuck.failed();

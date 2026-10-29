@@ -97,4 +97,29 @@ class SagaEngineTest {
         assertThat(((Number) ((Map<?, ?>) received.get(0)).get("amountCents")).longValue())
                 .isEqualTo(42_000L);
     }
+
+    @Test
+    void exhaustedCompensationsEscalateAs0905(
+            @Autowired dev.brp.saga.SagaRecovery recovery,
+            @Autowired dev.brp.repository.AnomalyHitRepository hits) {
+        engine.register(SagaEngine.saga("doomed-flow")
+                .step("freeze", p -> "ok", "unfreeze", p -> {
+                    throw new IllegalStateException("compensation desk is closed forever");
+                })
+                .build());
+        String correlation = UUID.randomUUID().toString();
+        assertThat(engine.run("doomed-flow", correlation, Map.of()).success()).isTrue();
+
+        // the crash leftover: a RUNNING row the recovery will try to settle
+        rows.save(new dev.brp.entity.SagaInstanceRow("doomed-flow", "freeze", correlation, "unfreeze"));
+
+        int before905 = (int) hits.findAll().stream()
+                .filter(h -> h.getRuleId() == 905L).count();
+        recovery.run(null);
+
+        assertThat(rows.findBySagaAndCorrelationAndStepAndState(
+                "doomed-flow", correlation, "comp:freeze:recovery", "FAILED")).hasSize(1);
+        long after904 = hits.findAll().stream().filter(h -> h.getRuleId() == 905L).count();
+        org.assertj.core.api.Assertions.assertThat(after904).isGreaterThan(before905);
+    }
 }

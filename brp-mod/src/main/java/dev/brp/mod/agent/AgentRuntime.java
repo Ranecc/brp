@@ -56,6 +56,7 @@ public final class AgentRuntime {
     private final WorldAccess world;
     private final GameThreads threads;
     private final Consumer<String> log;
+    private final java.util.function.BiFunction<String, Integer, Boolean> signalExecutor;
     private final ScheduledExecutorService io = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "brp-agent-io");
         t.setDaemon(true);
@@ -66,6 +67,18 @@ public final class AgentRuntime {
     public AgentRuntime(Config cfg, BrpServerApi api, DiskBackedEventQueue wal,
                         PlayerDirectory players, WorldAccess world,
                         GameThreads threads, Consumer<String> log) {
+        this(cfg, api, wal, players, world, threads, log, null);
+    }
+
+    /**
+     * @param signalExecutor optional (channel, level) -> executed? — wired
+     *                       with the vault dispense port on real servers;
+     *                       without it, signal polls stay read-only counts.
+     */
+    public AgentRuntime(Config cfg, BrpServerApi api, DiskBackedEventQueue wal,
+                        PlayerDirectory players, WorldAccess world,
+                        GameThreads threads, Consumer<String> log,
+                        java.util.function.BiFunction<String, Integer, Boolean> signalExecutor) {
         this.cfg = cfg;
         this.api = api;
         this.wal = wal;
@@ -73,6 +86,7 @@ public final class AgentRuntime {
         this.world = world;
         this.threads = threads;
         this.log = log;
+        this.signalExecutor = signalExecutor;
     }
 
     public void start() throws IOException {
@@ -246,12 +260,42 @@ public final class AgentRuntime {
                     log.accept("[BRP] form desk poll failed: " + t.getMessage());
                     return null;
                 });
-        api.pollSignals(cfg.tenantId()).thenAccept(poll ->
-                        SignalDesk.publish(poll.pending() == null ? 0 : poll.pending().size()))
-                .exceptionally(t -> {
-                    log.accept("[BRP] signal desk poll failed: " + t.getMessage());
-                    return null;
-                });
+        api.pollSignals(cfg.tenantId()).thenAccept(poll -> {
+            SignalDesk.publish(poll.pending() == null ? 0 : poll.pending().size());
+            executeSignals(poll);
+        }).exceptionally(t -> {
+            log.accept("[BRP] signal desk poll failed: " + t.getMessage());
+            return null;
+        });
+    }
+
+    /**
+     * P3-12: run executable signals through the port and ack what ran —
+     * unacked commands stay PENDING server-side and come back next poll
+     * (at-least-once, the executor is expected to be idempotent-ish by
+     * design: a withdrawal that already left the vault fails honestly).
+     */
+    private void executeSignals(dev.brp.mod.client.BrpServerApi.SignalPoll poll) {
+        if (signalExecutor == null || poll.pending() == null || poll.pending().isEmpty()) {
+            return;
+        }
+        var executed = new java.util.ArrayList<Long>();
+        for (var cmd : poll.pending()) {
+            try {
+                Boolean ran = signalExecutor.apply(cmd.channel(), cmd.level());
+                if (Boolean.TRUE.equals(ran)) {
+                    executed.add(cmd.id());
+                }
+            } catch (RuntimeException e) {
+                log.accept("[BRP] signal " + cmd.id() + " (" + cmd.channel() + ") failed: " + e.getMessage());
+            }
+        }
+        if (!executed.isEmpty()) {
+            api.ackSignals(cfg.tenantId(), executed).exceptionally(t -> {
+                log.accept("[BRP] signal ack failed: " + t.getMessage());
+                return null;
+            });
+        }
     }
 
     private volatile Set<String> registeredChunks = Set.of();
