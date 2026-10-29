@@ -216,3 +216,7 @@ Tarjan SCC；发现 = 尺寸 ≥ 2 且环长 ≤ 4 的 SCC，按整额度（金�
 | P3-12 ✓ | mod：VaultPort + NeoForgeVault（真 Container 取出、整组、缺口诚实失败）+ agent 执行并 ack 流程 | mod |
 | P3-13 ✓ | 契约同步（openapi /monetary/* 全量） | contract |
 | P3-14 ✓ | 文档重同步 + 计数（03/09/12 互链；本行以完成它的方式打勾） | docs |
+
+> **交接**：P4（负载台——算力市场、需求响应、信贷、TPS 债券）在
+> docs/13-p4-compute-market.zh.md 中延续这套机器。课税分钟与周快照平面直接
+> 供它取用；本篇没有移动任何东西。

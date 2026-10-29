@@ -335,9 +335,9 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 | P4-10 | Downtime ledger + OEE (A×P, Q disclosed) + APS page columns | F | ✓ |
 | P4-11 | Work-order completion costing + asset registry | F | ✓ |
 | P4-12 | CC:T state endpoint + cc-brp.lua resource | G | ✓ |
-| P4-13 | Portal load page: forecast SVG, tariff table, DR windows, credit, bonds, book | H | ☐ |
-| P4-14 | OpenAPI sync: load/credit/bonds/market/oee/cc paths | H | ☐ |
-| P4-15 | Counts synced (AGENTS.md + READMEs), docs/12 handoff note | H | ☐ |
+| P4-13 | Portal load page: forecast SVG, tariff table, DR windows, credit, bonds, book | H | ✓ |
+| P4-14 | OpenAPI sync: load/credit/bonds/market/oee/cc paths | H | ✓ |
+| P4-15 | Counts synced (AGENTS.md + READMEs), docs/12 handoff note | H | ✓ |
 | P4-16 | Completion audit: full backend suite + mod build + CI green both remotes | H | ☐ |
 
 ## 13. Test plan

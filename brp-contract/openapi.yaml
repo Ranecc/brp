@@ -548,6 +548,197 @@ paths:
       responses:
         "200": {description: pending commands + cursor}
 
+  # --- P4: the load desk (docs/13) ---
+  /api/v1/monetary/load/samples:
+    get:
+      summary: Minute-bucketed load samples (mspt, players, entities, chunks)
+      parameters:
+        - {name: hours, in: query, schema: {type: integer, default: 24}}
+      responses:
+        "200": {description: "[{bucketMinute, sampleCount, msptAvg, msptMax, playerMax, entityMax, chunkMax, forcedMax}]"}
+  /api/v1/monetary/load/forecast:
+    get:
+      summary: Hourly mspt forecast with tariff classification (profile EWMA + damped live correction)
+      parameters:
+        - {name: hours, in: query, schema: {type: integer, default: 24}}
+      responses:
+        "200": {description: "{coldStart, profileDays, liveMspt, hours[{hourStart, predictedMspt, utilization, tariffLabel, multiplierPct, schedulable}]}"}
+  /api/v1/monetary/load/profile/refresh:
+    post:
+      summary: Run the daily profile refresh (idempotent per date)
+      responses:
+        "200": {description: "{ran}"}
+  /api/v1/monetary/tariff:
+    get:
+      summary: The versioned time-of-use tariff windows
+      responses:
+        "200": {description: "[{id, version, dayOfWeek, startMinute, endMinute, multiplierPct, label}]"}
+  /api/v1/monetary/tariff/windows:
+    post:
+      summary: Publish the next tariff version (copies latest rows + the new window)
+      responses:
+        "200": {description: the created window}
+        "400": {description: invalid window geometry or multiplier}
+  /api/v1/monetary/dr/{tenantId}/jobs:
+    get:
+      summary: The tenant's deferrable jobs
+      responses:
+        "200": {description: "[{id, resource, estMinutes, status, awardedStart, windowSeq, shedCount}]"}
+    post:
+      summary: File a deferrable job (idempotent by idemKey)
+      responses:
+        "200": {description: the filed job}
+        "400": {description: invalid window, or credit.restricted}
+  /api/v1/monetary/dr/{tenantId}/jobs/{jobId}/cancel:
+    post:
+      summary: Cancel a FILED/AWARDED job, refunding the reservation
+      responses:
+        "200": {description: the cancelled job}
+  /api/v1/monetary/dr/award:
+    post:
+      summary: Award feasible jobs to windows and dispatch due signals
+      responses:
+        "200": {description: "{awarded}"}
+  /api/v1/monetary/dr/shed-check:
+    post:
+      summary: Shed running DR windows when live mspt breaches the budget
+      responses:
+        "200": {description: "{liveMspt}"}
+  /api/v1/monetary/credit/{tenantId}:
+    get:
+      summary: The credit line (auto-created with an auto limit on first look)
+      responses:
+        "200": {description: "{limitCents, drawnCents, availableCents, utilizationPct, status, annualRatePct, limitPinned}"}
+  /api/v1/monetary/credit/{tenantId}/limit:
+    post:
+      summary: Admin sets (and pins) the limit
+      responses:
+        "200": {description: the updated line}
+  /api/v1/monetary/credit/{tenantId}/repay:
+    post:
+      summary: Repay debt from treasury cash (capped at drawn)
+      responses:
+        "200": {description: the updated line}
+        "400": {description: credit.no.cash | credit.nothing.drawn}
+  /api/v1/monetary/credit/{tenantId}/reinstate:
+    post:
+      summary: Admin-only exit from DEFAULTED (the machine re-runs from utilization)
+      responses:
+        "200": {description: the updated line}
+  /api/v1/monetary/credit/{tenantId}/events:
+    get:
+      summary: The credit audit trail (DRAW|REPAY|INTEREST|LIMIT_SET|STATUS)
+      responses:
+        "200": {description: "[{kind, amountCents, memo, createdAt}]"}
+  /api/v1/monetary/credit/desk/run:
+    post:
+      summary: Run the daily desk (sweep overdrafts, accrue interest, walk statuses)
+      responses:
+        "200": {description: "{ran}"}
+  /api/v1/monetary/bonds:
+    get:
+      summary: All bond series
+      responses:
+        "200": {description: "[{id, name, faceCents, couponPctAnnual, termDays, totalUnits, soldUnits, thresholdMspt, status, maturesAt}]"}
+    post:
+      summary: Issue a series (OPEN; performance-settled at maturity)
+      responses:
+        "200": {description: the series}
+  /api/v1/monetary/bonds/{seriesId}:
+    get:
+      summary: One series
+      responses:
+        "200": {description: the series}
+  /api/v1/monetary/bonds/{seriesId}/subscribe/{tenantId}:
+    post:
+      summary: Escrow BRC into a position (one per tenant per series)
+      responses:
+        "200": {description: the subscription}
+        "400": {description: bond.oversubscribed | bond.already.subscribed | credit.restricted}
+  /api/v1/monetary/bonds/{seriesId}/close:
+    post:
+      summary: Close the book (full -> AWARDED; starving -> FAILED + refunds)
+      responses:
+        "200": {description: the series}
+  /api/v1/monetary/bonds/accrual/run:
+    post:
+      summary: Daily coupon accrual (idempotent per series/tenant/day)
+      responses:
+        "200": {description: "{accrued}"}
+  /api/v1/monetary/bonds/settle/run:
+    post:
+      summary: Settle matured series; coupons x performanceFactor, principal whole
+      responses:
+        "200": {description: "[seriesId]"}
+  /api/v1/market/book:
+    get:
+      summary: All resting orders
+      responses:
+        "200": {description: "[{id, tenantId, side, qty, qtyRemaining, priceCents, status}]"}
+  /api/v1/market/{tenantId}/orders:
+    get:
+      summary: The tenant's orders
+      responses:
+        "200": {description: "[...]"}
+    post:
+      summary: Place an order (peg-banded price; ASKs lock quota, BIDs escrow BRC)
+      responses:
+        "200": {description: the order}
+        "400": {description: market.price.outside.band | market.cant.cover | credit.restricted}
+  /api/v1/market/{tenantId}/orders/{orderId}/cancel:
+    post:
+      summary: Cancel a resting order and release its collateral
+      responses:
+        "200": {description: the order}
+  /api/v1/market/expire:
+    post:
+      summary: Expire stale orders and release escrows
+      responses:
+        "200": {description: "{expired}"}
+  /api/v1/aps/shopfloor/{tenantId}/downtime:
+    get:
+      summary: The downtime ledger
+      responses:
+        "200": {description: "[{machine, reason, since, until, minutes}]"}
+    post:
+      summary: Record a stoppage (idempotent by key)
+      responses:
+        "200": {description: the event}
+  /api/v1/aps/shopfloor/{tenantId}/oee:
+    get:
+      summary: Weekly OEE — availability x performance, quality disclosed as 1.0
+      parameters:
+        - {name: weekOf, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: "{downtimeMinutes, availability, performance, quality, oee, performanceColdStart}"}
+  /api/v1/aps/shopfloor/{tenantId}/assets:
+    get:
+      summary: The asset registry
+      responses:
+        "200": {description: "[{kind, label, locationChunk, costBasisCents, status}]"}
+    post:
+      summary: Register an asset (handover result)
+      responses:
+        "200": {description: the asset}
+  /api/v1/aps/shopfloor/{tenantId}/assets/{assetId}/retire:
+    post:
+      summary: Retire an asset
+      responses:
+        "200": {description: the asset}
+  /api/v1/aps/shopfloor/{tenantId}/workorders/{ref}/stamp:
+    post:
+      summary: Stamp completion cost (materials reported + levy-priced machine time)
+      responses:
+        "200": {description: the stamp}
+        "400": {description: workorder.already.stamped}
+  /api/v1/cc/{tenant}/state:
+    get:
+      summary: The CC:T desk — one read-only poll (quota, windows, forecast, credit)
+      parameters:
+        - {name: Authorization, in: header, required: true, schema: {type: string}}
+      responses:
+        "200": {description: "{quotaLimit, msptPredicted, schedulable, tariffLabel, creditStatus, windows[]}"}
+        "400": {description: cc.disabled (no token configured) | cc.unauthorized}
   /api/v1/tenants/{tenantId}/signals/ack:
     post:
       summary: Agent acknowledges executed commands (marks DELIVERED)

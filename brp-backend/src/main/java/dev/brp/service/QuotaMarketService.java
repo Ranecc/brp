@@ -19,6 +19,9 @@ public interface QuotaMarketService {
 
     List<MarketOrderResponse> orders(String tenantId);
 
+    /** The tape: the most recent executions, newest first. */
+    List<dev.brp.entity.MarketTradeEntity> trades();
+
     /** Expire stale orders and release their escrows. */
     void expireStale();
 

@@ -244,3 +244,7 @@ acks with the movement id. Everything else in P3 is backend + portal.
 | P3-12 ✓ | mod: VaultPort + NeoForgeVault (real Container withdrawal, whole stacks, shortfall fails honestly) + agent execute-and-ack flow | mod |
 | P3-13 ✓ | contract sync (openapi /monetary/* complete) | contract |
 | P3-14 ✓ | docs resync + counts (03/09/12 cross-links; this row checked by doing it) | docs |
+
+> **Handoff**: P4 (the load desk — compute market, demand response, credit,
+> TPS bonds) continues this machinery in docs/13-p4-compute-market.md. The
+> levy minutes and the snapshot plane feed it directly; nothing here moved.

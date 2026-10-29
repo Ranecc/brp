@@ -61,6 +61,14 @@ public class PortalController {
     private final MarketPriceService marketPrices;
     private final WashService wash;
     private final PolicyRequestRepository policyRequests;
+    private final dev.brp.service.LoadSampleService loadSamples;
+    private final dev.brp.service.TariffService tariff;
+    private final dev.brp.service.DemandResponseService demandResponse;
+    private final dev.brp.service.CreditService credit;
+    private final dev.brp.service.BondService bonds;
+    private final dev.brp.service.QuotaMarketService market;
+    private final dev.brp.repository.DeferredJobRepository deferredJobs;
+
 
     public PortalController(EconomyReportService economy, AgentMonitorService monitor,
                             TpsReportService tpsReports, ApprovalService approvals,
@@ -70,7 +78,14 @@ public class PortalController {
                             SnapshotService snapshots, WealthLevyService wealthLevy,
                             PegService peg, GreshamService gresham,
                             MarketPriceService marketPrices, WashService wash,
-                            PolicyRequestRepository policyRequests) {
+                            PolicyRequestRepository policyRequests,
+                            dev.brp.service.LoadSampleService loadSamples,
+                            dev.brp.service.TariffService tariff,
+                            dev.brp.service.DemandResponseService demandResponse,
+                            dev.brp.service.CreditService credit,
+                            dev.brp.service.BondService bonds,
+                            dev.brp.service.QuotaMarketService market,
+                            dev.brp.repository.DeferredJobRepository deferredJobs) {
         this.economy = economy;
         this.monitor = monitor;
         this.tpsReports = tpsReports;
@@ -88,6 +103,13 @@ public class PortalController {
         this.marketPrices = marketPrices;
         this.wash = wash;
         this.policyRequests = policyRequests;
+        this.loadSamples = loadSamples;
+        this.tariff = tariff;
+        this.demandResponse = demandResponse;
+        this.credit = credit;
+        this.bonds = bonds;
+        this.market = market;
+        this.deferredJobs = deferredJobs;
     }
 
     @GetMapping("/economy")
@@ -153,6 +175,40 @@ public class PortalController {
                           @org.springframework.web.bind.annotation.RequestParam double threshold) {
         hotRules.create(new SetRuleRequest(name, eventType, field, op, threshold, "WARN"));
         return "redirect:/portal/desk";
+    }
+
+    /** The load desk (docs/13 §13): forecast curve, tariff, DR, credit, bonds, the book. */
+    @GetMapping("/load")
+    public String load(Model model) {
+        var forecast = loadSamples.forecast(24);
+        model.addAttribute("forecast", forecast);
+        model.addAttribute("curve", forecastPoints(forecast));
+        model.addAttribute("tariff", tariff.windows());
+        model.addAttribute("jobs", deferredJobs.findAll());
+        model.addAttribute("bonds", bonds.series());
+        model.addAttribute("book", market.book());
+        model.addAttribute("recentTrades", market.trades());
+        return "portal/load";
+    }
+
+    /** Inline-SVG polyline points for the forecast curve; same chrome as CPI. */
+    static String forecastPoints(dev.brp.dto.LoadDtos.ForecastResponse forecast) {
+        if (forecast.hours().isEmpty()) {
+            return "";
+        }
+        double maxMspt = forecast.hours().stream()
+                .mapToDouble(dev.brp.dto.LoadDtos.ForecastHour::predictedMspt)
+                .max().orElse(1.0);
+        double scale = 100.0 / Math.max(maxMspt, 1.0);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < forecast.hours().size(); i++) {
+            double y = 100.0 - forecast.hours().get(i).predictedMspt() * scale;
+            sb.append(i * 10).append(',').append(String.format("%.1f", y));
+            if (i < forecast.hours().size() - 1) {
+                sb.append(' ');
+            }
+        }
+        return sb.toString();
     }
 
     /** The monetary console (docs/12 §14): regime, snapshot, rails, CPI, peg, votes. */

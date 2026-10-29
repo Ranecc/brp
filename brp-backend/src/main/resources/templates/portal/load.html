@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 负载')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('load')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('负载 Load Desk')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>预测 / Forecast <span class="tag" th:if="${forecast.coldStart}">冷启动 · 样本不足</span>
+      <span class="tag" th:if="${!forecast.coldStart}" th:text='${"样本 " + forecast.profileDays + " 天"}'>样本 N 天</span></h2>
+    <p class="empty" style="margin-top:0">
+      实时 MSPT（30 分钟 EWMA）：<span class="pixel" th:text="${forecast.liveMspt}">0</span> ms
+      · 利用率 <span class="pixel" th:text="${#numbers.formatDecimal(forecast.liveMspt/50*100,1,1)}">0</span>%
+      （tick 预算 50 ms，wiki 说的）
+    </p>
+    <svg viewBox="0 0 240 100" class="spark" preserveAspectRatio="none" style="width:100%;height:90px">
+      <line x1="0" y1="20" x2="240" y2="20" stroke="#8884" stroke-dasharray="4 3"/>
+      <polyline th:attr="points=${curve}" fill="none" stroke="var(--accent, #7ac74f)" stroke-width="2"/>
+    </svg>
+    <table class="grid">
+      <thead><tr><th>小时</th><th>预测 MSPT</th><th>利用率</th><th>时段</th><th>乘数</th><th>可调度</th></tr></thead>
+      <tbody>
+      <tr th:each="h : ${forecast.hours}">
+        <td class="pixel" th:text="${h.hourStart}">-</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(h.predictedMspt,1,2)}">0</td>
+        <td class="num pixel" th:text="${#numbers.formatDecimal(h.utilization*100,1,1)} + '%'">-</td>
+        <td class="pixel" th:text="${h.tariffLabel}">SHOULDER</td>
+        <td class="num pixel" th:text="${h.multiplierPct} + '%'">-</td>
+        <td class="pixel" th:text="${h.schedulable} ? '可调度' : '满载'">-</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>电价表 / Tariff <span class="tag">version 0 = 启动配置</span></h2>
+    <table class="grid" th:if="${!tariff.isEmpty()}">
+      <thead><tr><th>版本</th><th>星期</th><th>起（分）</th><th>止（分）</th><th>乘数</th><th>标签</th></tr></thead>
+      <tbody>
+      <tr th:each="w : ${tariff}">
+        <td class="num pixel" th:text="${w.version}">0</td>
+        <td class="num pixel" th:text="${w.dayOfWeek}">-1</td>
+        <td class="num pixel" th:text="${w.startMinute}">0</td>
+        <td class="num pixel" th:text="${w.endMinute}">0</td>
+        <td class="num pixel" th:text="${w.multiplierPct} + '%'">-</td>
+        <td class="pixel" th:text="${w.label}">PEAK</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty">平峰填谷：谷段是表里的一行，不是一种心情。</p>
+  </section>
+
+  <section class="panel">
+    <h2>需求响应 / Demand Response <span class="tag">平峰填谷</span></h2>
+    <table class="grid" th:if="${!jobs.isEmpty()}">
+      <thead><tr><th>#</th><th>租户</th><th>分钟</th><th>状态</th><th>窗口起</th><th>切除</th></tr></thead>
+      <tbody>
+      <tr th:each="j : ${jobs}">
+        <td class="num pixel" th:text="${j.id}">-</td>
+        <td class="pixel" th:text="${j.tenantId}">-</td>
+        <td class="num pixel" th:text="${j.estMinutes}">-</td>
+        <td class="pixel" th:text="${j.status}">FILED</td>
+        <td class="pixel" th:text="${j.awardedStart}">-</td>
+        <td class="num pixel" th:text="${j.shedCount}">0</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${jobs.isEmpty()}">没有可推迟作业。电网难得清闲。</p>
+  </section>
+
+  <section class="panel">
+    <h2>信贷台 / Credit <span class="tag">债务 · 单利 · 有牙</span></h2>
+    <p class="empty">额度自动 = 近 30 天收入 × 系数（管理员可钉住）。RESTRICTED 关区块、停 DR、
+      禁下单——移动和游玩永远免费。利率：单利，复利是会被通缉的。</p>
+  </section>
+
+  <section class="panel">
+    <h2>债券 / Bonds <span class="tag">票息按实测 tick 结算</span></h2>
+    <table class="grid" th:if="${!bonds.isEmpty()}">
+      <thead><tr><th>#</th><th>名称</th><th>面值</th><th>票息</th><th>期限</th><th>认购</th><th>阈值</th><th>状态</th></tr></thead>
+      <tbody>
+      <tr th:each="b : ${bonds}">
+        <td class="num pixel" th:text="${b.id}">-</td>
+        <td class="pixel" th:text="${b.name}">-</td>
+        <td class="num pixel" th:text="${b.faceCents}">-</td>
+        <td class="num pixel" th:text="${b.couponPctAnnual} + '%'">-</td>
+        <td class="num pixel" th:text="${b.termDays} + 'd'">-</td>
+        <td class="num pixel" th:text="${b.soldUnits} + '/' + ${b.totalUnits}">-</td>
+        <td class="num pixel" th:text="${b.thresholdMspt} + ' ms'">-</td>
+        <td class="pixel" th:text="${b.status}">OPEN</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${bonds.isEmpty()}">财政部尚未发债。服务器跑得凉，谁还需要债券。</p>
+  </section>
+
+  <section class="panel">
+    <h2>订单簿 / Order book <span class="tag">锚带内 · 价格时间优先</span></h2>
+    <table class="grid" th:if="${!book.isEmpty()}">
+      <thead><tr><th>#</th><th>租户</th><th>方向</th><th>量</th><th>剩余</th><th>价（分）</th><th>状态</th></tr></thead>
+      <tbody>
+      <tr th:each="o : ${book}">
+        <td class="num pixel" th:text="${o.id}">-</td>
+        <td class="pixel" th:text="${o.tenantId}">-</td>
+        <td class="pixel" th:text="${o.side}">ASK</td>
+        <td class="num pixel" th:text="${o.qty}">-</td>
+        <td class="num pixel" th:text="${o.qtyRemaining}">-</td>
+        <td class="num pixel" th:text="${o.priceCents}">-</td>
+        <td class="pixel" th:text="${o.status}">NEW</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${book.isEmpty()}">订单簿空空如也。做市是被禁止的利益冲突。</p>
+  </section>
+</main>
+<footer th:replace="~{portal/fragments :: footer}"></footer>
+</body>
+</html>

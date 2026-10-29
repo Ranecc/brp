@@ -155,6 +155,13 @@ public class QuotaMarketServiceImpl implements QuotaMarketService {
     }
 
     @Override
+    public List<dev.brp.entity.MarketTradeEntity> trades() {
+        return trades.findAll().stream()
+                .sorted(java.util.Comparator.comparing(dev.brp.entity.MarketTradeEntity::getId).reversed())
+                .limit(20).toList();
+    }
+
+    @Override
     @Scheduled(fixedDelayString = "${brp.market.expire-ms:3600000}")
     public void expireStale() {
         List<MarketOrderEntity> stale = orders.findByExpiresAtBeforeAndStatusIn(
