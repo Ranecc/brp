@@ -22,6 +22,7 @@ import dev.brp.repository.ManagedChunkRepository;
 import dev.brp.service.ChunkService;
 import dev.brp.service.LedgerService;
 import dev.brp.service.NotificationService;
+import dev.brp.service.ShopFloorService;
 import dev.brp.service.TariffService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -50,6 +51,7 @@ public class ChunkServiceImpl implements ChunkService {
     private final long centsPerMinute;
     private final TariffService tariff;
     private final dev.brp.repository.CreditLineRepository creditLines;
+    private final ShopFloorService shopFloor;
 
     public ChunkServiceImpl(ManagedChunkRepository chunks,
                             ChunkPurchaseKeyRepository purchaseKeys,
@@ -61,7 +63,8 @@ public class ChunkServiceImpl implements ChunkService {
                             @Value("${brp.chunk.governor.starter-minutes:1440}") long starterMinutes,
                             @Value("${brp.chunk.billing.cents-per-minute:0}") long centsPerMinute,
                             TariffService tariff,
-                            dev.brp.repository.CreditLineRepository creditLines) {
+                            dev.brp.repository.CreditLineRepository creditLines,
+                            ShopFloorService shopFloor) {
         this.chunks = chunks;
         this.purchaseKeys = purchaseKeys;
         this.notifications = notifications;
@@ -73,6 +76,7 @@ public class ChunkServiceImpl implements ChunkService {
         this.centsPerMinute = centsPerMinute;
         this.tariff = tariff;
         this.creditLines = creditLines;
+        this.shopFloor = shopFloor;
     }
 
     @Override
@@ -220,6 +224,11 @@ public class ChunkServiceImpl implements ChunkService {
                 chunks.save(slot);
                 notifications.enqueue("chunk.credit.cutoff", "chunk.credit.cutoff",
                         slot.getChunkKey(), slot.getDimension(), tenantId);
+                java.time.LocalDateTime cut = java.time.LocalDateTime.now();
+                shopFloor.recordDowntime(tenantId, slot.getDimension() + "|" + slot.getChunkKey(),
+                        dev.brp.entity.DowntimeEventEntity.CREDIT_CUTOFF,
+                        "cutoff:" + tenantId + ":" + slot.getDimension() + "|" + slot.getChunkKey(),
+                        cut, cut.plusMinutes(1));
                 closed++;
             }
         }

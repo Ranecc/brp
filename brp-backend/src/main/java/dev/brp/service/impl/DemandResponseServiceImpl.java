@@ -11,6 +11,7 @@ import dev.brp.entity.DeferredJobEntity;
 import dev.brp.repository.DeferredJobRepository;
 import dev.brp.service.DemandResponseService;
 import dev.brp.service.LedgerService;
+import dev.brp.service.ShopFloorService;
 import dev.brp.service.LoadSampleService;
 import dev.brp.service.SignalService;
 import dev.brp.service.TariffService;
@@ -46,6 +47,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
 
     private final DeferredJobRepository jobs;
     private final dev.brp.repository.CreditLineRepository creditLines;
+    private final dev.brp.service.ShopFloorService shopFloor;
     private final LoadSampleService loadSamples;
     private final TariffService tariff;
     private final LedgerService ledger;
@@ -60,6 +62,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
 
     public DemandResponseServiceImpl(DeferredJobRepository jobs,
                                      dev.brp.repository.CreditLineRepository creditLines,
+                                     dev.brp.service.ShopFloorService shopFloor,
                                      LoadSampleService loadSamples,
                                      TariffService tariff,
                                      LedgerService ledger,
@@ -70,6 +73,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
                                      @Value("${brp.dr.max-sheds:2}") int maxSheds) {
         this.jobs = jobs;
         this.creditLines = creditLines;
+        this.shopFloor = shopFloor;
         this.loadSamples = loadSamples;
         this.tariff = tariff;
         this.ledger = ledger;
@@ -200,6 +204,7 @@ public class DemandResponseServiceImpl implements DemandResponseService {
         for (DeferredJobEntity job : jobs.findByStatusOrderByCreatedAtAsc(DeferredJobEntity.RUNNING)) {
             enqueue(job, LEVEL_CLOSE);
             refund(job);
+            shedDowntime(job);
             if (job.getShedCount() + 1 > maxSheds) {
                 job.close(DeferredJobEntity.CANCELLED);   // the grid gave it chances
             } else {
@@ -207,6 +212,13 @@ public class DemandResponseServiceImpl implements DemandResponseService {
             }
             jobs.save(job);
         }
+    }
+
+    /** The shed lands in the downtime ledger — OEE sees the grid operator's hand. */
+    private void shedDowntime(DeferredJobEntity job) {
+        LocalDateTime start = job.getAwardedStart() == null ? LocalDateTime.now(clock) : job.getAwardedStart();
+        shopFloor.recordDowntime(job.getTenantId(), "*", dev.brp.entity.DowntimeEventEntity.DR_SHED,
+                "dr-shed:" + job.getId() + ":" + (job.getShedCount() + 1), start, LocalDateTime.now(clock));
     }
 
     @Override

@@ -49,5 +49,13 @@ public final class LoadDtos {
 
     public record PlaceOrderRequest(String idemKey, String side, long qty, long priceCents) {}
 
+    public record DowntimeRequest(String machine, String reason, String idemKey,
+                                  String since, String until) {}
+
+    public record RegisterAssetRequest(String kind, String label, String locationChunk,
+                                       long costBasisCents) {}
+
+    public record StampCostRequest(String since, String until, long materialCostCents) {}
+
     public record SetLimitRequest(long limitCents) {}
 }

@@ -332,8 +332,8 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 | P4-07 | CreditService: draw/repay/interest/status machine + cutoff actions | C | ✓ |
 | P4-08 | BondService: issue/subscribe/accrue/mature with performanceFactor | D | ✓ |
 | P4-09 | QuotaMarketService: orders, matching, settlement, fees, self-trade ban | E | ✓ |
-| P4-10 | Downtime ledger + OEE (A×P, Q disclosed) + APS page columns | F | ☐ |
-| P4-11 | Work-order completion costing + asset registry | F | ☐ |
+| P4-10 | Downtime ledger + OEE (A×P, Q disclosed) + APS page columns | F | ✓ |
+| P4-11 | Work-order completion costing + asset registry | F | ✓ |
 | P4-12 | CC:T state endpoint + cc-brp.lua resource | G | ☐ |
 | P4-13 | Portal load page: forecast SVG, tariff table, DR windows, credit, bonds, book | H | ☐ |
 | P4-14 | OpenAPI sync: load/credit/bonds/market/oee/cc paths | H | ☐ |

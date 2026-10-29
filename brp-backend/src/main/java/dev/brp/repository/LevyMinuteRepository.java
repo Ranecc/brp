@@ -19,4 +19,6 @@ public interface LevyMinuteRepository extends JpaRepository<LevyMinuteEntity, Le
                                    @Param("tenant") String tenantId);
 
     List<LevyMinuteEntity> findByMinuteBucket(LocalDateTime minuteBucket);
+
+    List<LevyMinuteEntity> findByMinuteBucketBetween(LocalDateTime from, LocalDateTime to);
 }
