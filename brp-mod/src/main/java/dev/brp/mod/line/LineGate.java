@@ -14,8 +14,19 @@ public final class LineGate {
     private LineGate() {}
 
     public static Decision decide(Verdict verdict, double factor, long windowIndex) {
+        return decide(verdict, factor, windowIndex, true);
+    }
+
+    /**
+     * P4 demand response (docs/13 §5): a closed DR window THROTTLES the line
+     * (shed, not strike — the grid paused it, the meter still gets paid).
+     */
+    public static Decision decide(Verdict verdict, double factor, long windowIndex, boolean drOpen) {
         if (verdict == Verdict.HALT || factor <= 0) {
             return Decision.ON_STRIKE;
+        }
+        if (!drOpen) {
+            return Decision.THROTTLED;
         }
         long every = Math.max(1, (long) Math.ceil(1.0 / Math.min(1.0, factor)));
         return windowIndex % every == 0 ? Decision.RUNNING : Decision.THROTTLED;

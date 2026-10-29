@@ -37,6 +37,7 @@ public class MonetaryController {
     private final dev.brp.service.impl.VaultDriftServiceImpl vaultDrift;
     private final dev.brp.service.LoadSampleService loadSamples;
     private final dev.brp.service.TariffService tariff;
+    private final dev.brp.service.DemandResponseService demandResponse;
 
     public MonetaryController(RegimeService regime, SnapshotService snapshots,
                               WealthLevyService wealthLevy, PegService peg,
@@ -46,7 +47,8 @@ public class MonetaryController {
                               dev.brp.service.MarketPriceService marketPrices,
                               dev.brp.service.impl.VaultDriftServiceImpl vaultDrift,
                               dev.brp.service.LoadSampleService loadSamples,
-                              dev.brp.service.TariffService tariff) {
+                              dev.brp.service.TariffService tariff,
+                              dev.brp.service.DemandResponseService demandResponse) {
         this.regime = regime;
         this.snapshots = snapshots;
         this.wealthLevy = wealthLevy;
@@ -59,6 +61,7 @@ public class MonetaryController {
         this.vaultDrift = vaultDrift;
         this.loadSamples = loadSamples;
         this.tariff = tariff;
+        this.demandResponse = demandResponse;
     }
 
     @GetMapping("/regime")
@@ -196,5 +199,41 @@ public class MonetaryController {
     public dev.brp.dto.LoadDtos.TariffWindowResponse addTariffWindow(
             @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.AddTariffWindowRequest req) {
         return tariff.addWindow(req);
+    }
+
+    // --- P4 demand response (docs/13 §5) ---
+
+    @org.springframework.web.bind.annotation.PostMapping("/dr/{tenantId}/jobs")
+    public dev.brp.dto.LoadDtos.DeferredJobResponse fileDeferredJob(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.FileDeferredJobRequest req) {
+        return demandResponse.file(tenantId, req);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/dr/{tenantId}/jobs")
+    public java.util.List<dev.brp.dto.LoadDtos.DeferredJobResponse> deferredJobs(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId) {
+        return demandResponse.list(tenantId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/dr/{tenantId}/jobs/{jobId}/cancel")
+    public dev.brp.dto.LoadDtos.DeferredJobResponse cancelDeferredJob(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.PathVariable long jobId) {
+        return demandResponse.cancel(tenantId, jobId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/dr/award")
+    public java.util.Map<String, Object> drAward() {
+        demandResponse.awardDueJobs();
+        demandResponse.dispatchDueSignals();
+        return java.util.Map.of("awarded", true);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/dr/shed-check")
+    public java.util.Map<String, Double> drShedCheck() {
+        double live = loadSamples.liveMspt();
+        demandResponse.shedIfOverloaded(live);
+        return java.util.Map.of("liveMspt", live);
     }
 }

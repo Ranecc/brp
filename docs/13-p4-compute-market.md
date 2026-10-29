@@ -326,8 +326,8 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 | P4-02 | Census enrichment: players/entities/chunks/forced on heartbeat; minute-bucket upsert | A | ✓ |
 | P4-03 | LoadForecastService: profile EWMA + live correction + hourly forecast + endpoints | A | ✓ |
 | P4-04 | TariffService + chunk billing refactor onto the table (PeakPricingTest green) | B | ✓ |
-| P4-05 | DemandResponseService: file/award/shed/expire + billing | B | ☐ |
-| P4-06 | Mod: `dr.window` signals → governor feed gating | B | ☐ |
+| P4-05 | DemandResponseService: file/award/shed/expire + billing | B | ✓ |
+| P4-06 | Mod: `dr.window` signals → governor feed gating | B | ✓ |
 | P4-07 | CreditService: draw/repay/interest/status machine + cutoff actions | C | ☐ |
 | P4-08 | BondService: issue/subscribe/accrue/mature with performanceFactor | D | ☐ |
 | P4-09 | QuotaMarketService: orders, matching, settlement, fees, self-trade ban | E | ☐ |

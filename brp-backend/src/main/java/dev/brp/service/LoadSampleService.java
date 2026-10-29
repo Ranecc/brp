@@ -25,4 +25,7 @@ public interface LoadSampleService {
     boolean refreshProfile();
 
     ForecastResponse forecast(int hours);
+
+    /** The 30-minute EWMA of mspt — the "live" the shed check reads. */
+    double liveMspt();
 }

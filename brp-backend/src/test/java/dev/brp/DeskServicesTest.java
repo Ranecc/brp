@@ -50,8 +50,13 @@ class DeskServicesTest {
 
         var recent = hotRules.hits();
         assertThat(recent.size()).isGreaterThan(before);
-        assertThat(recent.get(0).observed()).isEqualTo(80.5);
-        assertThat(recent.get(0).ruleName()).startsWith("lag-watchdog-");
+        // shared-H2 discipline: other tests' rules write hits into the same
+        // global table — scope to OUR rule, never index the world
+        var ours = recent.stream()
+                .filter(h -> h.ruleName().startsWith("lag-watchdog-"))
+                .toList();
+        assertThat(ours).isNotEmpty();
+        assertThat(ours.get(0).observed()).isEqualTo(80.5);
     }
 
     @Test

@@ -46,4 +46,15 @@ class LineGateTest {
         assertEquals(0.0, ApsFeed.factor());
         ApsFeed.reset();
     }
+
+    @Test
+    void closedDrWindowThrottlesButNeverStrikes() {
+        // P4 (docs/13 section 5): the grid shed the line, the meter still gets paid
+        assertEquals(Decision.THROTTLED, LineGate.decide(Verdict.RUN, 1.0, 0, false));
+        assertEquals(Decision.THROTTLED, LineGate.decide(Verdict.RUN, 1.0, 3, false));
+        assertEquals(Decision.RUNNING, LineGate.decide(Verdict.RUN, 1.0, 0, true));
+        // a strike stays a strike even with the window open
+        assertEquals(Decision.ON_STRIKE, LineGate.decide(Verdict.HALT, 1.0, 0, true));
+        assertEquals(Decision.ON_STRIKE, LineGate.decide(Verdict.RUN, 0.0, 0, false));
+    }
 }

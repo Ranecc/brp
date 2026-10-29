@@ -142,10 +142,7 @@ public class LoadSampleServiceImpl implements LoadSampleService {
         boolean coldStart = maxDays < COLD_START_DAYS;
 
         LocalDateTime now = LocalDateTime.now(clock);
-        List<Double> recent = samples
-                .findByBucketMinuteGreaterThanEqualOrderByBucketMinuteAsc(now.minusMinutes(30))
-                .stream().map(LoadSampleEntity::getMsptAvg).toList();
-        double live = LoadForecastMath.ewma(recent, liveAlpha);
+        double live = liveMspt();
 
         int nowMinute = now.getHour() * 60 + now.getMinute();
         double profileNow = profileByMinute.getOrDefault(nowMinute, live);
@@ -163,6 +160,15 @@ public class LoadSampleServiceImpl implements LoadSampleService {
                     res.label(), res.multiplierPct(), schedulable));
         }
         return new ForecastResponse(coldStart, maxDays, round(live), out);
+    }
+
+    @Override
+    public double liveMspt() {
+        LocalDateTime now = LocalDateTime.now(clock);
+        List<Double> recent = samples
+                .findByBucketMinuteGreaterThanEqualOrderByBucketMinuteAsc(now.minusMinutes(30))
+                .stream().map(LoadSampleEntity::getMsptAvg).toList();
+        return LoadForecastMath.ewma(recent, liveAlpha);
     }
 
     /** Mean of the per-minute prediction across the hour. */

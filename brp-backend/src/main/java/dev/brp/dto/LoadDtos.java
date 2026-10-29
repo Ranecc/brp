@@ -23,4 +23,12 @@ public final class LoadDtos {
 
     public record AddTariffWindowRequest(int dayOfWeek, int startMinute, int endMinute,
                                          int multiplierPct, String label) {}
+
+    public record FileDeferredJobRequest(String idemKey, String resource, long quantity,
+                                         long estMinutes, String earliest, String deadline) {}
+
+    public record DeferredJobResponse(Long id, String tenantId, String resource, long quantity,
+                                      long estMinutes, String earliest, String deadline,
+                                      String status, String awardedStart, long awardedMinutes,
+                                      int windowSeq, int shedCount) {}
 }

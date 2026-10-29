@@ -67,12 +67,27 @@ public final class BrpAgent {
             }
 
             // P3-12: the vault dispense port, wired only when a vault
-            // container is configured (brp.vault.container = dim|x,y,z)
+            // container is configured (brp.vault.container = dim|x,y,z).
+            // P4: demand-response windows ride the same signal plane —
+            // @dr/<jobId>, level 15 = OPEN, 0 = CLOSE (docs/13 §5).
             String vaultRef = prop("brp.vault.container", "");
             java.util.function.BiFunction<String, Integer, Boolean> executor =
-                    vaultRef.isBlank() ? null
-                            : (channel, level) -> "vault.dispense".equals(channel)
-                                    && new NeoForgeVault(server, vaultRef).dispense(level);
+                    vaultRef.isBlank() && !drEnabled() ? null
+                            : (channel, level) -> {
+                                if ("vault.dispense".equals(channel) && !vaultRef.isBlank()) {
+                                    return new NeoForgeVault(server, vaultRef).dispense(level);
+                                }
+                                if (channel.startsWith("@dr/")) {
+                                    String jobId = channel.substring("@dr/".length());
+                                    if (level > 0) {
+                                        dev.brp.mod.governor.DrWindows.open(jobId);
+                                    } else {
+                                        dev.brp.mod.governor.DrWindows.close(jobId);
+                                    }
+                                    return true;
+                                }
+                                return false;
+                            };
             runtime = new AgentRuntime(AgentRuntime.Config.defaults(agentId, prop("brp.tenant", "server")),
                     api, wal, acl, acl, acl, msg -> LOG.info("{}", msg), executor);
             runtime.start();
@@ -126,5 +141,10 @@ public final class BrpAgent {
     private static String prop(String key, String fallback) {
         String v = System.getProperty(key);
         return v != null && !v.isBlank() ? v : fallback;
+    }
+
+    /** DR window signals are useful even with no vault container configured. */
+    private static boolean drEnabled() {
+        return Boolean.parseBoolean(prop("brp.dr.enabled", "true"));
     }
 }
