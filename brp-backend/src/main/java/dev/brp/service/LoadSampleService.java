@@ -28,4 +28,7 @@ public interface LoadSampleService {
 
     /** The 30-minute EWMA of mspt — the "live" the shed check reads. */
     double liveMspt();
+
+    /** Mean mspt over a window (sample-count weighted) — the bond desk's settlement price. */
+    double avgMsptBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
 }

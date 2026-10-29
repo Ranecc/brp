@@ -171,6 +171,18 @@ public class LoadSampleServiceImpl implements LoadSampleService {
         return LoadForecastMath.ewma(recent, liveAlpha);
     }
 
+    @Override
+    public double avgMsptBetween(LocalDateTime from, LocalDateTime to) {
+        List<LoadSampleEntity> rows = samples.findByBucketMinuteBetweenOrderByBucketMinuteAsc(from, to);
+        long weight = 0;
+        double weighted = 0;
+        for (LoadSampleEntity row : rows) {
+            weighted += row.getMsptAvg() * row.getSampleCount();
+            weight += row.getSampleCount();
+        }
+        return weight == 0 ? 0.0 : weighted / weight;
+    }
+
     /** Mean of the per-minute prediction across the hour. */
     private double predictedForHour(LocalDateTime hourStart, Map<Integer, Double> profileByMinute,
                                     double live, double anchor, boolean coldStart) {

@@ -39,6 +39,7 @@ public class MonetaryController {
     private final dev.brp.service.TariffService tariff;
     private final dev.brp.service.DemandResponseService demandResponse;
     private final dev.brp.service.CreditService credit;
+    private final dev.brp.service.BondService bonds;
 
     public MonetaryController(RegimeService regime, SnapshotService snapshots,
                               WealthLevyService wealthLevy, PegService peg,
@@ -50,7 +51,8 @@ public class MonetaryController {
                               dev.brp.service.LoadSampleService loadSamples,
                               dev.brp.service.TariffService tariff,
                               dev.brp.service.DemandResponseService demandResponse,
-                              dev.brp.service.CreditService credit) {
+                              dev.brp.service.CreditService credit,
+                              dev.brp.service.BondService bonds) {
         this.regime = regime;
         this.snapshots = snapshots;
         this.wealthLevy = wealthLevy;
@@ -65,6 +67,7 @@ public class MonetaryController {
         this.tariff = tariff;
         this.demandResponse = demandResponse;
         this.credit = credit;
+        this.bonds = bonds;
     }
 
     @GetMapping("/regime")
@@ -277,5 +280,47 @@ public class MonetaryController {
     @org.springframework.web.bind.annotation.PostMapping("/credit/desk/run")
     public java.util.Map<String, Boolean> creditDeskRun() {
         return java.util.Map.of("ran", credit.runDailyDesk());
+    }
+
+    // --- P4 bond desk (docs/13 §7) ---
+
+    @org.springframework.web.bind.annotation.PostMapping("/bonds")
+    public dev.brp.entity.BondSeriesEntity issueBond(
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.BondIssueRequest req) {
+        return bonds.issue(req.name(), req.faceCents(), req.couponPctAnnual(),
+                req.termDays(), req.totalUnits(), req.thresholdMspt());
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/bonds")
+    public java.util.List<dev.brp.entity.BondSeriesEntity> bonds() {
+        return bonds.series();
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/bonds/{seriesId}")
+    public dev.brp.entity.BondSeriesEntity bond(@org.springframework.web.bind.annotation.PathVariable long seriesId) {
+        return bonds.get(seriesId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/bonds/{seriesId}/subscribe/{tenantId}")
+    public dev.brp.entity.BondSubscriptionEntity subscribeBond(
+            @org.springframework.web.bind.annotation.PathVariable long seriesId,
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.SubscribeRequest req) {
+        return bonds.subscribe(seriesId, tenantId, req.units());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/bonds/{seriesId}/close")
+    public dev.brp.entity.BondSeriesEntity closeBond(@org.springframework.web.bind.annotation.PathVariable long seriesId) {
+        return bonds.close(seriesId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/bonds/accrual/run")
+    public java.util.Map<String, Boolean> bondAccrualRun() {
+        return java.util.Map.of("accrued", bonds.accrueDaily());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/bonds/settle/run")
+    public java.util.List<Long> bondSettleRun() {
+        return bonds.settleMatured();
     }
 }

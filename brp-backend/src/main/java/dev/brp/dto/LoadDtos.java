@@ -39,5 +39,10 @@ public final class LoadDtos {
 
     public record RepayRequest(long amountCents) {}
 
+    public record BondIssueRequest(String name, long faceCents, int couponPctAnnual,
+                                   int termDays, long totalUnits, double thresholdMspt) {}
+
+    public record SubscribeRequest(long units) {}
+
     public record SetLimitRequest(long limitCents) {}
 }

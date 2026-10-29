@@ -330,7 +330,7 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 | P4-05 | DemandResponseService: file/award/shed/expire + billing | B | ✓ |
 | P4-06 | Mod: `dr.window` signals → governor feed gating | B | ✓ |
 | P4-07 | CreditService: draw/repay/interest/status machine + cutoff actions | C | ✓ |
-| P4-08 | BondService: issue/subscribe/accrue/mature with performanceFactor | D | ☐ |
+| P4-08 | BondService: issue/subscribe/accrue/mature with performanceFactor | D | ✓ |
 | P4-09 | QuotaMarketService: orders, matching, settlement, fees, self-trade ban | E | ☐ |
 | P4-10 | Downtime ledger + OEE (A×P, Q disclosed) + APS page columns | F | ☐ |
 | P4-11 | Work-order completion costing + asset registry | F | ☐ |
