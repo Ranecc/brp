@@ -30,6 +30,7 @@ public class TelemetryServiceImpl implements TelemetryService {
     private final dev.brp.service.HotRuleService hotRules;
     private final dev.brp.service.ComputeLevyService computeLevy;
     private final dev.brp.service.MarketPriceService marketPrices;
+    private final dev.brp.service.LoadSampleService loadSamples;
     private final int maxBatchSize;
 
     public TelemetryServiceImpl(TelemetryRepository events, AgentMonitorService monitor,
@@ -37,6 +38,7 @@ public class TelemetryServiceImpl implements TelemetryService {
                                 dev.brp.service.HotRuleService hotRules,
                                 dev.brp.service.ComputeLevyService computeLevy,
                                 dev.brp.service.MarketPriceService marketPrices,
+                                dev.brp.service.LoadSampleService loadSamples,
                                 @Value("${brp.telemetry.max-batch-size:1000}") int maxBatchSize) {
         this.events = events;
         this.monitor = monitor;
@@ -45,6 +47,7 @@ public class TelemetryServiceImpl implements TelemetryService {
         this.hotRules = hotRules;
         this.computeLevy = computeLevy;
         this.marketPrices = marketPrices;
+        this.loadSamples = loadSamples;
         this.maxBatchSize = maxBatchSize;
     }
 
@@ -81,8 +84,14 @@ public class TelemetryServiceImpl implements TelemetryService {
         }
         try {
             switch (e.type() == null ? "" : e.type()) {
-                case BrpEventTypes.AGENT_HEARTBEAT -> monitor.recordHeartbeat(e.agentId(),
-                        num(p.get("mspt")), num(p.get("tps")), (int) num(p.get("backlog")));
+                case BrpEventTypes.AGENT_HEARTBEAT -> {
+                    monitor.recordHeartbeat(e.agentId(),
+                            num(p.get("mspt")), num(p.get("tps")), (int) num(p.get("backlog")));
+                    // docs/13 §2: the load plane's raw material rides the same heartbeat
+                    loadSamples.record(num(p.get("mspt")), (int) num(p.get("players")),
+                            (int) num(p.get("entities")), (int) num(p.get("chunks")),
+                            (int) num(p.get("forced")));
+                }
                 case BrpEventTypes.MACHINE_PLACED -> {
                     if (e.tenantId() != null) {
                         quotas.recordMachinePlaced(e.tenantId(), str(p.get("machineId")));

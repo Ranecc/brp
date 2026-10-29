@@ -322,10 +322,10 @@ Config keys (defaults): `brp.load.profile-alpha 0.05` ·
 
 | # | Task | Slice | Status |
 |---|---|---|---|
-| P4-01 | V19 migration: load_samples, load_profile, tariff_windows, deferred_jobs, credit_lines/events | A | ☐ |
-| P4-02 | Census enrichment: players/entities/chunks/forced on heartbeat; minute-bucket upsert | A | ☐ |
-| P4-03 | LoadForecastService: profile EWMA + live correction + hourly forecast + endpoints | A | ☐ |
-| P4-04 | TariffService + chunk billing refactor onto the table (PeakPricingTest green) | B | ☐ |
+| P4-01 | V19 migration: load_samples, load_profile, tariff_windows, deferred_jobs, credit_lines/events | A | ✓ |
+| P4-02 | Census enrichment: players/entities/chunks/forced on heartbeat; minute-bucket upsert | A | ✓ |
+| P4-03 | LoadForecastService: profile EWMA + live correction + hourly forecast + endpoints | A | ✓ |
+| P4-04 | TariffService + chunk billing refactor onto the table (PeakPricingTest green) | B | ✓ |
 | P4-05 | DemandResponseService: file/award/shed/expire + billing | B | ☐ |
 | P4-06 | Mod: `dr.window` signals → governor feed gating | B | ☐ |
 | P4-07 | CreditService: draw/repay/interest/status machine + cutoff actions | C | ☐ |

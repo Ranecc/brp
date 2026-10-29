@@ -35,6 +35,8 @@ public class MonetaryController {
     private final dev.brp.service.WashService wash;
     private final dev.brp.service.MarketPriceService marketPrices;
     private final dev.brp.service.impl.VaultDriftServiceImpl vaultDrift;
+    private final dev.brp.service.LoadSampleService loadSamples;
+    private final dev.brp.service.TariffService tariff;
 
     public MonetaryController(RegimeService regime, SnapshotService snapshots,
                               WealthLevyService wealthLevy, PegService peg,
@@ -42,7 +44,9 @@ public class MonetaryController {
                               dev.brp.repository.PolicyRequestRepository policyRequests,
                               dev.brp.service.WashService wash,
                               dev.brp.service.MarketPriceService marketPrices,
-                              dev.brp.service.impl.VaultDriftServiceImpl vaultDrift) {
+                              dev.brp.service.impl.VaultDriftServiceImpl vaultDrift,
+                              dev.brp.service.LoadSampleService loadSamples,
+                              dev.brp.service.TariffService tariff) {
         this.regime = regime;
         this.snapshots = snapshots;
         this.wealthLevy = wealthLevy;
@@ -53,6 +57,8 @@ public class MonetaryController {
         this.wash = wash;
         this.marketPrices = marketPrices;
         this.vaultDrift = vaultDrift;
+        this.loadSamples = loadSamples;
+        this.tariff = tariff;
     }
 
     @GetMapping("/regime")
@@ -160,5 +166,35 @@ public class MonetaryController {
     @org.springframework.web.bind.annotation.PostMapping("/vault/drift-check")
     public java.util.List<String> driftCheck() {
         return vaultDrift.driftCheck();
+    }
+
+    // --- P4 load plane (docs/13 §2-4) ---
+
+    @org.springframework.web.bind.annotation.GetMapping("/load/samples")
+    public java.util.List<dev.brp.dto.LoadDtos.SampleResponse> loadSamples(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "24") int hours) {
+        return loadSamples.samples(Math.min(Math.max(hours, 1), 24 * 7));
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/load/forecast")
+    public dev.brp.dto.LoadDtos.ForecastResponse loadForecast(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "24") int hours) {
+        return loadSamples.forecast(Math.min(Math.max(hours, 1), 48));
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/load/profile/refresh")
+    public java.util.Map<String, Boolean> profileRefresh() {
+        return java.util.Map.of("ran", loadSamples.refreshProfile());
+    }
+
+    @GetMapping("/tariff")
+    public java.util.List<dev.brp.dto.LoadDtos.TariffWindowResponse> tariffWindows() {
+        return tariff.windows();
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/tariff/windows")
+    public dev.brp.dto.LoadDtos.TariffWindowResponse addTariffWindow(
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.AddTariffWindowRequest req) {
+        return tariff.addWindow(req);
     }
 }

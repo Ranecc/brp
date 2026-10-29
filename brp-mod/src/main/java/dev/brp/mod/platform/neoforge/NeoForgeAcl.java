@@ -117,4 +117,23 @@ public final class NeoForgeAcl implements PlayerDirectory, GameThreads, WorldAcc
         }
         return keys;
     }
+
+    /**
+     * P4 census (docs/13 section 2): players, entities, loaded chunks — the
+     * three load predictors, sampled together. Read-only counts, safe from
+     * the IO pool per the threading note in the class javadoc.
+     */
+    @Override
+    public dev.brp.mod.acl.Acl.LoadCensus census() {
+        int players = server.getPlayerCount();
+        long entities = 0;
+        int chunks = 0;
+        for (var level : server.getAllLevels()) {
+            for (var ignored : level.getAllEntities()) {
+                entities++;
+            }
+            chunks += level.getChunkSource().getLoadedChunksCount();
+        }
+        return new dev.brp.mod.acl.Acl.LoadCensus(players, entities, chunks);
+    }
 }

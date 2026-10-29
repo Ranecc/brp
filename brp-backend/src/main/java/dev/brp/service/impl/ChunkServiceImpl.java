@@ -22,6 +22,7 @@ import dev.brp.repository.ManagedChunkRepository;
 import dev.brp.service.ChunkService;
 import dev.brp.service.LedgerService;
 import dev.brp.service.NotificationService;
+import dev.brp.service.TariffService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -47,10 +48,7 @@ public class ChunkServiceImpl implements ChunkService {
     private final long graceMinutes;
     private final long starterMinutes;
     private final long centsPerMinute;
-    private final int peakStartHour;
-    private final int peakEndHour;
-    private final int peakSurchargePercent;
-    private final java.time.ZoneId billingZone;
+    private final TariffService tariff;
 
     public ChunkServiceImpl(ManagedChunkRepository chunks,
                             ChunkPurchaseKeyRepository purchaseKeys,
@@ -61,10 +59,7 @@ public class ChunkServiceImpl implements ChunkService {
                             @Value("${brp.chunk.governor.grace-minutes:60}") long graceMinutes,
                             @Value("${brp.chunk.governor.starter-minutes:1440}") long starterMinutes,
                             @Value("${brp.chunk.billing.cents-per-minute:0}") long centsPerMinute,
-                            @Value("${brp.chunk.billing.peak-start-hour:19}") int peakStartHour,
-                            @Value("${brp.chunk.billing.peak-end-hour:23}") int peakEndHour,
-                            @Value("${brp.chunk.billing.peak-surcharge-percent:0}") int peakSurchargePercent,
-                            @Value("${brp.reports.zone:UTC}") String billingZoneId) {
+                            TariffService tariff) {
         this.chunks = chunks;
         this.purchaseKeys = purchaseKeys;
         this.notifications = notifications;
@@ -74,10 +69,7 @@ public class ChunkServiceImpl implements ChunkService {
         this.graceMinutes = graceMinutes;
         this.starterMinutes = starterMinutes;
         this.centsPerMinute = centsPerMinute;
-        this.peakStartHour = peakStartHour;
-        this.peakEndHour = peakEndHour;
-        this.peakSurchargePercent = peakSurchargePercent;
-        this.billingZone = java.time.ZoneId.of(billingZoneId);
+        this.tariff = tariff;
     }
 
     @Override
@@ -126,9 +118,10 @@ public class ChunkServiceImpl implements ChunkService {
                                              String chunkKey, PurchaseCreditsRequest req) {
         long amountCents;
         try {
-            amountCents = Math.addExact(
-                    Math.multiplyExact(req.minutes(), centsPerMinute),
-                    surchargeCents(Math.multiplyExact(req.minutes(), centsPerMinute)));
+            // docs/13 §4: one price of time — the versioned tariff table, not
+            // private surcharge fields. Pct stamped at posting time.
+            long base = Math.multiplyExact(req.minutes(), centsPerMinute);
+            amountCents = Math.multiplyExact(base, tariff.multiplierPctAt(java.time.Instant.now())) / 100;
         } catch (ArithmeticException overflow) {
             throw new BadRequestException("chunk.grant.invalid");   // money math, no jokes, no overflow
         }
@@ -255,21 +248,6 @@ public class ChunkServiceImpl implements ChunkService {
     private ManagedChunkEntity require(String tenantId, String dimension, String chunkKey) {
         return chunks.findByTenantIdAndDimensionAndChunkKey(tenantId, dimension, chunkKey)
                 .orElseThrow(() -> new BadRequestException("chunk.unknown"));
-    }
-
-    /**
-     * Time-of-use pricing (docs/10 R-3b): peak hours cost more, integral
-     * cents only — the power company's behavioral art, in one config key.
-     */
-    long surchargeCents(long baseCents) {
-        if (peakSurchargePercent == 0 || baseCents <= 0) {
-            return 0;
-        }
-        int hour = java.time.LocalTime.now(billingZone).getHour();
-        boolean peak = peakStartHour <= peakEndHour
-                ? hour >= peakStartHour && hour < peakEndHour
-                : hour >= peakStartHour || hour < peakEndHour;   // overnight windows wrap
-        return peak ? baseCents * peakSurchargePercent / 100 : 0;
     }
 
     /** The chunk meter's SYSTEM_SINK: per-tenant, provisioned idempotently. */

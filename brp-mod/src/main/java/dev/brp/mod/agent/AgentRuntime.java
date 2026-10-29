@@ -1,5 +1,6 @@
 package dev.brp.mod.agent;
 
+import dev.brp.mod.acl.Acl;
 import dev.brp.mod.acl.Acl.GameThreads;
 import dev.brp.mod.acl.Acl.PlayerDirectory;
 import dev.brp.mod.acl.Acl.TeamProvider;
@@ -113,13 +114,20 @@ public final class AgentRuntime {
     /** Stage 1: sample fleet telemetry through the ACL (no game-thread IO). */
     private void sampleHeartbeat() {
         try {
+            // P4 (docs/13 §2): the load census rides the heartbeat — players,
+            // entities, loaded chunks, plus our own registered (forced) set.
+            Acl.LoadCensus census = world.census();
             // "type" travels INSIDE the payload: the envelope stays schema-less
             // and drainWal cannot lose it (audit #3).
             wal.enqueue(UUID.randomUUID().toString(), gsonlessJson(Map.of(
                             "type", "agent.heartbeat",
                             "mspt", world.mspt(),
                             "tps", world.tps(),
-                            "backlog", wal.backlogSize())),
+                            "backlog", wal.backlogSize(),
+                            "players", census.players(),
+                            "entities", census.entities(),
+                            "chunks", census.chunksLoaded(),
+                            "forced", registeredChunks.size())),
                     "TELEMETRY").eventId();
         } catch (IOException e) {
             log.accept("[BRP] heartbeat enqueue failed: " + e.getMessage());

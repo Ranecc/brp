@@ -58,7 +58,17 @@ public final class Acl {
          * nothing rather than guessing.
          */
         default java.util.Set<String> forcedChunks() { return java.util.Set.of(); }
+
+        /**
+         * Load census for the heartbeat plane (P4, docs/13 §2): players,
+         * entities, loaded chunks. Default = honest zeros, same rule as
+         * forcedChunks() — claim nothing rather than guess.
+         */
+        default LoadCensus census() { return new LoadCensus(0, 0, 0); }
     }
+
+    /** One census sample: the load model's three predictors, measured together. */
+    public record LoadCensus(int players, long entities, int chunksLoaded) {}
 
     /**
      * Team/guild source port (docs/07-tenants.md). Exactly ONE provider is
