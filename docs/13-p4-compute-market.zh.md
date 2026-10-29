@@ -299,7 +299,7 @@ docs/10-business-map 给 P4 立下的承诺，收小、贴数据：
 | P4-09 | QuotaMarketService：订单、撮合、结算、费用、自成交禁令 | E | ✓ |
 | P4-10 | 停机台账 + OEE（A×P，Q 披露）+ APS 页列 | F | ✓ |
 | P4-11 | 工单完工成本 + 资产登记 | F | ✓ |
-| P4-12 | CC:T 状态端点 + cc-brp.lua 资源 | G | ☐ |
+| P4-12 | CC:T 状态端点 + cc-brp.lua 资源 | G | ✓ |
 | P4-13 | 门户负载页：预测 SVG、电价表、DR 窗口、信贷、债券、订单簿 | H | ☐ |
 | P4-14 | OpenAPI 同步：load/credit/bonds/market/oee/cc 路径 | H | ☐ |
 | P4-15 | 计数同步（AGENTS.md + 各 README）、docs/12 交接注记 | H | ☐ |
