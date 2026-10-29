@@ -151,7 +151,8 @@ class DemandResponseTest {
         var job = file(tenant, 60);
         dr.awardDueJobs();
         long reserved = 1_000_000L - treasury(tenant);
-        assertThat(reserved).isGreaterThan(0);
+        assertThat(reserved).as("job=%s treasury=%s events=%s", dr.list(tenant), treasury(tenant),
+                ledger.listAccounts(tenant)).isGreaterThan(0);
 
         dr.cancel(tenant, job.id());
 

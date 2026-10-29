@@ -44,5 +44,10 @@ public final class LoadDtos {
 
     public record SubscribeRequest(long units) {}
 
+    public record MarketOrderResponse(Long id, String tenantId, String side, long qty,
+                                      long qtyRemaining, long priceCents, String status) {}
+
+    public record PlaceOrderRequest(String idemKey, String side, long qty, long priceCents) {}
+
     public record SetLimitRequest(long limitCents) {}
 }

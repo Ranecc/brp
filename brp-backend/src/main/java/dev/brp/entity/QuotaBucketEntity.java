@@ -36,6 +36,12 @@ public class QuotaBucketEntity {
 
     public void setLimitAmount(long limitAmount) { this.limitAmount = limitAmount; }
 
+    /** Market desk: the used counter doubles as the locked-collateral tally. */
+    public void setUsed(long used) { this.used = used; }
+
+    /** Market delivery: the buyer's provisionable capacity grows. */
+    public void growLimit(long qty) { this.limitAmount += qty; }
+
     /** @return false when the placement exceeds the license. */
     public boolean tryConsumeOne() {
         if (limitAmount > 0 && used >= limitAmount) {

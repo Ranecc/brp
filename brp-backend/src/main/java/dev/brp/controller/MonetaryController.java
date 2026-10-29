@@ -40,6 +40,7 @@ public class MonetaryController {
     private final dev.brp.service.DemandResponseService demandResponse;
     private final dev.brp.service.CreditService credit;
     private final dev.brp.service.BondService bonds;
+    private final dev.brp.service.QuotaMarketService market;
 
     public MonetaryController(RegimeService regime, SnapshotService snapshots,
                               WealthLevyService wealthLevy, PegService peg,
@@ -52,7 +53,8 @@ public class MonetaryController {
                               dev.brp.service.TariffService tariff,
                               dev.brp.service.DemandResponseService demandResponse,
                               dev.brp.service.CreditService credit,
-                              dev.brp.service.BondService bonds) {
+                              dev.brp.service.BondService bonds,
+                              dev.brp.service.QuotaMarketService market) {
         this.regime = regime;
         this.snapshots = snapshots;
         this.wealthLevy = wealthLevy;
@@ -68,6 +70,7 @@ public class MonetaryController {
         this.demandResponse = demandResponse;
         this.credit = credit;
         this.bonds = bonds;
+        this.market = market;
     }
 
     @GetMapping("/regime")
@@ -322,5 +325,38 @@ public class MonetaryController {
     @org.springframework.web.bind.annotation.PostMapping("/bonds/settle/run")
     public java.util.List<Long> bondSettleRun() {
         return bonds.settleMatured();
+    }
+
+    // --- P4 quota market (docs/13 §8) ---
+
+    @org.springframework.web.bind.annotation.PostMapping("/market/{tenantId}/orders")
+    public dev.brp.dto.LoadDtos.MarketOrderResponse placeOrder(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.RequestBody dev.brp.dto.LoadDtos.PlaceOrderRequest req) {
+        return market.place(tenantId, req.idemKey(), req.side(), req.qty(), req.priceCents());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/market/{tenantId}/orders/{orderId}/cancel")
+    public dev.brp.dto.LoadDtos.MarketOrderResponse cancelOrder(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId,
+            @org.springframework.web.bind.annotation.PathVariable long orderId) {
+        return market.cancel(tenantId, orderId);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/market/book")
+    public java.util.List<dev.brp.dto.LoadDtos.MarketOrderResponse> marketBook() {
+        return market.book();
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/market/{tenantId}/orders")
+    public java.util.List<dev.brp.dto.LoadDtos.MarketOrderResponse> marketOrders(
+            @org.springframework.web.bind.annotation.PathVariable String tenantId) {
+        return market.orders(tenantId);
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/market/expire")
+    public java.util.Map<String, Integer> marketExpire() {
+        market.expireStale();
+        return java.util.Map.of("expired", market.expireStaleCount());
     }
 }
