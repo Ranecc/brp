@@ -66,6 +66,7 @@ brp/
 - [12-p3-monetary](docs/12-p3-monetary.zh.md) — P3 详细设计：快照、滞回、两税、铸币/锚价/Gresham、洗钱、CPI ⭐
 - [13-p4-compute-market](docs/13-p4-compute-market.zh.md) — P4 详细设计：负载平面、预测、分时电价、需求响应、信贷、TPS 债券、配额市场、车间台 ⭐
 - [14-p5-bourse](docs/14-p5-bourse.zh.md) — P5 详细设计：批量拍卖交易所、挂牌铸币厂、复本位闭环、挂牌预设 ⭐
+- [15-deploy](docs/15-deploy.zh.md) — compose / k8s / helm / 单 jar：后端的四种跑法，真机启动清单 ⭐
 - [10-business-map](docs/10-business-map.md) — ERP 缺一半的那张地图：order-to-cash 骨架、协议、工程项目；什么以字段发布、什么被否决 ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — 资本论季度落地复盘：三卷可执行项，完成度业内领先 ⭐
 
@@ -86,7 +87,7 @@ mvn -pl brp-backend -am test    # 213/213 全绿：账本幂等、Saga、审批�
 | P2 | WMS 适配器（原版→AE2→Create）+ 入库差异与调拨单 + 铸币计量事件（docs/03 §10）+ 仪表盘 + 告警 | ✅ |
 | P3 | 货币机器：每周快照、累进两税、体制滞回、铸币窗口、锚价 + Gresham、洗钱检测、CPI（docs/12） | ✅ |
 | P4 | 负载台：负载遥测 + 预测、分时电价、需求响应、信贷台（债务）、TPS 债券、配额市场、车间 OEE、CC:T 状态（docs/13） | ✅ |
-| P5 | 交易所：批量拍卖、挂牌铸币厂、复本位闭环、挂牌预设、模组物品目录与仓库（docs/14）。其后仍排队：k8s + helm 收尾、跨维度市场准入、逆周期合并操作手册（docs/11 卷三） | 🚧 |
+| P5 | 交易所：批量拍卖、挂牌铸币厂、复本位闭环、挂牌预设、模组物品目录与仓库（docs/14）；部署：k8s + helm chart + 单 jar sidecar（H2 文件兜底）（docs/15）。仍排队：跨维度市场准入、逆周期合并操作手册（docs/11 卷三） | 🚧 |
 | ∞ | 剥夺者就要被剥夺了（长尾风险——外部、不可控、未批预算） | 🔮 无法排期（docs/11） |
 
 ## 许可证

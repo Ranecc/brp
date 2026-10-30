@@ -1,0 +1,63 @@
+# BRP on Kubernetes (docs/15): the boring baseline.
+#
+# No Secret lives in git — create it once per cluster:
+#   kubectl create namespace brp
+#   kubectl -n brp create secret generic brp-db \
+#     --from-literal=BRP_DB_USER=brp \
+#     --from-literal=BRP_DB_PASS=<real password>
+#
+# The weak "brp/brp" toy defaults that compose refuses to start with do not
+# reach Kubernetes either: without the Secret the backend pod CrashLoopBackOffs
+# at the datasource, which is the loudest possible reminder.
+#
+# Postgres here is a single StatefulSet — fine for a Minecraft server's
+# ledger, and the docs say the boring enterprise answer for anything bigger
+# is a managed database plus postgres.enabled=false in the helm chart.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: brp
+  labels: {app: brp, component: postgres}
+spec:
+  serviceName: brp-postgres
+  replicas: 1
+  selector:
+    matchLabels: {app: brp, component: postgres}
+  template:
+    metadata:
+      labels: {app: brp, component: postgres}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports: [{containerPort: 5432}]
+          env:
+            - name: POSTGRES_DB
+              value: brp
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: brp-db, key: BRP_DB_USER}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: brp-db, key: BRP_DB_PASS}}
+          readinessProbe:
+            exec: {command: ["pg_isready", "-U", "brp", "-d", "brp"]}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: {requests: {storage: 8Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: brp-postgres
+  namespace: brp
+  labels: {app: brp, component: postgres}
+spec:
+  clusterIP: None
+  selector: {app: brp, component: postgres}
+  ports: [{port: 5432, targetPort: 5432}]

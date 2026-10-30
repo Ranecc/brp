@@ -1,0 +1,60 @@
+# The backend (docs/15): one Deployment, one ClusterIP Service, loopback
+# posture replaced by the cluster's own network policy. BRP_SERVER_ADDRESS
+# must stay 0.0.0.0 IN-POD (the container's loopback is not your loopback);
+# exposure to humans is an Ingress/reverse-proxy decision made on purpose.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brp-backend
+  namespace: brp
+  labels: {app: brp, component: backend}
+spec:
+  replicas: 1          # the scheduled desks are insert-only-guarded, but one
+                       # writer keeps the cron chorus in unison
+  selector:
+    matchLabels: {app: brp, component: backend}
+  template:
+    metadata:
+      labels: {app: brp, component: backend}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: backend
+          image: brp/brp-backend:latest   # build: docker build -t brp/brp-backend:latest .
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8080}]
+          env:
+            - name: BRP_DB_URL
+              value: jdbc:postgresql://brp-postgres.brp.svc.cluster.local:5432/brp
+            - name: BRP_DB_USER
+              valueFrom: {secretKeyRef: {name: brp-db, key: BRP_DB_USER}}
+            - name: BRP_DB_PASS
+              valueFrom: {secretKeyRef: {name: brp-db, key: BRP_DB_PASS}}
+            - name: BRP_PORT
+              value: "8080"
+            - name: BRP_SERVER_ADDRESS
+              value: 0.0.0.0
+          readinessProbe:
+            httpGet: {path: /actuator/health, port: 8080}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /actuator/health, port: 8080}
+            initialDelaySeconds: 45
+            periodSeconds: 20
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: brp-backend
+  namespace: brp
+  labels: {app: brp, component: backend}
+spec:
+  type: ClusterIP
+  selector: {app: brp, component: backend}
+  ports: [{port: 8080, targetPort: 8080}]

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: brp
+description: Better Resource Plan — the Ent ERP for Minecraft servers (docs/15)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/Ranecc/brp
+sources:
+  - https://github.com/Ranecc/brp
+keywords:
+  - minecraft
+  - erp
+  - ledger
+  - performance-art

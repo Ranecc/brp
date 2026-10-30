@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,5 +49,23 @@ class BackendSupervisorTest {
         assertTrue(supervisor.watchdogAlive());
         supervisor.shutdown();
         assertFalse(supervisor.watchdogAlive());
+    }
+
+    @Test
+    void theSidecarFallsBackToH2WhenTheOperatorBringsNoDatabase() {
+        List<String> args = BackendSupervisor.effectiveArgs(List.of("--x=1"), false, dir);
+        assertEquals(4, args.size());
+        assertEquals("--x=1", args.get(0));
+        assertTrue(args.get(1).startsWith("--spring.datasource.url=jdbc:h2:file:"));
+        assertTrue(args.get(1).contains("MODE=PostgreSQL"));
+        // the database file lands next to the extracted jar, inside <server>/brp/
+        assertTrue(args.get(1).contains(dir.resolve("brp-db").toString()));
+        assertEquals("--spring.datasource.username=brp", args.get(2));
+    }
+
+    @Test
+    void anExternalDatabaseIsTheOperatorsBusinessAlone() {
+        assertEquals(List.of("--x=1"),
+                BackendSupervisor.effectiveArgs(List.of("--x=1"), true, dir));
     }
 }

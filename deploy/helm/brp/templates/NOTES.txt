@@ -1,0 +1,11 @@
+BRP {{ .Chart.AppVersion }} — the Ent ERP is in the cluster now.
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "brp.fullname" . }}-backend 8080:{{ .Values.service.port }}
+  open http://127.0.0.1:8080/portal
+
+The Minecraft server points its mod at the service:
+  -Dbrp.backend.url=http://{{ include "brp.fullname" . }}-backend.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+The helm chart is the performance-art finale; the deployment is boring,
+as it should be. Ledger state lives in Postgres — back it up like you
+mean it (pg_dump), not like a first save slot.

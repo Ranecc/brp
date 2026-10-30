@@ -75,6 +75,7 @@ server) or fully standalone via docker-compose — same jar either way
 - [12-p3-monetary](docs/12-p3-monetary.md) — P3 detailed design: snapshot, hysteresis, levies, mint/peg/Gresham, wash, CPI ⭐
 - [13-p4-compute-market](docs/13-p4-compute-market.md) — P4 detailed design: load plane, forecast, tariffs, demand response, credit, TPS bonds, quota market, shop floor ⭐
 - [14-p5-bourse](docs/14-p5-bourse.md) — P5 detailed design: batch-auction exchange, listed mint, bimetallic closure, listing presets ⭐
+- [15-deploy](docs/15-deploy.md) — compose / k8s / helm / single-jar: four ways to run the backend, real-machine boot checklist ⭐
 - [10-business-map](docs/10-business-map.md) — the missing half of the ERP: order-to-cash spine, agreements, projects; what ships as a field, what is vetoed ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — Das Kapital, reviewed quarterly: execution coverage across all three volumes ⭐
 
@@ -95,7 +96,7 @@ mvn -pl brp-backend -am test    # 213/213 green or no commit: ledger, saga, appr
 | P2 | WMS adapters (vanilla → AE2 → Create) + inbound discrepancy & transfer orders + villager-mint metering events (docs/03 §10) + dashboards + alerts | ✅ |
 | P3 | monetary machinery: weekly snapshot, progressive levies, regime hysteresis, mint window, peg + Gresham, wash detection, CPI (docs/12) | ✅ |
 | P4 | the load desk: load telemetry + forecast, time-of-use tariffs, demand response, credit desk (debt), TPS bonds, quota market, shop-floor OEE, CC:T state (docs/13) | ✅ |
-| P5 | the bourse: batch-auction exchange, listed mint, bimetallic closure, listing presets, mod item catalog & warehouse (docs/14). Still queued after: k8s + helm chart finale, cross-dimension market entry, consolidation playbooks (docs/11 Vol. III) | 🚧 |
+| P5 | the bourse: batch-auction exchange, listed mint, bimetallic closure, listing presets, mod item catalog & warehouse (docs/14); deployment: k8s + helm chart + single-jar sidecar with an H2 file fallback (docs/15). Still queued: cross-dimension market entry, consolidation playbooks (docs/11 Vol. III) | 🚧 |
 | ∞ | the expropriators are expropriated (long-tail risk — external, uncontrollable, no budget allocated) | 🔮 unschedulable (docs/11) |
 
 ## Licensing

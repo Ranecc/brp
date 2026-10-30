@@ -1,0 +1,37 @@
+# The performance-art finale's values (docs/15). The deployment itself is
+# boring, as it should be.
+
+image:
+  repository: brp/brp-backend    # docker build -t brp/brp-backend:latest .
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicas: 1                       # see deploy/k8s/10-backend.yaml for why
+
+service:
+  type: ClusterIP
+  port: 8080
+
+db:
+  # Bring your own Secret (recommended):
+  #   kubectl -n brp create secret generic brp-db \
+  #     --from-literal=BRP_DB_USER=brp --from-literal=BRP_DB_PASS=<real>
+  existingSecret: ""
+  # ...or let the chart mint one — but then you owe it a real password:
+  password: ""                    # required when existingSecret is empty
+  user: brp
+  # External managed Postgres: set postgres.enabled=false and point url at it.
+  url: ""                         # empty = in-cluster brp-postgres when enabled
+  name: brp
+
+postgres:
+  enabled: true
+  image: postgres:16
+  storage: 8Gi
+
+resources:
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {cpu: "1", memory: 1Gi}
+
+nodeSelector: {}
+tolerations: []

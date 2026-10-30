@@ -89,10 +89,14 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Test database AND the single-file fallback: the sidecar jar runs
+         H2 file mode when no BRP_DB_URL is in the environment (docs/15).
+         Compose/k8s carry Postgres and never touch it; the 2.5 MB is the
+         price of "drop the mod jar in, everything works". -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <scope>test</scope>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 

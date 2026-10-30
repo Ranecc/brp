@@ -64,17 +64,32 @@ neoForge {
     }
 }
 
-// Single-file distribution: the release pipeline drops the Maven-built fat
-// jar at src/main/resources/backend/brp-backend.jar (git-ignored) before
-// `gradle build`; BackendSupervisor extracts it at first run (sha256-checked,
-// auto-upgraded when the embedded copy changes). 100+ MB mod jars are a
-// time-honored tradition; we uphold it.
-//
-// tasks.register("embedBackend", Copy::class) {
-//     from(rootProject.projectDir.resolve("brp-backend/target/brp-backend-0.1.0-SNAPSHOT.jar"))
-//     into(layout.projectDirectory.dir("src/main/resources/backend"))
-//     rename { "brp-backend.jar" }
-// }
+// Single-file distribution (docs/15): `mvn -pl brp-backend -am package
+// -DskipTests` first, then `gradle build` — the Maven fat jar is embedded at
+// resources/backend/brp-backend.jar (git-ignored) and BackendSupervisor
+// extracts it at first run (sha256-checked, auto-upgraded when the embedded
+// copy changes). 100+ MB mod jars are a time-honored tradition; we uphold it.
+// Building without a backend jar present stays legal (mod-only dev builds).
+// the Maven reactor sits one level up: brp/brp-backend/target
+val backendTarget = layout.projectDirectory.dir("../brp-backend/target")
+
+tasks.register<Copy>("embedBackend") {
+    from(backendTarget) {
+        include("brp-backend-*.jar")
+        exclude("*-sources.jar", "*-javadoc.jar", "*-original.jar")
+    }
+    into(layout.projectDirectory.dir("src/main/resources/backend"))
+    rename { "brp-backend.jar" }
+    onlyIf {
+        backendTarget.asFile.listFiles()?.any {
+            it.name.startsWith("brp-backend-") && it.name.endsWith(".jar")
+        } == true
+    }
+}
+
+tasks.named("processResources") {
+    dependsOn("embedBackend")
+}
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"

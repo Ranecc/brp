@@ -215,12 +215,35 @@ public final class BackendSupervisor {
 
     // --- internals ---
 
+    /** The launch environment decides the database (docs/15): BRP_DB_URL set
+     * means the operator owns persistence; otherwise the sidecar falls back
+     * to an H2 file under <server>/brp/ — a real database file, not a toy,
+     * but the backup story is "copy one file", and the docs say so. */
+    static boolean hasExternalDatabase() {
+        String url = System.getenv("BRP_DB_URL");
+        return url != null && !url.isBlank();
+    }
+
+    static List<String> effectiveArgs(List<String> extraArgs, boolean externalDb,
+                                      java.nio.file.Path sidecarDir) {
+        if (externalDb) {
+            return extraArgs;
+        }
+        String dbFile = sidecarDir.resolve("brp-db").toString().replace("\\", "/");
+        List<String> out = new java.util.ArrayList<>(extraArgs);
+        out.add("--spring.datasource.url=jdbc:h2:file:" + dbFile + ";MODE=PostgreSQL");
+        out.add("--spring.datasource.username=brp");
+        out.add("--spring.datasource.password=");
+        return out;
+    }
+
     private void spawn() throws IOException {
         List<String> cmd = new ArrayList<>();
         cmd.add(cfg.javaExecutable());
         cmd.add("-Xmx" + cfg.xmx());
         cmd.addAll(List.of("-jar", cfg.backendJar().toString()));
-        cmd.addAll(cfg.extraArgs());
+        cmd.addAll(effectiveArgs(cfg.extraArgs(),
+                hasExternalDatabase(), cfg.backendJar().getParent()));
         cfg.log().accept("[BRP] launching backend: " + String.join(" ", cmd));
         child = new ProcessBuilder(cmd).inheritIO().start();
         running.set(true);
