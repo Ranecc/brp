@@ -39,6 +39,10 @@ public final class BrpAgent {
     private BrpAgent() {}
 
     public static void boot(MinecraftServer server) {
+        if (!Boolean.parseBoolean(prop("brp.agent.enabled", "true"))) {
+            LOG.info("[BRP] agent disabled (brp.agent.enabled=false); mod inert");
+            return;
+        }
         try {
             Path dir = FMLPaths.GAMEDIR.get().resolve("brp");
             Files.createDirectories(dir);
@@ -52,7 +56,7 @@ public final class BrpAgent {
             DiskBackedEventQueue wal = new DiskBackedEventQueue(dir, 100_000);
             HttpBrpClient api = new HttpBrpClient(
                     prop("brp.backend.url", "http://127.0.0.1:8080"),
-                    prop("brp.token", "dev"));
+                    token(dir));
             String agentId = prop("brp.agent-id",
                     InetAddress.getLocalHost().getHostName() + "-" + UUID.randomUUID().toString().substring(0, 8));
 
@@ -89,7 +93,8 @@ public final class BrpAgent {
                                 return false;
                             };
             runtime = new AgentRuntime(AgentRuntime.Config.defaults(agentId, prop("brp.tenant", "server")),
-                    api, wal, acl, acl, acl, msg -> LOG.info("{}", msg), executor);
+                    api, wal, acl, acl, acl, msg -> LOG.info("{}", msg), executor,
+                    new dev.brp.mod.platform.neoforge.NeoForgeActuator(server));
             runtime.start();
 
             // P5 (docs/14 §8): the item catalog push runs unconditionally —
@@ -170,6 +175,37 @@ public final class BrpAgent {
     private static String prop(String key, String fallback) {
         String v = System.getProperty(key);
         return v != null && !v.isBlank() ? v : fallback;
+    }
+
+    /**
+     * Zero-arg boot (docs/16 §2): no brp.token configured means the mod
+     * mints one on first boot and persists it at brp/agent.token — the
+     * operator assigns identity after boot, not before. The "dev" default is
+     * retired: a constant printed in source is not a token, it is a sticky
+     * note on the vault door. (The backend's v0 posture stays no-auth-
+     * internal-only; HMAC instance auth is P1, docs/01 §6.)
+     */
+    private static String token(Path dir) {
+        String configured = System.getProperty("brp.token");
+        if (configured != null && !configured.isBlank()) {
+            return configured;
+        }
+        Path file = dir.resolve("agent.token");
+        try {
+            if (Files.isRegularFile(file)) {
+                String stored = Files.readString(file).trim();
+                if (!stored.isBlank()) {
+                    return stored;
+                }
+            }
+            String minted = UUID.randomUUID().toString();
+            Files.writeString(file, minted);
+            LOG.info("[BRP] no brp.token configured: minted one at brp/agent.token (zero-arg boot)");
+            return minted;
+        } catch (IOException e) {
+            LOG.warn("[BRP] agent.token persistence failed ({}); a per-boot token will do", e.getMessage());
+            return UUID.randomUUID().toString();
+        }
     }
 
     /** DR window signals are useful even with no vault container configured. */

@@ -76,6 +76,7 @@ server) or fully standalone via docker-compose — same jar either way
 - [13-p4-compute-market](docs/13-p4-compute-market.md) — P4 detailed design: load plane, forecast, tariffs, demand response, credit, TPS bonds, quota market, shop floor ⭐
 - [14-p5-bourse](docs/14-p5-bourse.md) — P5 detailed design: batch-auction exchange, listed mint, bimetallic closure, listing presets ⭐
 - [15-deploy](docs/15-deploy.md) — compose / k8s / helm / single-jar: four ways to run the backend, real-machine boot checklist ⭐
+- [16-p6-local-actuator](docs/16-p6-local-actuator.md) — P6: zero-arg boot, the singleplayer local ERP, the chunk actuator (playerless tickets, smart start/stop) ⭐
 - [10-business-map](docs/10-business-map.md) — the missing half of the ERP: order-to-cash spine, agreements, projects; what ships as a field, what is vetoed ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — Das Kapital, reviewed quarterly: execution coverage across all three volumes ⭐
 

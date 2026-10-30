@@ -100,19 +100,21 @@ Postgres——运维的选择，绝不偷偷替你做默认。
 ## 6. 真机·下：mod
 
 把 `brp-mod-0.1.0-*.jar` 放进**服务器**的 `mods/`（NeoForge 1.21.1；
-单人模式什么都不启动——agent 是专用服务器的公民）。系统属性配置
+P6 起单人模式同样启动 agent——本地 ERP，见 docs/16——
+`brp.agent.enabled=false` 是总开关）。系统属性配置
 （启动参数或启动脚本里给）：
 
 | 属性 | 含义 | 默认 |
 |---|---|---|
 | `brp.backend.url` | 后端监听地址 | `http://127.0.0.1:8080` |
 | `brp.tenant` | 服务器级租户 id | `server` |
-| `brp.token` | v0 bearer token | `dev` |
+| `brp.token` | v0 bearer token；未配置时自动铸造并持久化到 `brp/agent.token` | 自动 |
 | `brp.vault.container` | 铸币窗口发放箱 `dim\|x,y,z` | 未设 |
 | `brp.bourse.container` | 交易所入库箱 `dim\|x,y,z` | 未设 |
 | `brp.catalog.push-min` | 物品目录推送节奏（分钟） | `30` |
 | `brp.bourse.sync-sec` | 入库台节奏（秒） | `30` |
 | `brp.dr.enabled` | 需求响应窗口信号处理 | `true` |
+| `brp.agent.enabled` | mod 总开关 | `true` |
 
 首启预期，按顺序：`[BRP] backend sidecar not started`（降级模式——
 WAL 缓冲到后端出现为止）或 supervisor 的健康日志；`[BRP] agent runtime up`；

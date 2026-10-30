@@ -67,6 +67,7 @@ brp/
 - [13-p4-compute-market](docs/13-p4-compute-market.zh.md) — P4 详细设计：负载平面、预测、分时电价、需求响应、信贷、TPS 债券、配额市场、车间台 ⭐
 - [14-p5-bourse](docs/14-p5-bourse.zh.md) — P5 详细设计：批量拍卖交易所、挂牌铸币厂、复本位闭环、挂牌预设 ⭐
 - [15-deploy](docs/15-deploy.zh.md) — compose / k8s / helm / 单 jar：后端的四种跑法，真机启动清单 ⭐
+- [16-p6-local-actuator](docs/16-p6-local-actuator.zh.md) — P6：无参启动、单人本地 ERP、区块执行器（免假人票据、智能启停）⭐
 - [10-business-map](docs/10-business-map.md) — ERP 缺一半的那张地图：order-to-cash 骨架、协议、工程项目；什么以字段发布、什么被否决 ⭐
 - [11-kapital-checklist](docs/11-kapital-checklist.md) — 资本论季度落地复盘：三卷可执行项，完成度业内领先 ⭐
 

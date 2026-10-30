@@ -111,7 +111,8 @@ in the file DB), catalog/mint/clear endpoints answer.
 ## 6. Real machine, part 2: the mod
 
 Drop `brp-mod-0.1.0-*.jar` into the **server's** `mods/` (NeoForge 1.21.1;
-singleplayer boots nothing — the agent is a dedicated-server citizen).
+singleplayer boots the same agent since P6 — the local ERP, docs/16 —
+with `brp.agent.enabled=false` as the off switch).
 System-property configuration (in `server.properties`-adjacent startup
 args or the launcher script):
 
@@ -119,12 +120,13 @@ args or the launcher script):
 |---|---|---|
 | `brp.backend.url` | where the backend listens | `http://127.0.0.1:8080` |
 | `brp.tenant` | the server-level tenant id | `server` |
-| `brp.token` | v0 bearer token | `dev` |
+| `brp.token` | v0 bearer token; minted + persisted at `brp/agent.token` when unset | auto |
 | `brp.vault.container` | mint-window dispense chest `dim\|x,y,z` | unset |
 | `brp.bourse.container` | bourse intake chest `dim\|x,y,z` | unset |
 | `brp.catalog.push-min` | item-catalog push cadence (minutes) | `30` |
 | `brp.bourse.sync-sec` | intake desk cadence (seconds) | `30` |
 | `brp.dr.enabled` | DR window signal handling | `true` |
+| `brp.agent.enabled` | the mod's master switch | `true` |
 
 First-boot expectations, in order: `[BRP] backend sidecar not started`
 (degraded mode — the agent buffers in the WAL until the backend appears) or

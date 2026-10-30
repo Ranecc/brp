@@ -58,6 +58,7 @@ public final class AgentRuntime {
     private final GameThreads threads;
     private final Consumer<String> log;
     private final java.util.function.BiFunction<String, Integer, Boolean> signalExecutor;
+    private final ChunkActuator actuator;
     private final ScheduledExecutorService io = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "brp-agent-io");
         t.setDaemon(true);
@@ -68,18 +69,22 @@ public final class AgentRuntime {
     public AgentRuntime(Config cfg, BrpServerApi api, DiskBackedEventQueue wal,
                         PlayerDirectory players, WorldAccess world,
                         GameThreads threads, Consumer<String> log) {
-        this(cfg, api, wal, players, world, threads, log, null);
+        this(cfg, api, wal, players, world, threads, log, null, null);
     }
 
     /**
      * @param signalExecutor optional (channel, level) -> executed? — wired
      *                       with the vault dispense port on real servers;
      *                       without it, signal polls stay read-only counts.
+     * @param actuator       optional chunk ticket desk (docs/16 §3) — the mod
+     *                       holds FORCED-class tickets for registered lines
+     *                       whose governor verdict is not HALT.
      */
     public AgentRuntime(Config cfg, BrpServerApi api, DiskBackedEventQueue wal,
                         PlayerDirectory players, WorldAccess world,
                         GameThreads threads, Consumer<String> log,
-                        java.util.function.BiFunction<String, Integer, Boolean> signalExecutor) {
+                        java.util.function.BiFunction<String, Integer, Boolean> signalExecutor,
+                        ChunkActuator actuator) {
         this.cfg = cfg;
         this.api = api;
         this.wal = wal;
@@ -88,6 +93,7 @@ public final class AgentRuntime {
         this.threads = threads;
         this.log = log;
         this.signalExecutor = signalExecutor;
+        this.actuator = actuator;
     }
 
     public void start() throws IOException {
@@ -100,6 +106,7 @@ public final class AgentRuntime {
         schedule(this::pollGovernor, cfg.governorEvery());
         schedule(this::reportChunkMinutes, Duration.ofSeconds(60));
         schedule(this::pollDesks, cfg.governorEvery());   // P2-10: paper and orders
+        schedule(this::actuate, Duration.ofSeconds(30));  // P6: the ticket desk
         log.accept("[BRP] agent runtime up: agent=" + cfg.agentId()
                 + " wal=" + wal.backlogSize());
     }
@@ -307,6 +314,38 @@ public final class AgentRuntime {
     }
 
     private volatile Set<String> registeredChunks = Set.of();
+
+    /**
+     * P6 (docs/16 §3): the ticket desk — reconcile desired state (registered
+     * ∩ governor verdict != HALT) against the tickets we hold, with a per-
+     * pass budget. A chunk the backend stopped vouching for loses its ticket;
+     * a throttled line keeps it (throttled windows still run).
+     */
+    private void actuate() {
+        if (actuator == null || registeredChunks.isEmpty()) {
+            return;
+        }
+        Set<String> held = actuator.held();
+        ActuatorLogic.Decision d = ActuatorLogic.reconcile(registeredChunks,
+                key -> dev.brp.mod.governor.GovernorFeed.verdictFor(
+                        key.substring(0, key.indexOf('|')), key.substring(key.indexOf('|') + 1)),
+                held::contains, 16);
+        int placed = 0;
+        for (String key : d.toActivate()) {
+            int split = key.indexOf('|');
+            if (actuator.activate(key.substring(0, split), key.substring(split + 1))) {
+                placed++;
+            }
+        }
+        for (String key : d.toDeactivate()) {
+            int split = key.indexOf('|');
+            actuator.deactivate(key.substring(0, split), key.substring(split + 1));
+        }
+        if (!d.isEmpty()) {
+            log.accept("[BRP] ticket desk: +" + placed + " / -" + d.toDeactivate().size()
+                    + " (held " + actuator.held().size() + ")");
+        }
+    }
 
     /** The census adapter (P2-14) reads the registered set from here. */
     public Set<String> registeredChunksView() {
