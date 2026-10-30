@@ -88,4 +88,21 @@ public interface BrpServerApi {
     CompletableFuture<SignalPoll> pollSignals(String tenantId);
 
     CompletableFuture<Void> ackSignals(String tenantId, List<Long> ids);
+
+    // --- bourse plane (P5, docs/14 §8) ---
+
+    /** Catalog push: namespaced item ids, 500 per call, backend prettifies names. */
+    CompletableFuture<Map<String, Object>> postCatalog(List<Map<String, String>> items);
+
+    record WarehouseDeposit(String itemId, long qty, String idemKey) {}
+
+    CompletableFuture<Map<String, Object>> postDeposit(String tenantId, WarehouseDeposit deposit);
+
+    record ClaimRow(long id, String itemId, long qty, String status) {}
+
+    CompletableFuture<List<ClaimRow>> getPendingClaims(String tenantId);
+
+    CompletableFuture<Void> confirmClaim(String tenantId, long claimId);
+
+    CompletableFuture<Void> releaseClaim(String tenantId, long claimId);
 }

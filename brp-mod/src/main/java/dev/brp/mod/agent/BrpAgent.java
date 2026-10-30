@@ -92,6 +92,35 @@ public final class BrpAgent {
                     api, wal, acl, acl, acl, msg -> LOG.info("{}", msg), executor);
             runtime.start();
 
+            // P5 (docs/14 §8): the item catalog push runs unconditionally —
+            // reading mod items is not the same as selling them. The intake
+            // desk (deposit slot + withdraw claims) wakes only when an
+            // intake container is configured (brp.bourse.container = dim|x,y,z).
+            final dev.brp.mod.agent.ItemCatalog itemCatalog = new dev.brp.mod.agent.ItemCatalog(
+                    dev.brp.mod.platform.neoforge.NeoForgeItemCatalog::ids,
+                    api, msg -> LOG.info("{}", msg));
+            long catalogMin = Long.parseLong(prop("brp.catalog.push-min", "30"));
+            io.scheduleWithFixedDelay(itemCatalog::push, 5, catalogMin * 60,
+                    java.util.concurrent.TimeUnit.SECONDS);
+
+            String intakeRef = prop("brp.bourse.container", "");
+            if (!intakeRef.isBlank()) {
+                try {
+                    dev.brp.mod.store.SqliteLocalStore bourseStore =
+                            new dev.brp.mod.store.SqliteLocalStore(dir.resolve("bourse.db"));
+                    bourseStore.init();
+                    dev.brp.mod.agent.BourseSync bourseSync = new dev.brp.mod.agent.BourseSync(
+                            api, bourseStore, new dev.brp.mod.platform.neoforge.NeoForgeBourse(server, intakeRef),
+                            prop("brp.tenant", "server"), msg -> LOG.info("{}", msg));
+                    long syncSec = Long.parseLong(prop("brp.bourse.sync-sec", "30"));
+                    io.scheduleWithFixedDelay(bourseSync::sync, syncSec, syncSec,
+                            java.util.concurrent.TimeUnit.SECONDS);
+                    LOG.info("[BRP] bourse intake desk up: {}", intakeRef);
+                } catch (Exception deskFailed) {
+                    LOG.warn("[BRP] bourse intake desk failed to start: {}", deskFailed.getMessage());
+                }
+            }
+
             // P2-14: the machine census — namespace counts over registered
             // chunks, ModList-guarded, one machine.stats event per mod
             final dev.brp.mod.adapters.NamespacePolicy policy = new dev.brp.mod.adapters.NamespacePolicy();

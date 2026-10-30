@@ -124,6 +124,49 @@ public final class HttpBrpClient implements BrpServerApi {
                 .thenApply(b -> null);
     }
 
+    // --- bourse plane (P5, docs/14 §8) ---
+
+    @Override
+    public CompletableFuture<Map<String, Object>> postCatalog(List<Map<String, String>> items) {
+        return send("POST", "/api/v1/exchange/catalog", Map.of("items", items))
+                .thenApply(body -> {
+                    Type t = new TypeToken<Map<String, Object>>() {}.getType();
+                    return gson.<Map<String, Object>>fromJson(body, t);
+                });
+    }
+
+    @Override
+    public CompletableFuture<Map<String, Object>> postDeposit(String tenantId,
+                                                              WarehouseDeposit deposit) {
+        return send("POST", "/api/v1/exchange/warehouse/" + tenantId + "/deposit", deposit)
+                .thenApply(body -> {
+                    Type t = new TypeToken<Map<String, Object>>() {}.getType();
+                    return gson.<Map<String, Object>>fromJson(body, t);
+                });
+    }
+
+    @Override
+    public CompletableFuture<List<ClaimRow>> getPendingClaims(String tenantId) {
+        return send("GET", "/api/v1/exchange/claims/" + tenantId, null)
+                .thenApply(body -> {
+                    Type t = new TypeToken<List<ClaimRow>>() {}.getType();
+                    List<ClaimRow> rows = gson.<List<ClaimRow>>fromJson(body, t);
+                    return rows.stream().filter(c -> "PENDING".equals(c.status())).toList();
+                });
+    }
+
+    @Override
+    public CompletableFuture<Void> confirmClaim(String tenantId, long claimId) {
+        return send("POST", "/api/v1/exchange/warehouse/" + tenantId
+                + "/withdraw/" + claimId + "/confirm", null).thenApply(b -> null);
+    }
+
+    @Override
+    public CompletableFuture<Void> releaseClaim(String tenantId, long claimId) {
+        return send("POST", "/api/v1/exchange/warehouse/" + tenantId
+                + "/withdraw/" + claimId + "/release", null).thenApply(b -> null);
+    }
+
     // --- internals ---
 
     private CompletableFuture<String> send(String method, String path, Object bodyJson) {
