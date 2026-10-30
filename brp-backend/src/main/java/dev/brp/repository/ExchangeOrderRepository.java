@@ -27,6 +27,9 @@ public interface ExchangeOrderRepository extends JpaRepository<ExchangeOrderEnti
 
     List<ExchangeOrderEntity> findByExpiresAtBeforeAndStatusIn(OffsetDateTime cutoff, List<String> statuses);
 
+    @Query("select distinct o.itemId from ExchangeOrderEntity o where o.status in ('NEW', 'PARTIAL')")
+    List<String> itemIdsWithResting();
+
     List<ExchangeOrderEntity> findByTenantIdOrderByCreatedAtDesc(String tenantId);
 
     List<ExchangeOrderEntity> findByTenantIdAndItemIdOrderByCreatedAtDesc(String tenantId, String itemId);

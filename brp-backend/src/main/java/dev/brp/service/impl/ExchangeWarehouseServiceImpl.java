@@ -159,6 +159,20 @@ public class ExchangeWarehouseServiceImpl implements ExchangeWarehouseService {
         });
     }
 
+    @Override
+    public void ship(String sellerTenantId, String buyerTenantId, String itemId,
+                     long qty, String refId, String idemKey) {
+        tx.executeWithoutResult(status -> {
+            if (movements.findByIdemKey(idemKey).isPresent()) {
+                return;
+            }
+            move(sellerTenantId, itemId, -qty, 0, ExchangeMovementEntity.FILL_OUT, refId,
+                    idemKey + ":out");
+            move(buyerTenantId, itemId, qty, 0, ExchangeMovementEntity.FILL_IN, refId,
+                    idemKey + ":in");
+        });
+    }
+
     // --- internals ---
 
     private void move(String tenantId, String itemId, long deltaFree, long deltaHeld,

@@ -34,4 +34,8 @@ public interface ExchangeWarehouseService {
     /** Fill settlement: seller's held ships to buyer's free. Caller's transaction. */
     void deliver(String sellerTenantId, String buyerTenantId, String itemId,
                  long qty, String refId, String idemKey);
+
+    /** Fill settlement from FREE stock (the mint never held an order row). */
+    void ship(String sellerTenantId, String buyerTenantId, String itemId,
+              long qty, String refId, String idemKey);
 }

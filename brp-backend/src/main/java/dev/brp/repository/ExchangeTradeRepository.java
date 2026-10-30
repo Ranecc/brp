@@ -11,4 +11,8 @@ public interface ExchangeTradeRepository extends JpaRepository<ExchangeTradeEnti
     List<ExchangeTradeEntity> findByItemIdOrderByIdDesc(String itemId, Pageable pageable);
 
     List<ExchangeTradeEntity> findByBatchSeq(long batchSeq);
+
+    List<ExchangeTradeEntity> findByBidOrderId(Long bidOrderId);
+
+    List<ExchangeTradeEntity> findByAskOrderId(Long askOrderId);
 }

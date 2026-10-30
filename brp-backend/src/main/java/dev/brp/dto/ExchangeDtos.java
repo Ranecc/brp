@@ -53,4 +53,6 @@ public final class ExchangeDtos {
 
     public record RefCrawlResponse(String itemId, long refBefore, long refAfter,
                                    boolean moved) {}
+
+    public record ClearRunResponse(long batchSeq, int itemsCleared, int tradesCleared) {}
 }

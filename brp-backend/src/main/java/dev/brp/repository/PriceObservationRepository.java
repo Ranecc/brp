@@ -9,4 +9,6 @@ public interface PriceObservationRepository extends JpaRepository<PriceObservati
     List<PriceObservationEntity> findByItemIdOrderByObservedAtAsc(String itemId);
 
     List<PriceObservationEntity> findTop500ByOrderByObservedAtDesc();
+
+    List<PriceObservationEntity> findByVenue(String venue);
 }

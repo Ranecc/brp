@@ -53,9 +53,11 @@ public class QuotaMarketServiceImpl implements QuotaMarketService {
     private final LedgerService ledger;
     private final TransactionTemplate tx;
     private final dev.brp.repository.CreditLineRepository creditLines;
+    private final dev.brp.service.PegService peg;
     private final Clock clock;
     private final int feeBips;
     private final int ttlDays;
+    private final boolean autoObserve;
     private final Map<String, Long> placedKeys = new ConcurrentHashMap<>();
 
     public QuotaMarketServiceImpl(MarketOrderRepository orders,
@@ -65,9 +67,11 @@ public class QuotaMarketServiceImpl implements QuotaMarketService {
                                   LedgerService ledger,
                                   TransactionTemplate tx,
                                   dev.brp.repository.CreditLineRepository creditLines,
+                                  dev.brp.service.PegService peg,
                                   Clock clock,
                                   @Value("${brp.market.fee-bips:50}") int feeBips,
-                                  @Value("${brp.market.order-ttl-days:7}") int ttlDays) {
+                                  @Value("${brp.market.order-ttl-days:7}") int ttlDays,
+                                  @Value("${brp.peg.auto-observe:true}") boolean autoObserve) {
         this.orders = orders;
         this.trades = trades;
         this.buckets = buckets;
@@ -75,9 +79,11 @@ public class QuotaMarketServiceImpl implements QuotaMarketService {
         this.ledger = ledger;
         this.tx = tx;
         this.creditLines = creditLines;
+        this.peg = peg;
         this.clock = clock;
         this.feeBips = feeBips;
         this.ttlDays = ttlDays;
+        this.autoObserve = autoObserve;
     }
 
     @Override
@@ -323,6 +329,13 @@ public class QuotaMarketServiceImpl implements QuotaMarketService {
         long askTaken = ask.fill(qty);
         if (bidTaken != askTaken || bidTaken != qty) {
             throw new BadRequestException("market.fill.mismatch");
+        }
+
+        // the bimetallic closure (docs/14 §7): the industrial leg phones the
+        // band home. Admission keeps in-band prints, and the streak decays —
+        // which is also information.
+        if (autoObserve) {
+            peg.observe(PegStateEntity.QUOTA, price / 100.0);
         }
     }
 
