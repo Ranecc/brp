@@ -74,7 +74,7 @@ brp/
 ```bash
 cp .env.example .env            # 填真 BRP_DB_PASS（compose 强制要求）
 docker compose up -d --build    # postgres + backend，端口只绑 127.0.0.1
-mvn -pl brp-backend -am test    # 172/172 全绿：账本幂等、Saga、审批、配额、计费、货币、对账科、负载平面、信贷、债券、配额市场、车间台……趁跑测试去摸摸草（方块或真草均可）
+mvn -pl brp-backend -am test    # 213/213 全绿：账本幂等、Saga、审批、配额、计费、货币、对账科、负载平面、信贷、债券、配额市场、车间台、交易所……趁跑测试去摸摸草（方块或真草均可）
 ```
 
 ## 路线图

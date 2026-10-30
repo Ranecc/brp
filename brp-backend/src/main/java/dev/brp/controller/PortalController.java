@@ -68,6 +68,9 @@ public class PortalController {
     private final dev.brp.service.BondService bonds;
     private final dev.brp.service.QuotaMarketService market;
     private final dev.brp.repository.DeferredJobRepository deferredJobs;
+    private final dev.brp.service.ExchangeCatalogService bourseCatalog;
+    private final dev.brp.service.ExchangeMintService bourseMint;
+    private final dev.brp.service.ExchangeClearingService bourseClearing;
 
 
     public PortalController(EconomyReportService economy, AgentMonitorService monitor,
@@ -85,7 +88,10 @@ public class PortalController {
                             dev.brp.service.CreditService credit,
                             dev.brp.service.BondService bonds,
                             dev.brp.service.QuotaMarketService market,
-                            dev.brp.repository.DeferredJobRepository deferredJobs) {
+                            dev.brp.repository.DeferredJobRepository deferredJobs,
+                            dev.brp.service.ExchangeCatalogService bourseCatalog,
+                            dev.brp.service.ExchangeMintService bourseMint,
+                            dev.brp.service.ExchangeClearingService bourseClearing) {
         this.economy = economy;
         this.monitor = monitor;
         this.tpsReports = tpsReports;
@@ -110,6 +116,9 @@ public class PortalController {
         this.bonds = bonds;
         this.market = market;
         this.deferredJobs = deferredJobs;
+        this.bourseCatalog = bourseCatalog;
+        this.bourseMint = bourseMint;
+        this.bourseClearing = bourseClearing;
     }
 
     @GetMapping("/economy")
@@ -189,6 +198,43 @@ public class PortalController {
         model.addAttribute("book", market.book());
         model.addAttribute("recentTrades", market.trades());
         return "portal/load";
+    }
+
+    /** The bourse (docs/14): the posted list, the mint's reserve, the recent bells. */
+    @GetMapping("/bourse")
+    public String bourse(Model model) {
+        model.addAttribute("items", bourseCatalog.catalog());
+        model.addAttribute("mint", bourseMint.state());
+        var emeraldClears = bourseClearing.clears("minecraft:emerald", 24);
+        model.addAttribute("clears", emeraldClears);
+        model.addAttribute("clearCurve", clearPoints(emeraldClears));
+        model.addAttribute("trades", bourseClearing.trades("minecraft:emerald", 20));
+        return "portal/bourse";
+    }
+
+    /** Inline-SVG polyline for the emerald clearing price, oldest left. */
+    static String clearPoints(java.util.List<dev.brp.dto.ExchangeDtos.ClearResponse> clears) {
+        java.util.List<Long> prices = clears.stream()
+                .map(dev.brp.dto.ExchangeDtos.ClearResponse::priceCents)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+        java.util.Collections.reverse(prices);
+        if (prices.size() < 2) {
+            return "";
+        }
+        long min = prices.stream().mapToLong(Long::longValue).min().orElse(0);
+        long max = prices.stream().mapToLong(Long::longValue).max().orElse(1);
+        long span = Math.max(1, max - min);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < prices.size(); i++) {
+            double x = 240.0 * i / (prices.size() - 1);
+            double y = 90.0 - 80.0 * (prices.get(i) - min) / span;
+            if (i > 0) {
+                sb.append(' ');
+            }
+            sb.append(String.format(java.util.Locale.ROOT, "%.1f,%.1f", x, y));
+        }
+        return sb.toString();
     }
 
     /** Inline-SVG polyline points for the forecast curve; same chrome as CPI. */

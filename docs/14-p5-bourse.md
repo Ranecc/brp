@@ -1,6 +1,6 @@
 # P5 — The Bourse: batch auctions, a listed mint, and the bimetallic closure
 
-> Status: **design approved, implementation in progress** · Phase: P5
+> Status: **shipped** · Phase: P5
 > Predecessor: docs/13 (P4 load desk) · Predecessor-in-law: docs/03 §3, §9, §10
 >
 > P4 priced *when the ticks get used*. P5 builds the room where everything
@@ -219,20 +219,20 @@ No third governance channel was created in the making of this section.
 
 | # | Slice | Deliverable | Status |
 |---|---|---|---|
-| P5-01 | A | V22 migration, entities, repositories | — |
-| P5-02 | A | Catalog + listing governance (two presets) + push API | — |
-| P5-03 | B | Warehouse (deposit/withdraw/claims/movements, conservation) | — |
-| P5-04 | C | `AuctionMath` kink algorithm (pure) | — |
-| P5-05 | D | Order filing (escrow/hold, idem, cancel) | — |
-| P5-06 | E | Listed mint (quotes, seigniorage sweep) | — |
-| P5-07 | E | Batch clearing scheduler (single-tx, guard, initialDelay) | — |
-| P5-08 | E | Ref crawl + CPI feed + bimetallic closure (peg auto-observe) | — |
-| P5-09 | F | Mod: item catalog push | — |
-| P5-10 | F | Mod: warehouse deposit/withdraw via vault staging | — |
-| P5-11 | G | Portal bourse page + controller endpoints | — |
-| P5-12 | G | OpenAPI paths + messages (en/zh) | — |
-| P5-13 | G | Test-count sync (AGENTS.md, READMEs) | — |
-| P5-14 | H | Audit pass: shared-H2 scoping, scheduler races, idem replay | — |
+| P5-01 | A | V22 migration, entities, repositories | ✓ |
+| P5-02 | A | Catalog + listing governance (two presets) + push API | ✓ |
+| P5-03 | B | Warehouse (deposit/withdraw/claims/movements, conservation) | ✓ |
+| P5-04 | C | `AuctionMath` kink algorithm (pure) | ✓ |
+| P5-05 | D | Order filing (escrow/hold, idem, cancel) | ✓ |
+| P5-06 | E | Listed mint (quotes, seigniorage sweep) | ✓ |
+| P5-07 | E | Batch clearing scheduler (single-tx, guard, initialDelay) | ✓ |
+| P5-08 | E | Ref crawl + CPI feed + bimetallic closure (peg auto-observe) | ✓ |
+| P5-09 | F | Mod: item catalog push | ✓ |
+| P5-10 | F | Mod: warehouse deposit/withdraw via vault staging | ✓ |
+| P5-11 | G | Portal bourse page + controller endpoints | ✓ |
+| P5-12 | G | OpenAPI paths + messages (en/zh) | ✓ |
+| P5-13 | G | Test-count sync (AGENTS.md, READMEs) | ✓ |
+| P5-14 | H | Audit pass: shared-H2 scoping, scheduler races, idem replay | ✓ |
 
 ## 10. Configuration
 

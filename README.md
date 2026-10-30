@@ -83,7 +83,7 @@ server) or fully standalone via docker-compose — same jar either way
 ```bash
 cp .env.example .env            # set a real BRP_DB_PASS (compose enforces it)
 docker compose up -d --build    # postgres + backend, ports bound to 127.0.0.1
-mvn -pl brp-backend -am test    # 172/172 green or no commit: ledger, saga, approvals, quotas, billing, currency, desks, load plane, credit, bonds, quota market, shop floor — go touch grass while it runs
+mvn -pl brp-backend -am test    # 213/213 green or no commit: ledger, saga, approvals, quotas, billing, currency, desks, load plane, credit, bonds, quota market, shop floor, the bourse — go touch grass while it runs
 ```
 
 ## Roadmap

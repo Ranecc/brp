@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{portal/fragments :: head('BRP · 交易所')}"></head>
+<body class="portal">
+<nav th:replace="~{portal/fragments :: sidebar('bourse')}"></nav>
+<header th:replace="~{portal/fragments :: breadcrumb('交易所 The Bourse')}"></header>
+<main class="content">
+  <section class="panel">
+    <h2>挂牌铸币厂 / The Listed Mint <span class="tag">9:00 开市，9:05 收市，一如所有伟大的流动性匮乏市场</span></h2>
+    <p class="empty" style="margin-top:0">
+      标准公式运行中（Sargent–Velde）：钉住参考价 · 持有准备金 · 双向兑换。
+      资金池 <span class="pixel" th:text="${mint.treasuryCents / 100.0}">0</span> BRC
+      · 工作余额 <span class="pixel" th:text="${mint.floatCents / 100.0}">0</span>
+      · 备货 <span class="pixel" th:text="${mint.warehouseItems}">0</span> 件
+      · 价差 <span class="pixel" th:text="${mint.spreadBips}">200</span> bips
+      · 每边深度 <span class="pixel" th:text="${mint.depth}">64</span> 件
+    </p>
+    <p class="empty" style="margin-top:0">
+      准备金是真的：铸币厂卖不出仓库里没有的货，也买不起付不起的单——
+      这就是铸币厂和印钞机的区别。
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>挂牌目录 / The Posted List</h2>
+    <table class="grid">
+      <thead><tr><th>物品</th><th>显示名</th><th>状态</th><th>参考价（分）</th><th>钉住</th></tr></thead>
+      <tbody>
+      <tr th:each="i : ${items}">
+        <td class="pixel" th:text="${i.itemId}">-</td>
+        <td th:text="${i.displayName}">-</td>
+        <td class="pixel" th:text="${i.listedState}">DEFAULT</td>
+        <td class="num pixel" th:text="${i.refCents}">0</td>
+        <td class="pixel" th:text="${i.pinned} ? '腐竹定价' : '随行就市'">-</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${items.isEmpty()}">名录是空的：等模组目录推送，或者等腐竹亲手挂出第一行。</p>
+  </section>
+
+  <section class="panel">
+    <h2>emerald 清算史 / Emerald Clears <span class="tag">复本位的第二条腿自己打电话回家</span></h2>
+    <svg viewBox="0 0 240 100" class="spark" preserveAspectRatio="none" style="width:100%;height:90px">
+      <polyline th:attr="points=${clearCurve}" fill="none" stroke="var(--accent, #7ac74f)" stroke-width="2"/>
+    </svg>
+    <table class="grid" th:if="${!clears.isEmpty()}">
+      <thead><tr><th>批次</th><th>清算价（分）</th><th>成交量</th><th>买量/卖量</th><th>参考价</th><th>爬行后</th></tr></thead>
+      <tbody>
+      <tr th:each="c : ${clears}">
+        <td class="pixel" th:text="${c.batchSeq}">-</td>
+        <td class="num pixel" th:text="${c.priceCents}">-</td>
+        <td class="num pixel" th:text="${c.clearedQty}">0</td>
+        <td class="num pixel" th:text="${c.bidVol} + ' / ' + ${c.askVol}">-</td>
+        <td class="num pixel" th:text="${c.refBefore}">-</td>
+        <td class="num pixel" th:text="${c.refAfter}">-</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${clears.isEmpty()}">还没有钟声。挂上第一对买卖单，然后等 9:05。</p>
+  </section>
+
+  <section class="panel">
+    <h2>最近成交 / Recent Trades</h2>
+    <table class="grid" th:if="${!trades.isEmpty()}">
+      <thead><tr><th>批次</th><th>买方</th><th>卖方</th><th>数量</th><th>单价（分）</th><th>手续费</th></tr></thead>
+      <tbody>
+      <tr th:each="t : ${trades}">
+        <td class="pixel" th:text="${t.batchSeq}">-</td>
+        <td class="pixel" th:text="${t.buyer}">-</td>
+        <td class="pixel" th:text="${t.seller}">-</td>
+        <td class="num pixel" th:text="${t.qty}">0</td>
+        <td class="num pixel" th:text="${t.priceCents}">0</td>
+        <td class="num pixel" th:text="${t.feeCents}">0</td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${trades.isEmpty()}">空。村里人的货不会自己走上订单簿——挂不挂，腐竹说了算（docs/14 §5）。</p>
+  </section>
+</main>
+</body>
+</html>

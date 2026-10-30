@@ -746,6 +746,103 @@ paths:
       responses:
         "200": {description: acked}
 
+  # --- P5: the bourse (docs/14) ---
+  /api/v1/exchange/catalog:
+    post:
+      summary: Push item ids from the mod registry (500 per batch, names upsert only)
+      responses:
+        "200": {description: "ack; listing state is never touched by a push"}
+        "400": {description: exchange.catalog.too.large | exchange.item.id.invalid}
+  /api/v1/exchange/items:
+    get:
+      summary: The catalog with listing state and reference prices
+      responses:
+        "200": {description: "[{itemId, displayName, listedState, refCents, pinned}]"}
+  /api/v1/exchange/items/{itemId}:
+    get:
+      summary: One catalog entry
+      responses:
+        "200": {description: the entry}
+        "400": {description: exchange.item.unknown}
+    put:
+      summary: Listing governance (two presets, per-item override; LISTED requires a price)
+      responses:
+        "200": {description: the entry}
+        "400": {description: exchange.listing.state.invalid | exchange.listing.ref.required}
+  /api/v1/exchange/warehouse/{tenantId}:
+    get:
+      summary: Custody rows (free/held) for the tenant
+      responses:
+        "200": {description: "[{tenantId, itemId, qtyFree, qtyHeld}]"}
+  /api/v1/exchange/warehouse/{tenantId}/deposit:
+    post:
+      summary: File a deposit (idempotent; goods must have left the world first)
+      responses:
+        "200": {description: the warehouse row}
+        "400": {description: exchange.warehouse.qty.invalid | exchange.item.unknown}
+  /api/v1/exchange/warehouse/{tenantId}/withdraw:
+    post:
+      summary: File a withdraw claim (free qty leaves the books on filing)
+      responses:
+        "200": {description: "the claim {id, status: PENDING}"}
+        "400": {description: exchange.warehouse.insufficient}
+  /api/v1/exchange/warehouse/{tenantId}/withdraw/{claimId}/confirm:
+    post:
+      summary: Confirm after the goods actually spawned
+      responses:
+        "200": {description: ok}
+  /api/v1/exchange/warehouse/{tenantId}/withdraw/{claimId}/release:
+    post:
+      summary: Release a stale claim back to custody
+      responses:
+        "200": {description: ok}
+  /api/v1/exchange/claims/{tenantId}:
+    get:
+      summary: The tenant's withdraw claims
+      responses:
+        "200": {description: "[{id, itemId, qty, status}]"}
+  /api/v1/exchange/orders:
+    post:
+      summary: File a limit order (BIDs escrow BRC, ASKs hold stock; batch clears later)
+      responses:
+        "200": {description: the order}
+        "400": {description: exchange.item.not.listed | exchange.warehouse.insufficient | credit.restricted}
+    get:
+      summary: Orders by tenant (and optionally item)
+      responses:
+        "200": {description: "[...]"}
+  /api/v1/exchange/orders/{tenantId}/{orderId}:
+    delete:
+      summary: Cancel a resting order and release its collateral
+      responses:
+        "200": {description: the order}
+        "400": {description: exchange.cancel.invalid}
+  /api/v1/exchange/book/{itemId}:
+    get:
+      summary: The item's resting book with the posted reference
+      responses:
+        "200": {description: "{refCents, pinned, listedState, bids[], asks[]}"}
+  /api/v1/exchange/clear:
+    post:
+      summary: Ring the bell now (the scheduler does this every brp.exchange.clear-ms)
+      responses:
+        "200": {description: "{batchSeq, itemsCleared, tradesCleared}"}
+  /api/v1/exchange/clears:
+    get:
+      summary: Price observations per item (the peg band and CPI both read these)
+      responses:
+        "200": {description: "[{batchSeq, priceCents, clearedQty, refBefore, refAfter}]"}
+  /api/v1/exchange/trades:
+    get:
+      summary: Recent fills at the uniform clearing price
+      responses:
+        "200": {description: "[{batchSeq, buyer, seller, qty, priceCents, feeCents}]"}
+  /api/v1/exchange/mint:
+    get:
+      summary: The listed mint's public state (float, treasury, stock, spread, depth)
+      responses:
+        "200": {description: "{tenantId, floatCents, treasuryCents, warehouseItems, spreadBips, depth}"}
+
 components:
   schemas:
     CreateAccountRequest:
