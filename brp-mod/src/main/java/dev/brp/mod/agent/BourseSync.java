@@ -4,7 +4,9 @@ import dev.brp.mod.client.BrpServerApi;
 import dev.brp.mod.store.LocalStore;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -27,6 +29,7 @@ public final class BourseSync {
 
     static final String NS_STAGE = "bourse-stage";
     static final String NS_BASELINE = "bourse-baseline";
+    static final String NS_PICKUP = "bourse-pickup";
 
     public record Summary(int staged, int filed, int confirmed, int released, int drift) {}
 
@@ -85,7 +88,11 @@ public final class BourseSync {
                 continue;
             }
             String idemKey = "bourse-dep:" + tenantId + ":" + UUID.randomUUID();
-            // goods leave the world first, books second
+            // goods leave the world first, books second; after the extract the
+            // shelf sits exactly at the baseline again, so the baseline row
+            // never moves on the deposit path (the real-net boot caught this:
+            // a stale pre-extract baseline made every later arrival read as
+            // a shortfall)
             if (!port.extract(e.getKey(), delta)) {
                 log.accept("[BRP] bourse intake failed to extract " + delta + "x " + e.getKey());
                 continue;
@@ -93,8 +100,6 @@ public final class BourseSync {
             inTx(tx -> {
                 tx.exec("insert or replace into kv (ns, key, value) values (?, ?, ?)",
                         NS_STAGE, idemKey, e.getKey() + "|" + delta);
-                tx.exec("insert or replace into kv (ns, key, value) values (?, ?, ?)",
-                        NS_BASELINE, e.getKey(), String.valueOf(expected + delta));
             });
             staged++;
         }
@@ -108,9 +113,14 @@ public final class BourseSync {
         int released = 0;
         try {
             for (BrpServerApi.ClaimRow claim : api.getPendingClaims(tenantId).join()) {
-                if (port.extract(claim.itemId(), claim.qty())) {
+                // the books were debited when the claim was filed; the desk
+                // spawns the goods into the container and confirms after.
+                // The real-net boot caught this calling the inverse port
+                // method: extracted goods AND debited books, custody vanished.
+                if (port.deposit(claim.itemId(), claim.qty())) {
                     api.confirmClaim(tenantId, claim.id()).join();
-                    adjustBaseline(claim.itemId(), -claim.qty());
+                    adjustBaseline(claim.itemId(), claim.qty());
+                    adjustPickup(claim.itemId(), claim.qty());
                     confirmed++;
                 } else {
                     api.releaseClaim(tenantId, claim.id()).join();
@@ -123,12 +133,31 @@ public final class BourseSync {
         }
         int drift = 0;
         Map<String, Long> baseline = baseline();
-        for (Map.Entry<String, Long> e : port.inventory().entrySet()) {
-            long expected = baseline.getOrDefault(e.getKey(), 0L);
-            if (e.getValue() < expected) {
-                drift++;
-                log.accept("[BRP] bourse intake SHORT by " + (expected - e.getValue())
-                        + "x " + e.getKey() + " — nobody filed that withdrawal");
+        SortedMap<String, Long> actual = port.inventory();
+        // watch the union: an item pocketed down to zero is gone from the
+        // shelf but still expected — skipping it would leave a phantom
+        // baseline that under-counts the next real arrival
+        Set<String> watched = new LinkedHashSet<>(baseline.keySet());
+        watched.addAll(actual.keySet());
+        for (String itemId : watched) {
+            long expected = baseline.getOrDefault(itemId, 0L);
+            long have = actual.getOrDefault(itemId, 0L);
+            if (have < expected) {
+                long shortfall = expected - have;
+                long pickup = pickupBalance(itemId);
+                if (pickup > 0) {
+                    // a confirmed payout waiting in the container is pocketed
+                    // by hand — pocketing it is the point, not a theft
+                    long absorbed = Math.min(pickup, shortfall);
+                    adjustBaseline(itemId, -absorbed);
+                    adjustPickup(itemId, -absorbed);
+                    shortfall -= absorbed;
+                }
+                if (shortfall > 0) {
+                    drift++;
+                    log.accept("[BRP] bourse intake SHORT by " + shortfall
+                            + "x " + itemId + " — nobody filed that withdrawal");
+                }
             }
         }
         return new Settled(confirmed, released, drift);
@@ -146,6 +175,20 @@ public final class BourseSync {
         long current = baseline().getOrDefault(itemId, 0L);
         inTx(tx -> tx.exec("insert or replace into kv (ns, key, value) values (?, ?, ?)",
                 NS_BASELINE, itemId, String.valueOf(current + delta)));
+    }
+
+    /** Spawned-but-not-yet-pocketed payout qty per item; absorbs lawful pickup. */
+    private long pickupBalance(String itemId) {
+        return rows(NS_PICKUP).stream()
+                .filter(row -> row[0].equals(itemId))
+                .mapToLong(row -> Long.parseLong(row[1]))
+                .findFirst().orElse(0L);
+    }
+
+    private void adjustPickup(String itemId, long delta) {
+        long current = pickupBalance(itemId);
+        inTx(tx -> tx.exec("insert or replace into kv (ns, key, value) values (?, ?, ?)",
+                NS_PICKUP, itemId, String.valueOf(current + delta)));
     }
 
     @FunctionalInterface

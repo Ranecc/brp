@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The intake desk state machine (docs/14 §8): goods leave the world before
- * the books move, staging survives a backend outage, claims ship before
+ * the books move, staging survives a backend outage, payouts spawn before
  * they confirm, and a short shelf is reported rather than absorbed.
  */
 class BourseSyncTest {
@@ -38,6 +38,11 @@ class BourseSyncTest {
         assertFalse(port.contents.containsKey("testmod:copper_ingot"));
         assertTrue(api.deposits.isEmpty());
         assertEquals(1, store.tables.get(BourseSync.NS_STAGE).size());
+        // the baseline never moves on the deposit path: after the extract
+        // the shelf sits exactly at the old baseline, so the row must stay
+        // absent (a written pre-extract count became a phantom shortfall
+        // on the real-net boot)
+        assertFalse(store.get(BourseSync.NS_BASELINE, "testmod:copper_ingot").isPresent());
 
         // pass 2: backend back — the staged row files under its fixed idem key
         api.failDeposits = false;
@@ -57,32 +62,67 @@ class BourseSyncTest {
     }
 
     @Test
-    void claimsShipThenConfirm() {
-        port.contents.put("testmod:iron_ingot", 10L);
-        store.put(BourseSync.NS_BASELINE, "testmod:iron_ingot", "10");
+    void claimsSpawnThenConfirm() {
+        // the books were debited when the claim was filed; the desk spawns
+        // the goods and must not re-deposit them on the next pass
         api.pendingClaims = List.of(new BrpServerApi.ClaimRow(7, "testmod:iron_ingot", 4, "PENDING"));
 
         BourseSync.Summary s = desk().sync();
         assertEquals(1, s.confirmed());
         assertEquals(List.of(7L), api.confirmed);
-        assertEquals(6L, port.contents.get("testmod:iron_ingot"));
-        assertEquals("6", store.get(BourseSync.NS_BASELINE, "testmod:iron_ingot").orElse(""));
+        assertEquals(4L, port.contents.get("testmod:iron_ingot"));
+        assertEquals("4", store.get(BourseSync.NS_BASELINE, "testmod:iron_ingot").orElse(""));
+
+        // pocketing the payout is the point, not a theft: the shelf drops,
+        // the pickup balance absorbs it, no drift and no re-deposit
+        api.pendingClaims = List.of();
+        port.contents.remove("testmod:iron_ingot");
+        BourseSync.Summary after = desk().sync();
+        assertEquals(0, after.drift());
+        assertEquals(0, after.staged());
+        assertEquals("0", store.get(BourseSync.NS_BASELINE, "testmod:iron_ingot").orElse("?"));
     }
 
     @Test
-    void aClaimWithoutGoodsReleasesInsteadOfLying() {
-        store.put(BourseSync.NS_BASELINE, "testmod:gold_ingot", "10");
-        port.contents.put("testmod:gold_ingot", 10L);
-        port.failExtract = true;
+    void aClaimWithoutRoomReleasesInsteadOfLying() {
+        port.failSpawn = true;
         api.pendingClaims = List.of(new BrpServerApi.ClaimRow(9, "testmod:gold_ingot", 4, "PENDING"));
 
         BourseSync.Summary s = desk().sync();
         assertEquals(1, s.released());
         assertEquals(List.of(9L), api.released);
         assertTrue(api.confirmed.isEmpty());
-        // the release puts the goods back; the baseline keeps expecting them
-        assertEquals(10L, port.contents.get("testmod:gold_ingot"));
-        assertEquals("10", store.get(BourseSync.NS_BASELINE, "testmod:gold_ingot").orElse(""));
+        assertTrue(port.contents.isEmpty());
+        assertEquals(0, s.drift());
+    }
+
+    @Test
+    void theftBeyondAPayoutStillReports() {
+        // 3 of the shortfall are a pending payout; the rest is a real theft
+        store.put(BourseSync.NS_BASELINE, "testmod:iron_ingot", "10");
+        store.put(BourseSync.NS_PICKUP, "testmod:iron_ingot", "3");
+        port.contents.put("testmod:iron_ingot", 4L);
+
+        BourseSync.Summary s = desk().sync();
+        assertEquals(1, s.drift());
+        assertTrue(log.stream().anyMatch(l -> l.contains("SHORT by 3")));
+        assertEquals("7", store.get(BourseSync.NS_BASELINE, "testmod:iron_ingot").orElse("?"));
+        assertEquals("0", store.get(BourseSync.NS_PICKUP, "testmod:iron_ingot").orElse("?"));
+    }
+
+    @Test
+    void baselineFollowsTheExtractedShelfSoLaterArrivalsStillCount() {
+        // the real-net failure, end to end: the first deposit left the
+        // baseline at the pre-extract level, so every later arrival was
+        // misread as a shortfall and never deposited
+        port.contents.put("minecraft:emerald", 16L);
+        desk().sync();
+        assertFalse(store.get(BourseSync.NS_BASELINE, "minecraft:emerald").isPresent());
+
+        port.contents.put("minecraft:emerald", 8L);
+        BourseSync.Summary s = desk().sync();
+        assertEquals(1, s.staged());
+        assertTrue(api.deposits.stream().anyMatch(d -> d.qty() == 16L));
     }
 
     @Test

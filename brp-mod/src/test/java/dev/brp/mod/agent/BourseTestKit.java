@@ -82,6 +82,7 @@ final class BourseTestKit {
     static final class FakePort implements BoursePort {
         final SortedMap<String, Long> contents = new TreeMap<>();
         boolean failExtract;
+        boolean failSpawn;
 
         @Override
         public SortedMap<String, Long> inventory() {
@@ -107,6 +108,9 @@ final class BourseTestKit {
 
         @Override
         public boolean deposit(String itemId, long qty) {
+            if (failSpawn) {
+                return false;
+            }
             contents.merge(itemId, qty, Long::sum);
             return true;
         }
