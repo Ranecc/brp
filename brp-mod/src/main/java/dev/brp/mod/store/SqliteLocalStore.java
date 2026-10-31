@@ -13,7 +13,7 @@ import java.util.Optional;
 
 /**
  * Embedded SQLite LocalStore. Ships via jar-in-jar (org.xerial:sqlite-jdbc,
- * bundled natives) — see build.gradle.ksl comments; nothing shades into the
+ * bundled natives) — see build.gradle.kts; nothing shades into the
  * brp-common annotation namespace.
  *
  * WAL journaling + single-connection serialized access keeps SQLite's
@@ -31,6 +31,15 @@ public final class SqliteLocalStore implements LocalStore {
     @Override
     public synchronized void init() throws Exception {
         Files.createDirectories(dbFile.getParent());
+        // DriverManager discovers drivers via service files, which ModLauncher
+        // module layers do not surface reliably from nested jars; warm the
+        // driver through our own loader so its static registerDriver runs.
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(
+                    "sqlite-jdbc missing from the jarJar bundle", e);
+        }
         conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.toAbsolutePath());
         exec("PRAGMA journal_mode=WAL");
         exec("PRAGMA synchronous=NORMAL");

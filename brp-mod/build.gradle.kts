@@ -28,13 +28,17 @@ dependencies {
     // Embedded local persistence + cache. Jar-in-jar via ModDevGradle's jarJar
     // (verify plugin support on first real build; fallback: shadow + relocate
     // caffeine to dev.brp.shaded.caffeine so core code only sees CacheFront).
-    // jarJar("org.xerial:sqlite-jdbc:[3.46,)")
+    // The range must contain the pinned testImplementation version below — the
+    // real-net boot caught this exact gap (intake desk: no suitable driver).
+    jarJar("org.xerial:sqlite-jdbc:[3.46.0,3.47.0)")
     // jarJar("com.github.ben-manes.caffeine:caffeine:[3.2,)")
 
     // Pure-Java units (governor decision tables etc.) run as plain JUnit —
-    // no Minecraft bootstrap, no client, no excuses.
+    // no Minecraft bootstrap, no excuses. sqlite-jdbc pinned so the local
+    // store unit exercises the same driver the jarJar bundle ships.
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.xerial:sqlite-jdbc:3.46.1.3")
     // gson ships inside NeoForge for MAIN; the plain test runtime needs it
     // spelled out (payloadOf parses WAL lines in units)
     testImplementation("com.google.code.gson:gson:2.11.0")
