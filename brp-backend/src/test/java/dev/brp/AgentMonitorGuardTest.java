@@ -42,12 +42,14 @@ class AgentMonitorGuardTest {
         String fresh = "fresh-" + uniqueId();
         String corpse = "corpse-" + uniqueId();
         monitor.recordHeartbeat(fresh, 40.0, 20.0, 0);
+        // other suites share this database and own fresh heartbeats too, so
+        // the absolute mean is nobody's business — the corpse must simply
+        // change nothing: same fleet, same average, exactly
+        double withoutCorpse = monitor.averageMspt();
         monitor.recordHeartbeat(corpse, 900.0, 20.0, 0);
         backdate(corpse, Duration.ofMinutes(30));
-
-        double avg = monitor.averageMspt();
-        // the corpse's 900 mspt must not drag the mean off the live agent
-        assertThat(avg).isCloseTo(40.0, org.assertj.core.data.Offset.offset(0.001));
+        // a corpse with 900 mspt lands in the table and the mean does not move
+        assertThat(monitor.averageMspt()).isEqualTo(withoutCorpse);
     }
 
     @Test
