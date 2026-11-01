@@ -82,7 +82,7 @@ class OutboxFlowTest {
         when(sender.send(anyString(), anyString())).thenReturn(false);
         notifications.enqueue("approval.nudged", "approval.nudge.ok");
         dispatcher.drainOnce();
-        var failedRows = outbox.findTop20ByStatusOrderByIdAsc("FAILED");
+        var failedRows = outbox.findTop20ByStatusOrderByCreatedAtAsc("FAILED");
         assertThat(failedRows).isNotEmpty();
 
         long rowId = ourNudgedRow();   // ours, not some other context's stale corpse

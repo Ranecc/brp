@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,5 +68,27 @@ class BackendSupervisorTest {
     void anExternalDatabaseIsTheOperatorsBusinessAlone() {
         assertEquals(List.of("--x=1"),
                 BackendSupervisor.effectiveArgs(List.of("--x=1"), true, dir));
+    }
+
+    @Test
+    void healthMeansOurChildSpeakingActuator() throws IOException {
+        BackendSupervisor supervisor = new BackendSupervisor(config());
+        // no child at all: even a friendly squatter on the port cannot pass
+        assertFalse(supervisor.healthy());
+        // the actuator contract, minimally — a bare 200 from anything else lies
+        assertTrue(BackendSupervisor.saysUp("{\"status\":\"UP\",\"components\":{}}"));
+        assertFalse(BackendSupervisor.saysUp("{\"ok\":true}"));
+        assertFalse(BackendSupervisor.saysUp(null));
+    }
+
+    @Test
+    void startRegistersTheExitHookSoKillsNeverOrphanTheChild() throws IOException {
+        BackendSupervisor supervisor = new BackendSupervisor(config());
+        assertThrows(IOException.class, supervisor::start);   // jar missing
+        // the hook exists after the first start attempt and survives cycles
+        assertTrue(supervisor.exitHookRegistered());
+        supervisor.shutdown();
+        assertThrows(IOException.class, supervisor::start);
+        assertTrue(supervisor.exitHookRegistered());
     }
 }

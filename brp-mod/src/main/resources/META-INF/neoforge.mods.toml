@@ -6,6 +6,7 @@ license = "MIT"
 modId = "brp"
 version = "0.1.0-SNAPSHOT"
 displayName = "BRP — Better Resource Plan"
+displayTest = "MATCH_VERSION"   # one jar on both sides; strictness is the feature
 description = '''
 Enterprise-grade (in the fun way) resource planning for Minecraft servers:
 ledger, WMS/MRP, machine telemetry and signal control. Pairs with the
@@ -16,7 +17,9 @@ authors = ["BRP Team"]
 [[dependencies.brp]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.1.0,)"
+# upper bound is the 1.21.x loader line (21.2+ is a different MC version);
+# the compile-time ticket API is verified against 21.1 only (audit #23)
+versionRange = "[21.1.0,21.2)"
 ordering = "NONE"
 side = "BOTH"
 

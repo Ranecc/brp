@@ -26,7 +26,12 @@ management:
       exposure:
         include: health,info,metrics
 
-# v0 assumes a trusted internal network; HMAC instance auth lands in P1 (docs/01 §6)
+# v0 machine auth: static bearer token (docs/01 §6). Blank = the documented
+# trusted-network / zero-arg singleplayer posture; set BRP_TOKEN and every
+# /api request must carry it. The portal stays the deliberate no-auth
+# exception (docs/01 §2); HMAC lands in P1.
 brp:
+  auth:
+    token: ${BRP_TOKEN:}
   telemetry:
     max-batch-size: 1000

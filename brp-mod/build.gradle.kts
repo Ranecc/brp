@@ -25,13 +25,13 @@ dependencies {
     // implements the same Idempotent/Atomic contracts.
     implementation("dev.brp:brp-common:0.1.0-SNAPSHOT")
 
-    // Embedded local persistence + cache. Jar-in-jar via ModDevGradle's jarJar
-    // (verify plugin support on first real build; fallback: shadow + relocate
-    // caffeine to dev.brp.shaded.caffeine so core code only sees CacheFront).
-    // The range must contain the pinned testImplementation version below — the
-    // real-net boot caught this exact gap (intake desk: no suitable driver).
+    // Embedded local persistence + cache. sqlite-jdbc rides jarJar (range must
+    // contain the pinned testImplementation version below — the real-net boot
+    // caught this exact gap: intake desk died on "no suitable driver").
+    // caffeine stays OUT until a caller exists: CacheFront ships the pure-Java
+    // in-memory implementation, so the AGENTS.md local-storage promise is
+    // backed by the sqlite bundle alone (audit #20, both halves now honest).
     jarJar("org.xerial:sqlite-jdbc:[3.46.0,3.47.0)")
-    // jarJar("com.github.ben-manes.caffeine:caffeine:[3.2,)")
 
     // Pure-Java units (governor decision tables etc.) run as plain JUnit —
     // no Minecraft bootstrap, no excuses. sqlite-jdbc pinned so the local

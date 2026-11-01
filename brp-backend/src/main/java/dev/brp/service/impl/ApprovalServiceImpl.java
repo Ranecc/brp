@@ -183,12 +183,12 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Override
     public List<WithdrawalRequestResponse> inbox(String teamId, String status) {
         String s = status != null ? status : "PENDING";
-        return mapper.toDtoList(requests.findByTeamIdAndStatusOrderById(teamId, s));
+        return mapper.toDtoList(requests.findByTeamIdAndStatusOrderByCreatedAtDesc(teamId, s));
     }
 
     @Override
     public List<WithdrawalRequestResponse> latestPending() {
-        return mapper.toDtoList(requests.findTop20ByStatusOrderByIdDesc("PENDING"));
+        return mapper.toDtoList(requests.findTop20ByStatusOrderByCreatedAtDesc("PENDING"));
     }
 
     // --- internals ---

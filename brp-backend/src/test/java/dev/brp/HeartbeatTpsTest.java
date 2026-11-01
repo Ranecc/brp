@@ -40,12 +40,17 @@ class HeartbeatTpsTest {
         heartbeat("hb-" + java.util.UUID.randomUUID(), "ag-farm-cluster", 8.0);
         heartbeat("hb-" + java.util.UUID.randomUUID(), "ag-museum-server", 12.0);
 
-        // order-proof: the report must reflect exactly the fleet's stored mean
+        // order-proof: the report reflects the LIVE fleet's mean — the same
+        // five-minute staleness window the monitor applies (audit #27); the
+        // shared database carries corpses from other suites and older runs
+        java.time.Instant cutoff = java.time.Instant.now()
+                .minus(dev.brp.service.impl.AgentMonitorServiceImpl.STALE_AFTER);
         double expected = agents.findAll().stream()
+                .filter(a -> a.getReportedAt().isAfter(cutoff))
                 .mapToDouble(dev.brp.entity.AgentStateEntity::getMspt).average().orElse(0.0);
         var report = tpsReports.fileWeeklyReport(true);
         assertThat(report.averageMspt()).isEqualTo(expected);
-        assertThat(expected).isGreaterThanOrEqualTo(10.0 * 2 / 2 - 2.0); // ours landed
+        assertThat(expected).isGreaterThanOrEqualTo(8.0); // ours landed (8 and 12)
         assertThat(report.lines()).anyMatch(l -> l.contains("Ticks per second"));
     }
 

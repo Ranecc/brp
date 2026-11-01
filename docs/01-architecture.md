@@ -106,7 +106,8 @@ dedicated thread pool.
 
 - enrollment: one-time provisioning token → instance_id + secret
 - requests: HMAC-SHA256(instance_id, timestamp, nonce, bodyHash), ±30s window,
-  nonce replay cache (v0: static bearer token on a trusted network; HMAC in P1)
+  nonce replay cache (v0: static bearer token via BRP_TOKEN — shipped, the
+  filter lives in config/BearerTokenFilter; HMAC in P1)
 - transport: plain HTTP on a private network is fine; TLS/wireguard otherwise
 - player portal: OAuth2/OIDC, in-game code binding to MC account; RBAC synced
   from LuckPerms (the v0 web console is the deliberate exception: no-auth,

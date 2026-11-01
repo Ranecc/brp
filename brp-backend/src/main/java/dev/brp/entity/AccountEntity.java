@@ -41,6 +41,8 @@ public class AccountEntity {
     public long getBalanceCents() { return balanceCents; }
 
     public void apply(long signedDeltaCents) {
-        this.balanceCents += signedDeltaCents;
+        // exact arithmetic: overflow surfaces as a 400 at the service boundary,
+        // never a silent wrap (money paths are no-joke zones)
+        this.balanceCents = Math.addExact(this.balanceCents, signedDeltaCents);
     }
 }

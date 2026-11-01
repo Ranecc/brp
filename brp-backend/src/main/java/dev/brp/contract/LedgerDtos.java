@@ -1,6 +1,7 @@
 package dev.brp.contract;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,7 +26,10 @@ public final class LedgerDtos {
     public record JournalLine(
             @NotBlank String accountNo,
             @NotBlank String direction,     // DEBIT | CREDIT
-            @NotNull @Positive Long amountCents,
+            // 1e12 cents upper bound: no honest game leg is larger, and the
+            // cap keeps validate()'s balanced-sum arithmetic far from long
+            // overflow even for pathological line counts (#29)
+            @NotNull @Positive @Max(1_000_000_000_000L) Long amountCents,
             String memo) {}
 
     public record PostJournalRequest(

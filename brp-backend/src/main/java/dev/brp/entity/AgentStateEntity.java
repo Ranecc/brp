@@ -37,4 +37,9 @@ public class AgentStateEntity {
         this.backlog = backlog;
         this.reportedAt = Instant.now();
     }
+
+    /** Recovery seam: restoring a snapshot preserves the original heartbeat time. */
+    public void setReportedAt(Instant reportedAt) {
+        this.reportedAt = reportedAt;
+    }
 }

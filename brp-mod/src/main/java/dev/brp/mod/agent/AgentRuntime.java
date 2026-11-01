@@ -155,8 +155,15 @@ public final class AgentRuntime {
                     Object declared = payload.remove("type");
                     String type = declared instanceof String str && !str.isBlank()
                             ? str : "agent.heartbeat";
-                    return new EventDto(e.seq() + ":" + e.eventId(), type, 1,
-                            cfg.agentId(), cfg.tenantId(), e.reliability(), payload);
+                    // audit #19: the eventId goes out exactly as it was minted —
+                // the old seq: prefix made the online dedup key differ from
+                // the generated one. occurredAt rides the WAL's ts column.
+                return new EventDto(e.eventId(), type, 1,
+                        cfg.agentId(), cfg.tenantId(),
+                        e.tsEpochMs() > 0
+                                ? java.time.Instant.ofEpochMilli(e.tsEpochMs()).toString()
+                                : null,
+                        e.reliability(), payload);
                 })
                 .toList();
         api.postTelemetry(events).thenAccept(ack -> {

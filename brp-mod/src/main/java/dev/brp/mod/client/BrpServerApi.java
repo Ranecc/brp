@@ -21,16 +21,18 @@ public interface BrpServerApi {
 
     // --- telemetry plane (batched, at-least-once, eventId dedup) ---
 
+    // field order mirrors the backend EventEnvelope — occurredAt included,
+    // the openapi contract stops drifting from the wire (audit #19)
     record EventDto(String eventId, String type, int schemaVersion, String agentId,
-                    String tenantId, String reliability, Object payload) {
+                    String tenantId, String occurredAt, String reliability, Object payload) {
         public static EventDto telemetry(String agentId, String tenantId, String type, Object payload) {
             return new EventDto(UUID.randomUUID().toString(), type, 1, agentId, tenantId,
-                    "TELEMETRY", payload);
+                    java.time.Instant.now().toString(), "TELEMETRY", payload);
         }
 
         public static EventDto critical(String agentId, String tenantId, String type, Object payload) {
             return new EventDto(UUID.randomUUID().toString(), type, 1, agentId, tenantId,
-                    "CRITICAL", payload);
+                    java.time.Instant.now().toString(), "CRITICAL", payload);
         }
     }
 

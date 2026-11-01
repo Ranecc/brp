@@ -12,6 +12,7 @@ import dev.brp.contract.TelemetryDtos.TelemetryBatch;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Map;
 
@@ -19,6 +20,12 @@ import java.util.Map;
  * Telemetry plane: batched, at-least-once, deduped by eventId. Deliberately
  * NOT one big transaction — a unique-violation on one event must not poison
  * the batch (rollback-only pitfall), so each event commits independently.
+ *
+ * Since audit #26 the per-event unit is "side effects + dedup marker" in ONE
+ * transaction: previously the marker committed first, so a failed fanOut left
+ * an event the agent's retry could never re-apply (the dedup wall) —
+ * at-least-once had quietly degraded to at-most-once for every quota minute
+ * and heartbeat that ever tripped.
  */
 @Service
 public class TelemetryServiceImpl implements TelemetryService {
@@ -31,6 +38,7 @@ public class TelemetryServiceImpl implements TelemetryService {
     private final dev.brp.service.ComputeLevyService computeLevy;
     private final dev.brp.service.MarketPriceService marketPrices;
     private final dev.brp.service.LoadSampleService loadSamples;
+    private final TransactionTemplate tx;
     private final int maxBatchSize;
 
     public TelemetryServiceImpl(TelemetryRepository events, AgentMonitorService monitor,
@@ -39,6 +47,7 @@ public class TelemetryServiceImpl implements TelemetryService {
                                 dev.brp.service.ComputeLevyService computeLevy,
                                 dev.brp.service.MarketPriceService marketPrices,
                                 dev.brp.service.LoadSampleService loadSamples,
+                                TransactionTemplate tx,
                                 @Value("${brp.telemetry.max-batch-size:1000}") int maxBatchSize) {
         this.events = events;
         this.monitor = monitor;
@@ -48,6 +57,7 @@ public class TelemetryServiceImpl implements TelemetryService {
         this.computeLevy = computeLevy;
         this.marketPrices = marketPrices;
         this.loadSamples = loadSamples;
+        this.tx = tx;
         this.maxBatchSize = maxBatchSize;
     }
 
@@ -64,13 +74,18 @@ public class TelemetryServiceImpl implements TelemetryService {
                 continue;
             }
             try {
-                events.saveAndFlush(new IngestedEventEntity(e.eventId(), e.agentId(), e.type()));
+                tx.execute(status -> {
+                    fanOut(e);
+                    if (e.payload() instanceof Map<?, ?> p) {
+                        hotRules.evaluate(e.type() == null ? "" : e.type(), p);   // docs/10 R-2
+                    }
+                    // the marker commits with the effects it vouches for
+                    events.saveAndFlush(new IngestedEventEntity(e.eventId(), e.agentId(), e.type()));
+                    return null;
+                });
                 accepted++;
-                fanOut(e);
-                if (e.payload() instanceof Map<?, ?> p) {
-                    hotRules.evaluate(e.type() == null ? "" : e.type(), p);   // docs/10 R-2
-                }
             } catch (DataIntegrityViolationException race) {
+                // we lost the insert race -> the winner ran the side effects
                 duplicates++;
             }
         }
@@ -119,9 +134,13 @@ public class TelemetryServiceImpl implements TelemetryService {
                 }
                 default -> { /* plain telemetry, no fan-out */ }
             }
-        } catch (RuntimeException bad) {
+        } catch (dev.brp.common.BadRequestException | IllegalArgumentException
+                | ClassCastException malformed) {
+            // payload-shaped bugs stop here: the event stays plain telemetry
+            // and the marker commits. Infra failures propagate — the tx rolls
+            // back, the batch 500s, the agent resends, at-least-once holds.
             org.slf4j.LoggerFactory.getLogger(TelemetryServiceImpl.class)
-                    .warn("malformed heartbeat from {}: {}", e.agentId(), bad.getMessage());
+                    .warn("malformed telemetry from {}: {}", e.agentId(), malformed.getMessage());
         }
     }
 

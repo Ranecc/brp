@@ -70,6 +70,7 @@ public final class BackendSupervisor {
     // while a comment claimed otherwise. The comment finally tells the truth.
     private volatile ScheduledExecutorService watchdog;
     private volatile Process child;
+    private volatile Thread exitHook;
 
     public BackendSupervisor(Config cfg) {
         this.cfg = cfg;
@@ -82,6 +83,13 @@ public final class BackendSupervisor {
         }
         if (watchdog == null || watchdog.isShutdown()) {
             watchdog = newWatchdog();
+        }
+        // audit #22: a killed game server used to orphan the child — it kept
+        // the port and the DB cache warm for nobody. The hook survives stop/
+        // start cycles because shutdown() is idempotent.
+        if (exitHook == null) {
+            exitHook = new Thread(this::shutdown, "brp-supervisor-exit-hook");
+            Runtime.getRuntime().addShutdownHook(exitHook);
         }
         if (cfg.embeddedResource() != null) {
             extractEmbedded(cfg.embeddedResource(), cfg.backendJar());
@@ -200,17 +208,33 @@ public final class BackendSupervisor {
         }
     }
 
-    public boolean healthy() {
+    public boolean healthy() {        // audit #22: "something answers 200 on our port" once counted as
+        // health — a squatter on the port would pass forever while our child
+        // lay dead. Now the child must be alive AND speak actuator.
+        Process p = child;
+        if (p == null || !p.isAlive()) {
+            return false;
+        }
         try {
             HttpResponse<String> r = http.send(
                     HttpRequest.newBuilder(URI.create(
                                     "http://127.0.0.1:" + cfg.port() + "/actuator/health"))
                             .timeout(Duration.ofSeconds(2)).GET().build(),
                     HttpResponse.BodyHandlers.ofString());
-            return r.statusCode() == 200;
+            return r.statusCode() == 200 && saysUp(r.body());
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /** The actuator contract, minimally: {"status":"UP", ...}. */
+    static boolean saysUp(String body) {
+        return body != null && body.contains("\"status\":\"UP\"");
+    }
+
+    /** Test seam: the kill-proof hook is registered exactly once per instance. */
+    public boolean exitHookRegistered() {
+        return exitHook != null;
     }
 
     // --- internals ---

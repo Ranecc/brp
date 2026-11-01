@@ -96,7 +96,7 @@ Feign 落地方式（对"用 Feign"执念的尊重与妥协）：
 ## 6. 安全模型
 
 - 注册：Agent 首次启动用一次性 provisioning token 向 Backend 换取 `instance_id + secret`
-- 请求：HMAC-SHA256 签名（instance_id, 时间戳, nonce, body 摘要）+ 时间窗 ±30s + nonce 去重（v0 可先 Bearer token，HMAC P1 上）
+- 请求：HMAC-SHA256 签名（instance_id, 时间戳, nonce, body 摘要）+ 时间窗 ±30s + nonce 去重（v0：BRP_TOKEN 静态 Bearer token，已实现，见 config/BearerTokenFilter；HMAC P1 上）
 - 通道：内网 HTTP 即可，公网必须 TLS 或 wireguard
 - 玩家门户：OAuth2/OIDC（游戏内发码绑定 MC 账号），权限走 RBAC（对接 LuckPerms 组同步）；v0 网页控制台是刻意的例外——免认证、仅内网（见 §2）
 - 审计：所有写操作进 `audit_log`，不可删

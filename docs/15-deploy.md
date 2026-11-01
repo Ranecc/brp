@@ -120,13 +120,19 @@ args or the launcher script):
 |---|---|---|
 | `brp.backend.url` | where the backend listens | `http://127.0.0.1:8080` |
 | `brp.tenant` | the server-level tenant id | `server` |
-| `brp.token` | v0 bearer token; minted + persisted at `brp/agent.token` when unset | auto |
+| `brp.token` | v0 bearer token; resolves `-Dbrp.token`, then the `BRP_TOKEN` env var, then mints + persists at `brp/agent.token` | auto |
 | `brp.vault.container` | mint-window dispense chest `dim\|x,y,z` | unset |
 | `brp.bourse.container` | bourse intake chest `dim\|x,y,z` | unset |
 | `brp.catalog.push-min` | item-catalog push cadence (minutes) | `30` |
 | `brp.bourse.sync-sec` | intake desk cadence (seconds) | `30` |
 | `brp.dr.enabled` | DR window signal handling | `true` |
 | `brp.agent.enabled` | the mod's master switch | `true` |
+
+Machine auth (audit #30, docs/01 §6): exporting `BRP_TOKEN=<secret>` on the
+server process turns on the backend's bearer-token filter for `/api` AND is
+picked up by the mod automatically — one variable, both sides of the
+sidecar pair. Leave it unset for the documented open posture (loopback-only
+single-file boot, tests).
 
 First-boot expectations, in order: `[BRP] backend sidecar not started`
 (degraded mode — the agent buffers in the WAL until the backend appears) or

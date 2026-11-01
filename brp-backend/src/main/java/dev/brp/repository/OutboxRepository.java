@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface OutboxRepository extends JpaRepository<OutboxMessageEntity, Long> {
 
-    List<OutboxMessageEntity> findTop20ByStatusOrderByIdAsc(String status);
+    List<OutboxMessageEntity> findTop20ByStatusOrderByCreatedAtAsc(String status);
 
     Optional<OutboxMessageEntity> findFirstByStatusOrderByIdAsc(String status);
 

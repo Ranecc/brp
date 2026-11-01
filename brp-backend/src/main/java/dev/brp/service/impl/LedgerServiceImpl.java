@@ -118,7 +118,14 @@ public class LedgerServiceImpl implements LedgerService {
         List<AccountEntity> touched = new ArrayList<>();
         for (JournalLine line : req.lines()) {
             AccountEntity acc = byNo.get(line.accountNo());
-            acc.apply(signed(line));
+            try {
+                acc.apply(signed(line));
+            } catch (ArithmeticException overflow) {
+                // balance ceiling: the belt under validate()'s per-request sum,
+                // reached only across many legitimate posts; thrown out of the
+                // tx callback, the template rolls the whole journal back
+                throw BadRequestException.of("ledger.amount.range");
+            }
             touched.add(acc);
         }
         String journalId = UUID.randomUUID().toString();
@@ -158,8 +165,14 @@ public class LedgerServiceImpl implements LedgerService {
                 // negative + balanced = silent reverse booking; not on our watch
                 throw BadRequestException.of("ledger.amount.positive");
             }
-            if ("DEBIT".equals(l.direction())) debit += l.amountCents();
-            else credit += l.amountCents();
+            try {
+                if ("DEBIT".equals(l.direction())) debit = Math.addExact(debit, l.amountCents());
+                else credit = Math.addExact(credit, l.amountCents());
+            } catch (ArithmeticException overflow) {
+                // second belt under the DTO @Max: a pathological line count
+                // can still push the balanced sum past long range
+                throw BadRequestException.of("ledger.amount.range");
+            }
         }
         if (debit != credit || debit == 0) {
             throw BadRequestException.of("ledger.unbalanced");

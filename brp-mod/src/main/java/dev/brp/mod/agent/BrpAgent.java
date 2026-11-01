@@ -184,10 +184,19 @@ public final class BrpAgent {
      * retired: a constant printed in source is not a token, it is a sticky
      * note on the vault door. (The backend's v0 posture stays no-auth-
      * internal-only; HMAC instance auth is P1, docs/01 §6.)
+     *
+     * Resolution order: -Dbrp.token, then BRP_TOKEN in the environment —
+     * the backend filter (audit #30) reads the same env var, so one export
+     * on the server process authenticates both sides of the sidecar pair.
      */
     private static String token(Path dir) {
         String configured = System.getProperty("brp.token");
-        if (configured != null && !configured.isBlank()) {
+        if (configured == null || configured.isBlank()) {
+            String fromEnv = System.getenv("BRP_TOKEN");
+            if (fromEnv != null && !fromEnv.isBlank()) {
+                return fromEnv.trim();
+            }
+        } else {
             return configured;
         }
         Path file = dir.resolve("agent.token");
