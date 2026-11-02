@@ -36,7 +36,7 @@ dependencies {
     // Pure-Java units (governor decision tables etc.) run as plain JUnit —
     // no Minecraft bootstrap, no excuses. sqlite-jdbc pinned so the local
     // store unit exercises the same driver the jarJar bundle ships.
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.xerial:sqlite-jdbc:3.46.1.3")
     // gson ships inside NeoForge for MAIN; the plain test runtime needs it
