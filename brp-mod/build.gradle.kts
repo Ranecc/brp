@@ -38,7 +38,7 @@ dependencies {
     // store unit exercises the same driver the jarJar bundle ships.
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.xerial:sqlite-jdbc:3.46.1.3")
+    testImplementation("org.xerial:sqlite-jdbc:3.54.1.0")
     // gson ships inside NeoForge for MAIN; the plain test runtime needs it
     // spelled out (payloadOf parses WAL lines in units)
     testImplementation("com.google.code.gson:gson:2.15.0")
