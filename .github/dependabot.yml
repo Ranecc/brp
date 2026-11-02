@@ -23,6 +23,12 @@ updates:
     directory: "/brp-mod"
     schedule:
       interval: "weekly"
+    ignore:
+      # The testImplementation pin must stay inside the jarJar range in
+      # brp-mod/build.gradle.kts. Dependabot bumps the pin alone: CI stays
+      # green, the real-net boot dies on "no suitable driver". Range and pin
+      # move together, by hand.
+      - dependency-name: "org.xerial:sqlite-jdbc"
     commit-message:
       prefix: "deps"
 
