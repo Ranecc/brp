@@ -41,7 +41,7 @@ dependencies {
     testImplementation("org.xerial:sqlite-jdbc:3.46.1.3")
     // gson ships inside NeoForge for MAIN; the plain test runtime needs it
     // spelled out (payloadOf parses WAL lines in units)
-    testImplementation("com.google.code.gson:gson:2.11.0")
+    testImplementation("com.google.code.gson:gson:2.15.0")
 }
 
 tasks.withType<Test>().configureEach {
