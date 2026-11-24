@@ -6,6 +6,13 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "ci"
+    # One PR per week, not one per action. CI breakage on a major bump is
+    # caught by the workflow run in the PR itself, and a grouped revert is
+    # cheap.
+    groups:
+      ci-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: "maven"
     directory: "/"
@@ -18,6 +25,19 @@ updates:
         update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "deps"
+    # Patch and minor updates ride along together; majors stay solo so each
+    # one gets its own review conversation.
+    groups:
+      java-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "version-update:semver-patch"
+      java-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "version-update:semver-minor"
 
   - package-ecosystem: "gradle"
     directory: "/brp-mod"
@@ -31,6 +51,17 @@ updates:
       - dependency-name: "org.xerial:sqlite-jdbc"
     commit-message:
       prefix: "deps"
+    groups:
+      mod-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "version-update:semver-patch"
+      mod-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "version-update:semver-minor"
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -38,3 +69,7 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "deps"
+    groups:
+      docker-base:
+        patterns:
+          - "*"
